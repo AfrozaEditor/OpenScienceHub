@@ -1,0 +1,75 @@
+.truncated-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.truncated-content {
+  word-break: break-all;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-height: 4em;
+  overflow-y: auto;
+  padding-right: var(--spacing-xs);
+}
+
+.truncated-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.truncate-toggle {
+  background: transparent;
+  border: none;
+  color: var(--accent-gold);
+  font-size: 0.85rem;
+  font-family: 'Sora', sans-serif;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  transition: color var(--transition-base);
+  align-self: flex-start;
+}
+
+.truncate-toggle:hover {
+  color: var(--accent-gold-light);
+  text-decoration: underline;
+}
+
+.truncate-toggle:focus {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.copy-text-button {
+  background: transparent;
+  border: 1px solid var(--border-gold);
+  color: var(--accent-gold);
+  font-size: 0.8rem;
+  font-family: 'Sora', sans-serif;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all var(--transition-base);
+  white-space: nowrap;
+}
+
+.copy-text-button:hover {
+  background: var(--accent-gold);
+  color: var(--bg-deep-black);
+  border-color: var(--accent-gold);
+}
+
+.copy-text-button:focus {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+}
+
+.truncated-text + .copy-text-button {
+  margin-left: var(--spacing-xs);
+}

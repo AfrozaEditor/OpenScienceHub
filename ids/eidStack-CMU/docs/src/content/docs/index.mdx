@@ -1,0 +1,32 @@
+---
+title: eidStack-CMU
+description: SSI DID Issuance & Verification API built with Credo and NestJS
+template: splash
+hero:
+  tagline: Self-Sovereign Identity platform — DID Issuance & Verification with Credo + NestJS
+  actions:
+    - text: Get Started
+      link: /guides/introduction/
+      icon: right-arrow
+    - text: API Reference
+      link: /api-reference/
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid>
+  <Card title="Introduction" icon="open-book">
+    Learn what eidStack-CMU is and how it works. [Read intro →](/guides/introduction/)
+  </Card>
+  <Card title="Installation" icon="laptop">
+    Clone, install, and run the project locally. [Setup guide →](/guides/installation/)
+  </Card>
+  <Card title="Issuance Flow" icon="document">
+    Step-by-step credential issuance from schema to holder. [Learn more →](/concepts/issuance-flow/)
+  </Card>
+  <Card title="API Reference" icon="setting">
+    Full REST API docs — every endpoint, request, and response. [Browse API →](/api-reference/)
+  </Card>
+</CardGrid>

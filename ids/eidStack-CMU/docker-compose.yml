@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: polyid_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env                       # optional: keeps env values outside compose; safe
+    environment:
+      NODE_ENV: production         # force running from dist (production)
+      PORT: 4000
+      AGENT_PORT: 3021
+      # DATABASE_URL will be read from .env if present; default fallback included here
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/polyid_db?schema=public}
+    ports:
+      - "4000:4000"
+      - "3021:3021"
+    depends_on:
+      - postgres
+    entrypoint: ["bash", "-lc", "./entrypoint.sh"]
+
+volumes:
+  pgdata:

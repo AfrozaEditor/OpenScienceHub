@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>eidStack-CMU API Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0d0f14;--sb:#111318;--panel:#161820;--border:#23252e;--blue:#4f9cf9;--purple:#a78bfa;--green:#3ecf8e;--orange:#f59e0b;--red:#f87171;--text:#e2e4ed;--muted:#6b7280;--code:#0a0c10;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden;font-size:14px;}
+#sb{width:268px;min-width:268px;background:var(--sb);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.sb-head{padding:16px 14px 12px;border-bottom:1px solid var(--border);}
+.sb-head h1{font-size:13px;font-weight:600;color:#fff;}
+.sb-head p{font-size:11px;color:var(--muted);margin-top:2px;}
+.sb-search{padding:8px 10px;border-bottom:1px solid var(--border);}
+.sb-search input{width:100%;background:var(--panel);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 9px;font-size:12px;font-family:inherit;outline:none;}
+.sb-search input:focus{border-color:var(--blue);}
+.sb-search input::placeholder{color:var(--muted);}
+#nav{overflow-y:auto;flex:1;padding:6px 0 20px;}
+.ng-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);padding:10px 14px 3px;}
+.ni{display:flex;align-items:center;gap:7px;padding:6px 14px;cursor:pointer;border-left:2px solid transparent;transition:all .13s;font-size:12px;color:#9ca3af;}
+.ni:hover{background:rgba(255,255,255,.03);color:var(--text);}
+.ni.active{background:rgba(79,156,249,.08);border-left-color:var(--blue);color:var(--blue);}
+.mb{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;padding:2px 5px;border-radius:3px;text-transform:uppercase;min-width:33px;text-align:center;flex-shrink:0;}
+.GET{background:rgba(62,207,142,.15);color:var(--green);}
+.POST{background:rgba(79,156,249,.15);color:var(--blue);}
+.PUT{background:rgba(245,158,11,.15);color:var(--orange);}
+.DELETE{background:rgba(248,113,113,.15);color:var(--red);}
+.PATCH{background:rgba(167,139,250,.15);color:var(--purple);}
+#main{flex:1;overflow-y:auto;}
+#content{max-width:880px;width:100%;margin:0 auto;padding:32px 40px 80px;}
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;height:65vh;text-align:center;gap:10px;}
+.w-logo{width:48px;height:48px;background:linear-gradient(135deg,var(--blue),var(--purple));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:6px;}
+.welcome h2{font-size:20px;font-weight:600;color:#fff;}
+.welcome p{color:var(--muted);max-width:340px;line-height:1.6;font-size:13px;}
+.ep-head{margin-bottom:22px;}
+.ep-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;}
+.ep-method{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;padding:4px 10px;border-radius:5px;text-transform:uppercase;}
+.ep-path{font-family:'IBM Plex Mono',monospace;font-size:15px;color:#fff;}
+.ep-title{font-size:19px;font-weight:600;color:#fff;margin-bottom:5px;letter-spacing:-.3px;}
+.ep-desc{color:var(--muted);line-height:1.6;font-size:13px;}
+.ep-tags{display:flex;gap:5px;margin-top:7px;}
+.ep-tag{font-size:10px;background:#1e2130;border:1px solid var(--border);color:var(--muted);padding:2px 8px;border-radius:20px;}
+.divider{height:1px;background:var(--border);margin:18px 0;}
+.sec{margin-bottom:26px;}
+.sec-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);margin-bottom:9px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.ptable{width:100%;border-collapse:collapse;}
+.ptable th{text-align:left;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:6px 10px;background:var(--panel);border:1px solid var(--border);}
+.ptable td{padding:9px 10px;border:1px solid var(--border);font-size:12.5px;vertical-align:top;}
+.ptable tr:hover td{background:rgba(255,255,255,.02);}
+.pname{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--blue);}
+.ptype{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--purple);}
+.req-b{font-size:9px;background:rgba(248,113,113,.15);color:var(--red);padding:1px 5px;border-radius:3px;margin-left:5px;vertical-align:middle;}
+.opt-b{font-size:9px;background:rgba(107,114,128,.15);color:var(--muted);padding:1px 5px;border-radius:3px;margin-left:5px;vertical-align:middle;}
+.schema-box{background:var(--panel);border:1px solid var(--border);border-radius:7px;overflow:hidden;}
+.schema-row{display:flex;gap:0;border-bottom:1px solid var(--border);}
+.schema-row:last-child{border-bottom:none;}
+.schema-row:hover{background:rgba(255,255,255,.02);}
+.sc-name{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--blue);padding:9px 12px;min-width:170px;flex-shrink:0;border-right:1px solid var(--border);}
+.sc-type{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--purple);padding:9px 10px;min-width:75px;flex-shrink:0;border-right:1px solid var(--border);}
+.sc-desc{font-size:12px;color:var(--muted);padding:9px 10px;flex:1;}
+.sc-ex{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--green);padding:9px 10px;border-left:1px solid var(--border);max-width:210px;word-break:break-all;}
+.resp-tabs{display:flex;gap:2px;flex-wrap:wrap;}
+.resp-tab{padding:6px 12px;font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer;border:1px solid var(--border);border-bottom:none;background:var(--panel);color:var(--muted);border-radius:5px 5px 0 0;transition:all .13s;}
+.resp-tab:hover{color:var(--text);}
+.resp-tab.active{background:var(--code);color:#fff;}
+.resp-tab.s2{color:var(--green);}
+.resp-tab.s4{color:var(--orange);}
+.resp-tab.s5{color:var(--red);}
+.resp-panel{background:var(--code);border:1px solid var(--border);border-radius:0 6px 6px 6px;overflow:hidden;display:none;}
+.resp-panel.active{display:block;}
+.resp-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.resp-code{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;}
+.resp-desc{font-size:12px;color:var(--muted);}
+.cb{background:var(--code);border:1px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:10px;}
+.cb-head{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;border-bottom:1px solid var(--border);background:#0f1117;}
+.cb-lang{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:500;}
+.copy-btn{font-size:10px;color:var(--muted);background:none;border:1px solid var(--border);padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;transition:all .13s;}
+.copy-btn:hover{color:var(--text);}
+pre{font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.7;padding:12px 14px;overflow-x:auto;color:#c9d1e0;white-space:pre;}
+.jk{color:#a78bfa;}.js{color:#3ecf8e;}.jn{color:#f59e0b;}.jb{color:#f87171;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#2a2d3a;border-radius:3px;}
+</style>
+</head>
+<body>
+<div id="sb">
+  <div class="sb-head"><h1>eidStack-CMU</h1><p>SSI Issuance &amp; Verification API</p></div>
+  <div class="sb-search"><input id="search" type="text" placeholder="Search endpoints…"/></div>
+  <div id="nav"></div>
+</div>
+<div id="main">
+  <div id="content">
+    <div class="welcome" id="welcome">
+      <div class="w-logo">⚡</div>
+      <h2>eidStack-CMU API Reference</h2>
+      <p>Select an endpoint from the sidebar to view parameters, request schema, and full response examples.</p>
+    </div>
+    <div id="epv" style="display:none;"></div>
+  </div>
+</div>
+<script>
+const SCHEMAS={
+  InitAgentDto:{required:["walletId","walletKey","endpoint","label","seed"],properties:{walletId:{type:"string",desc:"Unique wallet identifier",ex:"my-org-wallet"},walletKey:{type:"string",desc:"Wallet encryption password — keep secret",ex:"super-secure-key-123"},endpoint:{type:"string",desc:"Publicly reachable URL of your agent",ex:"http://your-agent-ip:8000"},label:{type:"string",desc:"Human-readable agent name shown in wallets",ex:"My Org Agent"},seed:{type:"string",desc:"32-char seed for deterministic DID generation. Same seed = same DID always.",ex:"000000000000000000000000MyOrgSeed"}}},
+  ReceiveInvitationDto:{required:["invitationUrl"],properties:{invitationUrl:{type:"string",desc:"Out-of-band invitation URL from another agent",ex:"http://other-agent?oob=eyJAdHlwZSI6..."}}},
+  CreateShortUrlDto:{required:["originalUrl"],properties:{originalUrl:{type:"string",desc:"The long SSI invitation URL to shorten",ex:"http://agent:8000/oob?oob=eyJAdHlwZSI6Imh0dHBz..."}}},
+  CreateSchemaInput:{required:["name","version","attributes"],properties:{name:{type:"string",desc:"Schema name — unique per issuer per version",ex:"StudentID"},version:{type:"string",desc:"Semantic version",ex:"1.0"},attributes:{type:"array",desc:"List of AttributeInput — defines credential fields",ex:'[{"attributeName":"full_name","schemaDataType":"string","displayName":"Full Name"}]'},issuerId:{type:"string",desc:"Issuer DID — optional, auto-resolved from agent",ex:"did:indy:bcovrin:test:ABC123"},orgId:{type:"string",desc:"Organization ID — optional",ex:"org-uuid-here"}}},
+  CreateCredDefInput:{required:["schemaId","tag"],properties:{schemaId:{type:"string",desc:"Full schema ID from the ledger",ex:"did:indy:bcovrin:test:ABC/anoncreds/v0/SCHEMA/StudentID/1.0"},tag:{type:"string",desc:"Tag to differentiate multiple cred defs for the same schema",ex:"default"},supportRevocation:{type:"boolean",desc:"Enable revocation support — requires revocation registry setup",ex:"false"}}},
+  OfferCredentialWithUrlDto:{required:["credentialDefinitionId"],properties:{credentialDefinitionId:{type:"string",desc:"Credential definition ID from the ledger",ex:"did:indy:bcovrin:test:ABC/anoncreds/v0/CLAIM_DEF/42/default"},connectionId:{type:"string",desc:"Optional — pass for connection-based offer. Omit for OOB invitation URL.",ex:"conn-uuid-here"},attributes:{type:"array",desc:"Array of {name, value} pairs matching schema attributes",ex:'[{"name":"full_name","value":"John Doe"},{"name":"student_id","value":"STU-001"}]'},comment:{type:"string",desc:"Optional message shown to holder in their wallet",ex:"Your Student ID credential from CMU"}}},
+  ProofRequestDto:{required:["credDefId","attributes"],properties:{credDefId:{type:"string",desc:"Credential definition ID to verify against",ex:"did:indy:bcovrin:test:ABC/anoncreds/v0/CLAIM_DEF/42/default"},attributes:{type:"array",desc:"Array of AttributeRequestDto — attributes to request",ex:'[{"name":"full_name"},{"name":"university"}]'},predicates:{type:"array",desc:"Optional ZKP predicates — prove condition without revealing value",ex:'[{"name":"age","pType":">=","pValue":18}]'},comment:{type:"string",desc:"Optional message shown to holder in their wallet",ex:"Please share your student credential"},connectionId:{type:"string",desc:"Optional — pass for connection-based request instead of OOB",ex:"conn-uuid-here"}}},
+  SendInviteDto:{required:["email","inviteLink","name"],properties:{email:{type:"string",desc:"Recipient email address",ex:"john@example.com"},name:{type:"string",desc:"Recipient name used in the email greeting",ex:"John Doe"},inviteLink:{type:"string",desc:"The invitation URL (short or full) to embed in email",ex:"http://yourapp.com/s/abc123"},type:{type:"string",desc:"Email template type",ex:"offer",enum:"connection | offer | proof | zkp-proof"}}}
+};
+
+const RESPONSES={
+  AgentInitialized:{agentId:"agt_abc123xyz",label:"My Org Agent",did:"did:indy:bcovrin:test:AbCdEf1234567890",endpoint:"http://your-agent-ip:8000",status:"initialized",walletId:"my-org-wallet"},
+  AgentStatus:{label:"My Org Agent",did:"did:indy:bcovrin:test:AbCdEf1234567890",endpoint:"http://your-agent-ip:8000",status:"running",connections:3,credentials:12},
+  IssuerDid:{did:"did:indy:bcovrin:test:AbCdEf1234567890",verkey:"3YnLxoEBsR7JPoQGQFRgGDTGGBjBBCMa9KuPKPqMgfKZ"},
+  ConnectionInvitation:{connectionId:"conn-uuid-8f3a2b1c",outOfBandId:"oob-uuid-9d4e3c2b",invitationUrl:"http://your-agent:8000/oob?oob=eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvb3V0LW9mLWJhbmQvMS4xL2ludml0YXRpb24iLCJAaWQiOiI4ZjNhMmIxYyJ9",state:"initial",createdAt:"2024-01-15T10:30:00.000Z"},
+  ShortUrl:{shortCode:"abc123",shortUrl:"http://yourapp.com/s/abc123",originalUrl:"http://your-agent:8000/oob?oob=eyJAdHlwZSI6...",createdAt:"2024-01-15T10:30:00.000Z"},
+  ResolvedUrl:{shortCode:"abc123",originalUrl:"http://your-agent:8000/oob?oob=eyJAdHlwZSI6...",createdAt:"2024-01-15T10:30:00.000Z"},
+  SchemaCreated:{schemaId:"did:indy:bcovrin:test:ABC123/anoncreds/v0/SCHEMA/StudentID/1.0",name:"StudentID",version:"1.0",attributes:["full_name","student_id","university","enrollment_date"],issuerId:"did:indy:bcovrin:test:AbCdEf1234567890",createdAt:"2024-01-15T10:30:00.000Z"},
+  SchemaList:{data:[{schemaId:"did:indy:bcovrin:test:ABC/anoncreds/v0/SCHEMA/StudentID/1.0",name:"StudentID",version:"1.0",attributes:["full_name","student_id"]},{schemaId:"did:indy:bcovrin:test:DEF/anoncreds/v0/SCHEMA/EmployeeID/1.0",name:"EmployeeID",version:"1.0",attributes:["full_name","employee_id","department"]}],total:2,page:1,limit:10},
+  CredDefCreated:{credentialDefinitionId:"did:indy:bcovrin:test:ABC123/anoncreds/v0/CLAIM_DEF/42/default",schemaId:"did:indy:bcovrin:test:ABC/anoncreds/v0/SCHEMA/StudentID/1.0",tag:"default",supportRevocation:false,issuerId:"did:indy:bcovrin:test:AbCdEf1234567890",createdAt:"2024-01-15T10:30:00.000Z"},
+  CredentialOffer:{credentialExchangeId:"cred-ex-uuid-7g4h5i6j",state:"offer-sent",credentialDefinitionId:"did:indy:bcovrin:test:ABC123/anoncreds/v0/CLAIM_DEF/42/default",invitationUrl:"http://your-agent:8000/oob?oob=eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvb3V0LW9mLWJhbmQvMS4xL2ludml0YXRpb24iLCJAaWQiOiI3ZzRoNWk2aiJ9",attributes:[{name:"full_name",value:"John Doe"},{name:"student_id",value:"STU-001"}],createdAt:"2024-01-15T10:30:00.000Z"},
+  OfferStatus:{credentialExchangeId:"cred-ex-uuid-7g4h5i6j",state:"done",updatedAt:"2024-01-15T10:35:00.000Z"},
+  ProofRequest:{proofRecordId:"proof-rec-uuid-1a2b3c4d",state:"request-sent",credDefId:"did:indy:bcovrin:test:ABC123/anoncreds/v0/CLAIM_DEF/42/default",invitationUrl:"http://your-agent:8000/oob?oob=eyJAdHlwZSI6Imh0dHBzOi8vZGlkY29tbS5vcmcvb3V0LW9mLWJhbmQvMS4xL2ludml0YXRpb24iLCJAaWQiOiIxYTJiM2M0ZCJ9",requestedAttributes:["full_name","university"],createdAt:"2024-01-15T10:30:00.000Z"},
+  ProofStatus:{proofRecordId:"proof-rec-uuid-1a2b3c4d",state:"done",verified:true,revealedAttributes:{full_name:"John Doe",university:"CMU"},updatedAt:"2024-01-15T10:35:00.000Z"},
+  EmailSent:{success:true,message:"Invitation email sent successfully",recipient:"john@example.com",type:"offer",sentAt:"2024-01-15T10:30:00.000Z"},
+  ErrorResponse:{correlationId:"corr-uuid-abc123",statusCode:400,error:"Bad Request",message:"Validation failed: walletId should not be empty"},
+  NotFound:{correlationId:"corr-uuid-abc123",statusCode:404,error:"Not Found",message:"Resource not found"},
+  Unauthorized:{correlationId:"corr-uuid-abc123",statusCode:401,error:"Unauthorized",message:"Bearer token missing or invalid"},
+  ServerError:{correlationId:"corr-uuid-abc123",statusCode:500,error:"Internal Server Error",message:"An unexpected error occurred"}
+};
+
+const PATHS=[
+  {path:"/credo-agent/initAgent",method:"post",op:{summary:"Initialize Agent",desc:"Initializes the Credo SSI agent with a wallet, ledger endpoint, and seed. <strong>Must be called first</strong> before any issuance or verification. Same walletId+walletKey restores an existing wallet.",tags:["credo-agent"],reqSchema:"InitAgentDto",responses:{"201":{desc:"Agent initialized successfully",body:"AgentInitialized"},"400":{desc:"Bad Request — missing or invalid parameters",body:"ErrorResponse"},"500":{desc:"Internal Server Error",body:"ServerError"}}}},
+  {path:"/credo-agent/receiveInvitation",method:"post",op:{summary:"Receive OOB Invitation",desc:"Receives and processes an Out-of-Band invitation URL from another agent.",tags:["credo-agent"],reqSchema:"ReceiveInvitationDto",responses:{"200":{desc:"Invitation processed successfully",body:"ConnectionInvitation"},"400":{desc:"Bad Request — invalid invitation URL",body:"ErrorResponse"}}}},
+  {path:"/credo-agent/getAgent",method:"get",op:{summary:"Get Agent Status",desc:"Returns a sanitized view of the running Credo agent — config and status without exposing wallet credentials.",tags:["credo-agent"],responses:{"200":{desc:"Agent status returned",body:"AgentStatus"},"500":{desc:"Internal Server Error",body:"ServerError"}}}},
+  {path:"/credo-agent/getIssuerDid",method:"get",op:{summary:"Get Issuer DID",desc:"Returns the DID registered on the ledger for this issuer. This DID is used to cryptographically sign all credentials.",tags:["credo-agent"],responses:{"200":{desc:"Issuer DID returned",body:"IssuerDid"},"404":{desc:"DID not found — agent may not be initialized",body:"NotFound"}}}},
+  {path:"/credo-agent/did",method:"get",op:{summary:"Get Agent DID",desc:"Returns the agent's own DID.",tags:["credo-agent"],responses:{"200":{desc:"Agent DID returned",body:"IssuerDid"}}}},
+  {path:"/connection/createInvitation",method:"post",op:{summary:"Create Connection Invitation",desc:"Creates an Out-of-Band connection invitation URL. Share with a holder as QR code or link to establish a persistent encrypted connection.",tags:["connection"],responses:{"201":{desc:"Connection invitation created",body:"ConnectionInvitation"},"500":{desc:"Internal Server Error",body:"ServerError"}}}},
+  {path:"/short-url/create",method:"post",op:{summary:"Create Short URL",desc:"Shortens a long SSI invitation URL for QR code delivery. Long OOB URLs generate dense unreadable QR codes — short URLs fix this.",tags:["short-url"],reqSchema:"CreateShortUrlDto",responses:{"201":{desc:"Short URL created",body:"ShortUrl"},"400":{desc:"Bad Request",body:"ErrorResponse"}}}},
+  {path:"/short-url/resolve",method:"get",op:{summary:"Resolve Short Code",desc:"Resolves a short code back to its original URL without redirecting.",tags:["short-url"],params:[{name:"code",in:"query",required:true,type:"string",desc:"The short code to resolve"}],responses:{"200":{desc:"Original URL returned",body:"ResolvedUrl"},"404":{desc:"Short code not found",body:"NotFound"}}}},
+  {path:"/short-url/s/{code}",method:"get",op:{summary:"Redirect to Original URL",desc:"Redirects the caller to the original URL. Used by wallet apps when a holder scans or clicks the short link.",tags:["short-url"],params:[{name:"code",in:"path",required:true,type:"string",desc:"The short code"}],responses:{"302":{desc:"Redirect to original URL"},"404":{desc:"Short code not found",body:"NotFound"}}}},
+  {path:"/issuance/schemas",method:"get",op:{summary:"List Schemas (Paginated)",desc:"Returns a paginated list of all credential schemas registered by this issuer on the ledger.",tags:["issuance"],params:[{name:"page",in:"query",required:false,type:"number",desc:"Page number (default: 1)"},{name:"limit",in:"query",required:false,type:"number",desc:"Items per page (default: 10)"}],responses:{"200":{desc:"Paginated list of schemas",body:"SchemaList"},"500":{desc:"Internal Server Error",body:"ServerError"}}}},
+  {path:"/issuance/schemas",method:"post",op:{summary:"Create Schema",desc:"Creates and registers a new credential schema on the ledger. Defines what attributes credentials of this type will contain. Schema name+version must be unique per issuer.",tags:["issuance"],reqSchema:"CreateSchemaInput",responses:{"201":{desc:"Schema created and anchored on ledger",body:"SchemaCreated"},"400":{desc:"Validation error",body:"ErrorResponse"},"500":{desc:"Internal Server Error",body:"ServerError"}}}},
+  {path:"/issuance/listSchemas",method:"get",op:{summary:"List All Schemas",desc:"Returns all schemas without pagination.",tags:["issuance"],responses:{"200":{desc:"All schemas returned",body:"SchemaList"}}}},
+  {path:"/issuance/credential-definitions",method:"get",op:{summary:"List Credential Definitions",desc:"Returns a paginated list of all credential definitions created by this issuer.",tags:["issuance"],params:[{name:"page",in:"query",required:false,type:"number",desc:"Page number"},{name:"limit",in:"query",required:false,type:"number",desc:"Items per page"}],responses:{"200":{desc:"Paginated credential definitions",body:"CredDefCreated"}}}},
+  {path:"/issuance/credential-definitions",method:"post",op:{summary:"Create Credential Definition",desc:"Creates a credential definition linking your issuer DID to a schema on the ledger. Required before issuing any credentials of that schema type.",tags:["issuance"],reqSchema:"CreateCredDefInput",responses:{"201":{desc:"Credential definition created and anchored",body:"CredDefCreated"},"400":{desc:"Validation error",body:"ErrorResponse"}}}},
+  {path:"/issuance/offer",method:"post",op:{summary:"Offer Credential",desc:"Issues a credential offer to a holder. Without <code>connectionId</code> creates an OOB invitation URL. With <code>connectionId</code> pushes the offer directly to the holder's connected wallet.",tags:["issuance"],reqSchema:"OfferCredentialWithUrlDto",responses:{"201":{desc:"Credential offer created — returns invitationUrl and credentialExchangeId",body:"CredentialOffer"},"400":{desc:"Validation error",body:"ErrorResponse"}}}},
+  {path:"/issuance/offerStatus",method:"get",op:{summary:"Get Offer Status",desc:"Polls the current state of a credential offer. Poll after <code>/issuance/offer</code> until state is <code>done</code>.",tags:["issuance"],params:[{name:"credentialExchangeId",in:"query",required:true,type:"string",desc:"The exchange ID returned from /issuance/offer"}],responses:{"200":{desc:"State: offer-sent → request-received → credential-issued → done",body:"OfferStatus"},"400":{desc:"Invalid credentialExchangeId",body:"ErrorResponse"}}}},
+  {path:"/verification/createProofRequest",method:"post",op:{summary:"Create Proof Request",desc:"Creates a proof request asking a holder to present credentials. Supports OOB, connection-based, attribute disclosure, and Zero Knowledge Predicates.",tags:["verification"],reqSchema:"ProofRequestDto",responses:{"201":{desc:"Proof request created — returns invitationUrl and proofRecordId",body:"ProofRequest"},"400":{desc:"Validation error",body:"ErrorResponse"}}}},
+  {path:"/verification/proofStatus",method:"get",op:{summary:"Get Proof Status",desc:"Polls the current state of a proof request. Poll after <code>/verification/createProofRequest</code> until state is <code>done</code>. When done and verified=true, the credential claims are confirmed.",tags:["verification"],params:[{name:"proofRecordId",in:"query",required:true,type:"string",desc:"The proof record ID from /verification/createProofRequest"}],responses:{"200":{desc:"State: request-sent → presentation-received → done",body:"ProofStatus"},"400":{desc:"Invalid proofRecordId",body:"ErrorResponse"}}}},
+  {path:"/email/send-invite-url",method:"post",op:{summary:"Send Invite Email",desc:"Sends an invitation link email to a holder. Use after creating a credential offer or proof request to deliver the invitation URL via email with the appropriate template.",tags:["email"],reqSchema:"SendInviteDto",responses:{"201":{desc:"Email sent successfully",body:"EmailSent"},"400":{desc:"Bad Request",body:"ErrorResponse"}}}}
+];
+
+function MC(m){return{get:"GET",post:"POST",put:"PUT",delete:"DELETE",patch:"PATCH"}[m]||"GET";}
+function SC(c){const n=parseInt(c);if(n>=200&&n<300)return"s2";if(n>=400&&n<500)return"s4";return"s5";}
+
+function jsonHL(obj){
+  return JSON.stringify(obj,null,2).replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,m=>{
+    if(/^"/.test(m)){if(/:$/.test(m))return`<span class="jk">${m}</span>`;return`<span class="js">${m}</span>`;}
+    if(/true|false|null/.test(m))return`<span class="jb">${m}</span>`;
+    return`<span class="jn">${m}</span>`;
+  });
+}
+
+function buildCurl(method,path,schName){
+  const sc=schName&&SCHEMAS[schName];
+  if(!sc)return`curl -X ${MC(method)} 'http://localhost:4000${path}'`;
+  const b={};Object.entries(sc.properties||{}).forEach(([k,v])=>{b[k]=v.ex||v.type;});
+  return`curl -X ${MC(method)} 'http://localhost:4000${path}' \\\n  -H 'Content-Type: application/json' \\\n  -d '${JSON.stringify(b,null,2)}'`;
+}
+
+function buildJs(method,path,schName){
+  const sc=schName&&SCHEMAS[schName];
+  if(!sc)return`const res = await fetch('http://localhost:4000${path}');\nconst data = await res.json();\nconsole.log(data);`;
+  const b={};Object.entries(sc.properties||{}).forEach(([k,v])=>{b[k]=v.ex||v.type;});
+  return`const res = await fetch('http://localhost:4000${path}', {\n  method: '${MC(method)}',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify(${JSON.stringify(b,null,4)})\n});\nconst data = await res.json();\nconsole.log(data);`;
+}
+
+function renderSchema(schName){
+  const sc=SCHEMAS[schName];if(!sc)return'';
+  const req=sc.required||[];
+  return`<div class="schema-row" style="background:rgba(255,255,255,.02)">
+    <div class="sc-name" style="color:var(--muted);font-size:10px;font-weight:600;text-transform:uppercase">Field</div>
+    <div class="sc-type" style="color:var(--muted);font-size:10px;font-weight:600;text-transform:uppercase">Type</div>
+    <div class="sc-desc" style="color:var(--muted);font-size:10px;font-weight:600;text-transform:uppercase">Description</div>
+    <div class="sc-ex" style="color:var(--muted);font-size:10px;font-weight:600;text-transform:uppercase">Example</div>
+  </div>`+Object.entries(sc.properties||{}).map(([k,v])=>`
+  <div class="schema-row">
+    <div class="sc-name">${k}<span class="${req.includes(k)?'req-b':'opt-b'}">${req.includes(k)?'required':'optional'}</span></div>
+    <div class="sc-type">${v.type}</div>
+    <div class="sc-desc">${v.desc||''}${v.enum?`<br/><span style="color:var(--blue);font-size:11px;margin-top:3px;display:block">Enum: ${v.enum}</span>`:''}</div>
+    <div class="sc-ex">${v.ex||''}</div>
+  </div>`).join('');
+}
+
+function renderEp(path,method,op){
+  const M=MC(method);
+  const uid=(method+path).replace(/[^a-z0-9]/gi,'_');
+  const params=op.params||[];
+  const responses=op.responses||{};
+  const rkeys=Object.keys(responses);
+
+  const paramsHtml=params.length?`<div class="sec"><div class="sec-title">Parameters</div><table class="ptable"><thead><tr><th>Name</th><th>In</th><th>Type</th><th>Description</th></tr></thead><tbody>${params.map(p=>`<tr><td><span class="pname">${p.name}</span><span class="${p.required?'req-b':'opt-b'}">${p.required?'required':'optional'}</span></td><td><span class="ptype">${p.in}</span></td><td><span class="ptype">${p.type||'string'}</span></td><td style="color:var(--muted);font-size:12px">${p.desc||''}</td></tr>`).join('')}</tbody></table></div>`:'';
+
+  const reqHtml=op.reqSchema?`<div class="sec"><div class="sec-title">Request Body <span style="font-size:10px;color:var(--red);font-weight:normal;text-transform:none;letter-spacing:0">· required</span></div><div class="schema-box">${renderSchema(op.reqSchema)}</div></div>`:'';
+
+  const tabsHtml=rkeys.map((c,i)=>`<div class="resp-tab ${SC(c)} ${i===0?'active':''}" onclick="swTab('${uid}','${c}')">${c}</div>`).join('');
+
+  const panelsHtml=rkeys.map((c,i)=>{
+    const r=responses[c];
+    const bodyObj=r.body&&RESPONSES[r.body];
+    const bodyHtml=bodyObj?`<div class="cb" style="margin:0;border:none;border-radius:0;border-top:1px solid var(--border);"><div class="cb-head"><span class="cb-lang">Example Response</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>${jsonHL(bodyObj)}</pre></div>`:'';
+    const cc=parseInt(c);const rc=cc<300?'var(--green)':cc<500?'var(--orange)':'var(--red)';
+    return`<div class="resp-panel ${i===0?'active':''}" id="rp_${uid}_${c}"><div class="resp-head"><span class="resp-code" style="color:${rc}">${c}</span><span class="resp-desc">${r.desc||''}</span></div>${bodyHtml}</div>`;
+  }).join('');
+
+  return`<div class="ep-head"><div class="ep-row"><span class="ep-method mb ${M}">${M}</span><span class="ep-path">${path}</span></div><div class="ep-title">${op.summary||path}</div><div class="ep-desc">${op.desc||''}</div>${op.tags?.length?`<div class="ep-tags">${op.tags.map(t=>`<span class="ep-tag">${t}</span>`).join('')}</div>`:''}</div>
+  <div class="divider"></div>
+  ${paramsHtml}
+  ${reqHtml}
+  <div class="sec"><div class="sec-title">Code Samples</div>
+    <div class="cb"><div class="cb-head"><span class="cb-lang">cURL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>${buildCurl(method,path,op.reqSchema).replace(/</g,'&lt;')}</pre></div>
+    <div class="cb"><div class="cb-head"><span class="cb-lang">JavaScript (fetch)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>${buildJs(method,path,op.reqSchema).replace(/</g,'&lt;')}</pre></div>
+  </div>
+  <div class="sec"><div class="sec-title">Responses</div><div class="resp-tabs">${tabsHtml}</div>${panelsHtml}</div>`;
+}
+
+function buildNav(filter=''){
+  const groups={};
+  PATHS.forEach(({path,method,op})=>{
+    const tag=op.tags?.[0]||'general';
+    if(!groups[tag])groups[tag]=[];
+    const label=op.summary||path;
+    if(!filter||label.toLowerCase().includes(filter)||path.toLowerCase().includes(filter))
+      groups[tag].push({path,method,label});
+  });
+  const nav=document.getElementById('nav');nav.innerHTML='';
+  Object.entries(groups).forEach(([tag,items])=>{
+    if(!items.length)return;
+    const g=document.createElement('div');g.className='nav-group';
+    g.innerHTML=`<div class="ng-title">${tag}</div>`+items.map(({path,method,label})=>{
+      const M=MC(method);const id=`${method}::${path}`;
+      return`<div class="ni" data-id="${id}" onclick="showEp('${method}','${path.replace(/'/g,"\\'")}')"><span class="mb ${M}">${M}</span><span>${label}</span></div>`;
+    }).join('');
+    nav.appendChild(g);
+  });
+}
+
+let cur=null;
+function showEp(method,path){
+  const id=`${method}::${path}`;if(cur===id)return;cur=id;
+  document.querySelectorAll('.ni').forEach(el=>el.classList.toggle('active',el.dataset.id===id));
+  const entry=PATHS.find(p=>p.path===path&&p.method===method);if(!entry)return;
+  document.getElementById('welcome').style.display='none';
+  const v=document.getElementById('epv');v.style.display='block';
+  v.innerHTML=renderEp(path,method,entry.op);
+  document.getElementById('main').scrollTop=0;
+}
+
+function swTab(uid,code){
+  document.querySelectorAll(`[id^="rp_${uid}_"]`).forEach(p=>p.classList.remove('active'));
+  document.getElementById(`rp_${uid}_${code}`)?.classList.add('active');
+  document.querySelectorAll('.resp-tab').forEach(t=>{
+    const oc=t.getAttribute('onclick')||'';
+    t.classList.toggle('active',oc===`swTab('${uid}','${code}')`);
+  });
+}
+
+function copyCode(btn){
+  const pre=btn.closest('.cb').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText);
+  btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1500);
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  buildNav();
+  document.getElementById('search').addEventListener('input',e=>buildNav(e.target.value.toLowerCase().trim()));
+});
+</script>
+</body>
+</html>

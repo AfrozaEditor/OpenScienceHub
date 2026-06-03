@@ -1,0 +1,10 @@
+export { DidCommAutoAcceptCredential } from '@credo-ts/didcomm/build/modules/credentials/models/DidCommCredentialAutoAcceptType.mjs';
+export { DidCommAutoAcceptProof } from '@credo-ts/didcomm/build/modules/proofs/models/DidCommProofAutoAcceptType.mjs';
+export { DidCommCredentialExchangeRecord } from '@credo-ts/didcomm/build/modules/credentials/repository/DidCommCredentialExchangeRecord.mjs';
+export { DidCommCredentialV2Protocol } from '@credo-ts/didcomm/build/modules/credentials/protocol/v2/DidCommCredentialV2Protocol.mjs';
+export { DidCommHttpOutboundTransport } from '@credo-ts/didcomm/build/transport/DidCommHttpOutboundTransport.mjs';
+export { DidCommMediationRepository } from '@credo-ts/didcomm/build/modules/routing/repository/DidCommMediationRepository.mjs';
+export { DidCommMediatorPickupStrategy } from '@credo-ts/didcomm/build/modules/routing/DidCommMediatorPickupStrategy.mjs';
+export { DidCommModule } from '@credo-ts/didcomm/build/DidCommModule.mjs';
+export { DidCommProofV2Protocol } from '@credo-ts/didcomm/build/modules/proofs/protocol/v2/DidCommProofV2Protocol.mjs';
+export { DidCommWsOutboundTransport } from '@credo-ts/didcomm/build/transport/DidCommWsOutboundTransport.mjs';

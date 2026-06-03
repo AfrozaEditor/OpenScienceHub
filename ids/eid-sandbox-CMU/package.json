@@ -1,0 +1,51 @@
+{
+  "name": "sandbox-cmu",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "codegen": "graphql-codegen"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^10.4.0",
+    "@headlessui/react": "^2.2.10",
+    "@hookform/resolvers": "^5.4.0",
+    "@tanstack/react-query": "^5.100.14",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.40.0",
+    "graphql": "^16.14.0",
+    "graphql-request": "^7.4.0",
+    "js-cookie": "^3.0.8",
+    "lucide-react": "^1.17.0",
+    "next": "16.2.6",
+    "qr.react": "^0.0.1",
+    "qrcode.react": "^4.2.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "react-hook-form": "^7.76.1",
+    "react-qr-code": "^2.0.21",
+    "react-select": "^5.10.2",
+    "recharts": "^3.8.1",
+    "sonner": "^2.0.7",
+    "zod": "^4.4.3",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^7.1.0",
+    "@graphql-codegen/client-preset": "^6.0.1",
+    "@tailwindcss/postcss": "^4.3.0",
+    "@types/js-cookie": "^3.0.6",
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19",
+    "babel-plugin-react-compiler": "1.0.0",
+    "dotenv-cli": "^11.0.0",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "16.2.6",
+    "tailwindcss": "^4.3.0",
+    "typescript": "^5.9.3"
+  }
+}

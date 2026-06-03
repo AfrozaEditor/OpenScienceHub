@@ -1,0 +1,71 @@
+.collapsible-section {
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--bg-surface);
+  margin-bottom: var(--spacing-sm);
+  overflow: hidden;
+  transition: all var(--transition-base);
+}
+
+.collapsible-section:hover {
+  border-color: var(--border-gold);
+}
+
+.collapsible-section.open {
+  border-color: var(--border-gold);
+}
+
+.collapsible-header {
+  width: 100%;
+  padding: var(--spacing-md);
+  background: transparent;
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-family: 'Sora', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all var(--transition-base);
+  text-align: left;
+}
+
+.collapsible-header:hover {
+  background: var(--bg-surface-elevated);
+  color: var(--accent-gold);
+}
+
+.collapsible-title {
+  font-family: 'Space Mono', monospace;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.collapsible-icon {
+  font-size: 1.5rem;
+  font-weight: 300;
+  color: var(--accent-gold);
+  line-height: 1;
+  transition: transform var(--transition-base);
+  min-width: 24px;
+  text-align: center;
+}
+
+.collapsible-section.open .collapsible-icon {
+  transform: rotate(0deg);
+}
+
+.collapsible-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height var(--transition-base), padding var(--transition-base);
+  padding: 0 var(--spacing-md);
+}
+
+.collapsible-content.expanded {
+  max-height: 5000px;
+  padding: 0 var(--spacing-md) var(--spacing-md) var(--spacing-md);
+}
+

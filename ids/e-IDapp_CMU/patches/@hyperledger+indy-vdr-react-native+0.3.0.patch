@@ -1,0 +1,22 @@
+diff --git a/node_modules/@hyperledger/indy-vdr-react-native/android/build.gradle b/node_modules/@hyperledger/indy-vdr-react-native/android/build.gradle
+index 31b9458..ac77d89 100644
+--- a/node_modules/@hyperledger/indy-vdr-react-native/android/build.gradle
++++ b/node_modules/@hyperledger/indy-vdr-react-native/android/build.gradle
+@@ -90,7 +90,7 @@ android {
+     
+     externalNativeBuild {
+         cmake {
+-            cppFlags "-fexceptions", "-frtti", "-std=c++1y", "-DONANDROID"
++            cppFlags "-fexceptions", "-frtti", "-std=c++20", "-DONANDROID"
+             abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+             arguments "-DANDROID_STL=c++_shared",
+                       "-DREACT_NATIVE_VERSION=${REACT_NATIVE_VERSION}",
+@@ -215,7 +215,7 @@
+ 
+ dependencies {
+   if (REACT_NATIVE_VERSION >= 71) {
+-      implementation "com.facebook.react:react-android:"
++      implementation "com.facebook.react:react-android:${REACT_NATIVE_FULL_VERSION}"
+   } else {
+       // noinspection GradleDynamicVersion
+       implementation 'com.facebook.react:react-native:' + REACT_NATIVE_FULL_VERSION

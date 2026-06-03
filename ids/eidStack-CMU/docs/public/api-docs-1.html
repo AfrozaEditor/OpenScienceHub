@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>eidStack-CMU API Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --sidebar-bg: #111318;
+    --panel-bg: #161820;
+    --border: #23252e;
+    --accent: #4f9cf9;
+    --accent2: #7c6af7;
+    --green: #3ecf8e;
+    --orange: #f59e0b;
+    --red: #f87171;
+    --purple: #a78bfa;
+    --text: #e2e4ed;
+    --muted: #6b7280;
+    --tag-bg: #1e2130;
+    --code-bg: #0a0c10;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    font-size: 14px;
+  }
+
+  /* SIDEBAR */
+  #sidebar {
+    width: 270px;
+    min-width: 270px;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .sidebar-header {
+    padding: 18px 16px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-header h1 { font-size: 14px; font-weight: 600; color: #fff; letter-spacing: -0.3px; }
+  .sidebar-header p { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .sidebar-search { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .sidebar-search input {
+    width: 100%; background: var(--panel-bg); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); padding: 6px 10px;
+    font-size: 12px; font-family: inherit; outline: none;
+  }
+  .sidebar-search input::placeholder { color: var(--muted); }
+  .sidebar-search input:focus { border-color: var(--accent); }
+  #nav { overflow-y: auto; flex: 1; padding: 8px 0 20px; }
+  .nav-group { margin-bottom: 2px; }
+  .nav-group-title {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--muted); padding: 10px 16px 4px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 16px; cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: all 0.15s; font-size: 12px; color: #9ca3af;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.03); color: var(--text); }
+  .nav-item.active { background: rgba(79,156,249,0.08); border-left-color: var(--accent); color: var(--accent); }
+  .method-badge {
+    font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 500;
+    padding: 2px 5px; border-radius: 3px; text-transform: uppercase;
+    min-width: 34px; text-align: center; flex-shrink: 0;
+  }
+  .GET    { background: rgba(62,207,142,0.15);  color: var(--green);  }
+  .POST   { background: rgba(79,156,249,0.15);  color: var(--accent); }
+  .PUT    { background: rgba(245,158,11,0.15);  color: var(--orange); }
+  .DELETE { background: rgba(248,113,113,0.15); color: var(--red);    }
+  .PATCH  { background: rgba(167,139,250,0.15); color: var(--purple); }
+
+  /* MAIN */
+  #main { flex: 1; overflow-y: auto; }
+  #content { max-width: 860px; width: 100%; margin: 0 auto; padding: 36px 40px 80px; }
+
+  /* WELCOME */
+  .welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; text-align: center; gap: 10px; }
+  .welcome .logo { width: 50px; height: 50px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 6px; }
+  .welcome h2 { font-size: 22px; font-weight: 600; color: #fff; }
+  .welcome p { color: var(--muted); max-width: 360px; line-height: 1.6; font-size: 13px; }
+
+  /* ENDPOINT HEADER */
+  .ep-header { margin-bottom: 24px; }
+  .ep-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .ep-method { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 5px; text-transform: uppercase; }
+  .ep-path { font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #fff; }
+  .ep-summary { font-size: 20px; font-weight: 600; color: #fff; margin-bottom: 6px; letter-spacing: -0.4px; }
+  .ep-desc { color: var(--muted); line-height: 1.6; font-size: 13px; }
+  .ep-tags { display: flex; gap: 6px; margin-top: 8px; }
+  .ep-tag { font-size: 10px; background: var(--tag-bg); border: 1px solid var(--border); color: var(--muted); padding: 2px 8px; border-radius: 20px; }
+
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  /* SECTION */
+  .section { margin-bottom: 28px; }
+  .section-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+
+  /* PARAMS TABLE */
+  .param-table { width: 100%; border-collapse: collapse; }
+  .param-table th { text-align: left; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); padding: 6px 10px; background: var(--panel-bg); border: 1px solid var(--border); }
+  .param-table td { padding: 9px 10px; border: 1px solid var(--border); font-size: 12.5px; vertical-align: top; }
+  .param-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .param-name { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--accent); }
+  .param-type { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--purple); }
+  .required-badge { font-size: 9px; background: rgba(248,113,113,0.15); color: var(--red); padding: 1px 5px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+  .optional-badge { font-size: 9px; background: rgba(107,114,128,0.15); color: var(--muted); padding: 1px 5px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+
+  /* SCHEMA BLOCK */
+  .schema-block { background: var(--panel-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
+  .schema-prop { display: flex; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+  .schema-prop:last-child { border-bottom: none; }
+  .schema-key { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--accent); min-width: 150px; flex-shrink: 0; }
+  .schema-val { font-size: 12px; color: var(--muted); }
+  .schema-type { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--purple); margin-right: 6px; }
+  .example-val { color: var(--green); font-size: 11px; margin-left: 6px; }
+
+  /* RESPONSE TABS */
+  .response-tabs { display: flex; gap: 2px; flex-wrap: wrap; margin-bottom: 0; }
+  .response-tab { padding: 6px 12px; font-size: 12px; font-family: 'IBM Plex Mono', monospace; cursor: pointer; border: 1px solid var(--border); border-bottom: none; background: var(--panel-bg); color: var(--muted); border-radius: 5px 5px 0 0; transition: all 0.15s; }
+  .response-tab:hover { color: var(--text); }
+  .response-tab.active { background: var(--code-bg); color: #fff; }
+  .response-tab.s2xx { color: var(--green); }
+  .response-tab.s4xx { color: var(--orange); }
+  .response-tab.s5xx { color: var(--red); }
+  .response-panel { background: var(--code-bg); border: 1px solid var(--border); border-radius: 0 5px 5px 5px; padding: 14px; display: none; }
+  .response-panel.active { display: block; }
+  .response-desc { font-size: 12.5px; color: var(--muted); margin-bottom: 10px; }
+
+  /* CODE BLOCK */
+  .code-block { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 10px; }
+  .code-header { display: flex; align-items: center; justify-content: space-between; padding: 7px 12px; border-bottom: 1px solid var(--border); background: #0f1117; }
+  .code-lang { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; }
+  .copy-btn { font-size: 10px; color: var(--muted); background: none; border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .copy-btn:hover { color: var(--text); border-color: #4b5563; }
+  pre { font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.7; padding: 12px 14px; overflow-x: auto; color: #c9d1e0; white-space: pre; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div class="sidebar-header">
+    <h1>eidStack-CMU</h1>
+    <p>SSI Issuance & Verification API</p>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="searchInput" placeholder="Search endpoints…" />
+  </div>
+  <div id="nav"></div>
+</div>
+
+<div id="main">
+  <div id="content">
+    <div class="welcome" id="welcome">
+      <div class="logo">⚡</div>
+      <h2>eidStack-CMU API Reference</h2>
+      <p>Select an endpoint from the sidebar to view its documentation, parameters, and code examples.</p>
+    </div>
+    <div id="ep-view" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+const SPEC = {
+  paths: {
+    "/credo-agent/initAgent": { post: {
+      summary: "Initialize Agent",
+      description: "Initializes the Credo SSI agent with a wallet, ledger endpoint, and seed. Must be called before any issuance or verification operations.",
+      tags: ["credo-agent"],
+      requestBody: { required: true, schema: "InitAgentDto" },
+      responses: { "201": "Agent initialized successfully", "400": "Bad Request — invalid parameters", "500": "Internal Server Error" }
+    }},
+    "/credo-agent/receiveInvitation": { post: {
+      summary: "Receive OOB Invitation",
+      description: "Receives and processes an Out-of-Band invitation URL from another agent.",
+      tags: ["credo-agent"],
+      requestBody: { required: true, schema: "ReceiveInvitationDto" },
+      responses: { "200": "Invitation processed successfully", "400": "Bad Request" }
+    }},
+    "/credo-agent/getAgent": { get: {
+      summary: "Get Agent Status",
+      description: "Returns sanitized view of the running Credo agent — config and status without exposing sensitive wallet credentials.",
+      tags: ["credo-agent"],
+      responses: { "200": "Agent status returned", "500": "Internal Server Error" }
+    }},
+    "/credo-agent/getIssuerDid": { get: {
+      summary: "Get Issuer DID",
+      description: "Returns the DID registered on the ledger for this issuer agent. Used to sign all credentials.",
+      tags: ["credo-agent"],
+      responses: { "200": "Issuer DID returned", "404": "DID not found" }
+    }},
+    "/credo-agent/did": { get: {
+      summary: "Get Agent DID",
+      description: "Returns the agent's own DID.",
+      tags: ["credo-agent"],
+      responses: { "200": "Agent DID returned" }
+    }},
+    "/connection/createInvitation": { post: {
+      summary: "Create Connection Invitation",
+      description: "Creates an Out-of-Band connection invitation URL. Share with a holder to establish a persistent encrypted connection between your agent and their wallet.",
+      tags: ["connection"],
+      responses: { "201": "Connection invitation created", "500": "Internal Server Error" }
+    }},
+    "/short-url/create": { post: {
+      summary: "Create Short URL",
+      description: "Shortens a long SSI invitation URL into a compact link suitable for QR codes and email delivery.",
+      tags: ["short-url"],
+      requestBody: { required: true, schema: "CreateShortUrlDto" },
+      responses: { "201": "Short URL created", "400": "Bad Request" }
+    }},
+    "/short-url/resolve": { get: {
+      summary: "Resolve Short Code",
+      description: "Resolves a short code back to its original URL without performing a redirect.",
+      tags: ["short-url"],
+      parameters: [{ name: "code", in: "query", required: true, type: "string", description: "The short code to resolve" }],
+      responses: { "200": "Original URL returned", "404": "Code not found" }
+    }},
+    "/short-url/s/{code}": { get: {
+      summary: "Redirect to Original URL",
+      description: "Redirects the caller to the original URL for the short code. Used by wallet apps scanning QR codes.",
+      tags: ["short-url"],
+      parameters: [{ name: "code", in: "path", required: true, type: "string", description: "The short code" }],
+      responses: { "302": "Redirect to original URL", "404": "Code not found" }
+    }},
+    "/issuance/schemas": {
+      get: {
+        summary: "List Schemas (Paginated)",
+        description: "Returns a paginated list of all credential schemas registered by this issuer.",
+        tags: ["issuance"],
+        parameters: [
+          { name: "page", in: "query", required: false, type: "number", description: "Page number (default: 1)" },
+          { name: "limit", in: "query", required: false, type: "number", description: "Items per page (default: 10)" }
+        ],
+        responses: { "200": "Paginated schemas returned", "500": "Internal Server Error" }
+      },
+      post: {
+        summary: "Create Schema",
+        description: "Creates and registers a new credential schema on the ledger. Defines what attributes a credential will contain.",
+        tags: ["issuance"],
+        requestBody: { required: true, schema: "CreateSchemaInput" },
+        responses: { "201": "Schema created and registered on ledger", "400": "Validation error", "500": "Internal Server Error" }
+      }
+    },
+    "/issuance/listSchemas": { get: {
+      summary: "List All Schemas",
+      description: "Returns all schemas without pagination.",
+      tags: ["issuance"],
+      responses: { "200": "All schemas returned" }
+    }},
+    "/issuance/credential-definitions": {
+      get: {
+        summary: "List Credential Definitions (Paginated)",
+        description: "Returns a paginated list of all credential definitions created by this issuer.",
+        tags: ["issuance"],
+        parameters: [
+          { name: "page", in: "query", required: false, type: "number", description: "Page number" },
+          { name: "limit", in: "query", required: false, type: "number", description: "Items per page" }
+        ],
+        responses: { "200": "Paginated credential definitions returned" }
+      },
+      post: {
+        summary: "Create Credential Definition",
+        description: "Creates a credential definition by linking the issuer DID to a schema on the ledger. Required before issuing any credentials of that schema type.",
+        tags: ["issuance"],
+        requestBody: { required: true, schema: "CreateCredDefInput" },
+        responses: { "201": "Credential definition created", "400": "Validation error" }
+      }
+    },
+    "/issuance/offer": { post: {
+      summary: "Offer Credential",
+      description: "Issues a credential offer to a holder. Without connectionId creates an OOB invitation URL. With connectionId pushes the offer directly to the holder's wallet.",
+      tags: ["issuance"],
+      requestBody: { required: true, schema: "OfferCredentialWithUrlDto" },
+      responses: { "201": "Credential offer created — returns invitationUrl and credentialExchangeId", "400": "Validation error" }
+    }},
+    "/issuance/offerStatus": { get: {
+      summary: "Get Offer Status",
+      description: "Polls the current state of a credential offer. Poll until state is 'done'.",
+      tags: ["issuance"],
+      parameters: [{ name: "credentialExchangeId", in: "query", required: true, type: "string", description: "ID returned from /issuance/offer" }],
+      responses: { "200": "State: offer-sent → request-received → credential-issued → done", "400": "Invalid credentialExchangeId" }
+    }},
+    "/verification/createProofRequest": { post: {
+      summary: "Create Proof Request",
+      description: "Creates a proof request asking a holder to present credentials. Supports OOB and connection-based modes, attribute disclosure, and Zero Knowledge Predicates.",
+      tags: ["verification"],
+      requestBody: { required: true, schema: "ProofRequestDto" },
+      responses: { "201": "Proof request created — returns invitationUrl and proofRecordId", "400": "Validation error" }
+    }},
+    "/verification/proofStatus": { get: {
+      summary: "Get Proof Status",
+      description: "Polls the current state of a proof request. Poll after calling /verification/createProofRequest until state is 'done'.",
+      tags: ["verification"],
+      parameters: [{ name: "proofRecordId", in: "query", required: true, type: "string", description: "ID returned from /verification/createProofRequest" }],
+      responses: { "200": "State: request-sent → presentation-received → done", "400": "Invalid proofRecordId" }
+    }},
+    "/email/send-invite-url": { post: {
+      summary: "Send Invite Email",
+      description: "Sends an invitation link email to a holder. Use after creating a credential offer or proof request to deliver the URL via email.",
+      tags: ["email"],
+      requestBody: { required: true, schema: "SendInviteDto" },
+      responses: { "201": "Email sent successfully", "400": "Bad Request" }
+    }}
+  },
+  schemas: {
+    InitAgentDto: {
+      required: ["walletId","walletKey","endpoint","label","seed"],
+      properties: {
+        walletId:  { type: "string", description: "Unique wallet identifier", example: "my-org-wallet" },
+        walletKey: { type: "string", description: "Wallet encryption password", example: "super-secure-key" },
+        endpoint:  { type: "string", description: "Publicly reachable agent URL", example: "http://your-agent-ip:8000" },
+        label:     { type: "string", description: "Human-readable agent name shown in wallets", example: "My Org Agent" },
+        seed:      { type: "string", description: "32-char seed for deterministic DID generation", example: "000000000000000000000000MyOrgSeed" }
+      }
+    },
+    ReceiveInvitationDto: {
+      required: ["invitationUrl"],
+      properties: {
+        invitationUrl: { type: "string", description: "Out-of-band invitation URL from another agent", example: "http://other-agent?oob=eyJ..." }
+      }
+    },
+    CreateShortUrlDto: {
+      required: ["originalUrl"],
+      properties: {
+        originalUrl: { type: "string", description: "The long URL to shorten", example: "http://agent:8000/oob?oob=eyJAdHlwZSI6..." }
+      }
+    },
+    CreateSchemaInput: {
+      required: ["name","version","attributes"],
+      properties: {
+        name:       { type: "string", description: "Schema name", example: "StudentID" },
+        version:    { type: "string", description: "Schema version", example: "1.0" },
+        attributes: { type: "array", description: "List of attribute definitions", example: '[{"attributeName":"full_name","schemaDataType":"string","displayName":"Full Name"}]' },
+        issuerId:   { type: "string", description: "Issuer DID (optional)", example: "did:indy:bcovrin:test:ABC123" },
+        orgId:      { type: "string", description: "Organization ID (optional)", example: "org-uuid" }
+      }
+    },
+    CreateCredDefInput: {
+      required: ["schemaId","tag"],
+      properties: {
+        schemaId:          { type: "string", description: "Schema ID to base this credential definition on", example: "did:indy:bcovrin:test:ABC/anoncreds/v0/SCHEMA/StudentID/1.0" },
+        tag:               { type: "string", description: "Tag to differentiate multiple cred defs for same schema", example: "default" },
+        supportRevocation: { type: "boolean", description: "Enable credential revocation support", example: "false" }
+      }
+    },
+    OfferCredentialWithUrlDto: {
+      required: ["credentialDefinitionId"],
+      properties: {
+        credentialDefinitionId: { type: "string", description: "Credential definition ID", example: "did:indy:bcovrin:test:ABC/anoncreds/v0/CLAIM_DEF/42/default" },
+        connectionId:           { type: "string", description: "Optional — pass for connection-based offer instead of OOB", example: "conn-uuid-here" },
+        attributes:             { type: "array", description: "Credential attribute name-value pairs", example: '[{"name":"full_name","value":"John Doe"}]' },
+        comment:                { type: "string", description: "Optional message shown to holder in wallet", example: "Your Student ID credential" }
+      }
+    },
+    ProofRequestDto: {
+      required: ["credDefId","attributes"],
+      properties: {
+        credDefId:    { type: "string", description: "Credential definition ID to verify against", example: "did:indy:bcovrin:test:ABC/anoncreds/v0/CLAIM_DEF/42/default" },
+        attributes:   { type: "array", description: "Attributes to request from holder", example: '[{"name":"full_name"},{"name":"university"}]' },
+        predicates:   { type: "array", description: "Optional ZKP predicates (prove without revealing)", example: '[{"name":"age","pType":">=","pValue":18}]' },
+        comment:      { type: "string", description: "Optional message shown to holder", example: "Please share your student credential" },
+        connectionId: { type: "string", description: "Optional — pass for connection-based instead of OOB", example: "conn-uuid-here" }
+      }
+    },
+    SendInviteDto: {
+      required: ["email","inviteLink","name"],
+      properties: {
+        email:      { type: "string", description: "Recipient email address", example: "john@example.com" },
+        name:       { type: "string", description: "Recipient name for greeting", example: "John Doe" },
+        inviteLink: { type: "string", description: "Invitation URL to include in email", example: "http://yourapp.com/s/abc123" },
+        type:       { type: "string", description: "Email template type", example: "offer — one of: connection | offer | proof | zkp-proof" }
+      }
+    }
+  }
+};
+
+// ── helpers ──────────────────────────────────────────────────────────
+function methodColor(m) {
+  return { get:'GET', post:'POST', put:'PUT', delete:'DELETE', patch:'PATCH' }[m.toLowerCase()] || 'GET';
+}
+function statusClass(code) {
+  const n = parseInt(code);
+  if (n >= 200 && n < 300) return 's2xx';
+  if (n >= 400 && n < 500) return 's4xx';
+  return 's5xx';
+}
+
+function buildCurl(method, path, schemaName) {
+  const base = 'http://localhost:4000';
+  const schema = schemaName && SPEC.schemas[schemaName];
+  if (!schema) return `curl -X ${method.toUpperCase()} '${base}${path}'`;
+  const body = {};
+  Object.entries(schema.properties || {}).forEach(([k, v]) => { body[k] = v.example || v.type; });
+  return `curl -X ${method.toUpperCase()} '${base}${path}' \\\n  -H 'Content-Type: application/json' \\\n  -d '${JSON.stringify(body, null, 2)}'`;
+}
+
+function buildJs(method, path, schemaName) {
+  const base = 'http://localhost:4000';
+  const schema = schemaName && SPEC.schemas[schemaName];
+  if (!schema) return `const res = await fetch('${base}${path}');\nconst data = await res.json();\nconsole.log(data);`;
+  const body = {};
+  Object.entries(schema.properties || {}).forEach(([k, v]) => { body[k] = v.example || v.type; });
+  return `const res = await fetch('${base}${path}', {\n  method: '${method.toUpperCase()}',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify(${JSON.stringify(body, null, 4)})\n});\nconst data = await res.json();\nconsole.log(data);`;
+}
+
+function renderSchema(schemaName) {
+  const schema = SPEC.schemas[schemaName];
+  if (!schema) return '';
+  const req = schema.required || [];
+  return Object.entries(schema.properties || {}).map(([k, v]) => `
+    <div class="schema-prop">
+      <div class="schema-key">${k}<span class="${req.includes(k) ? 'required-badge' : 'optional-badge'}">${req.includes(k) ? 'required' : 'optional'}</span></div>
+      <div class="schema-val"><span class="schema-type">${v.type}</span>${v.description || ''}<span class="example-val">${v.example ? '· e.g. ' + v.example : ''}</span></div>
+    </div>`).join('');
+}
+
+function renderEndpoint(path, method, op) {
+  const M = methodColor(method);
+  const schemaName = op.requestBody?.schema;
+  const params = op.parameters || [];
+  const responses = op.responses || {};
+  const respKeys = Object.keys(responses);
+  const uid = (method + path).replace(/[^a-z0-9]/gi, '_');
+
+  const paramsHtml = params.length ? `
+    <div class="section">
+      <div class="section-title">Parameters</div>
+      <table class="param-table">
+        <thead><tr><th>Name</th><th>In</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>${params.map(p => `<tr>
+          <td><span class="param-name">${p.name}</span><span class="${p.required ? 'required-badge' : 'optional-badge'}">${p.required ? 'required' : 'optional'}</span></td>
+          <td><span class="param-type">${p.in}</span></td>
+          <td><span class="param-type">${p.type || 'string'}</span></td>
+          <td style="color:var(--muted);font-size:12px">${p.description || ''}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>` : '';
+
+  const reqBodyHtml = schemaName ? `
+    <div class="section">
+      <div class="section-title">Request Body</div>
+      <div class="schema-block">${renderSchema(schemaName)}</div>
+    </div>` : '';
+
+  const respTabsHtml = respKeys.map((code, i) =>
+    `<div class="response-tab ${statusClass(code)} ${i===0?'active':''}" onclick="switchTab('${uid}','${code}')">${code}</div>`
+  ).join('');
+
+  const respPanelsHtml = respKeys.map((code, i) =>
+    `<div class="response-panel ${i===0?'active':''}" id="rp_${uid}_${code}">
+      <div class="response-desc">${responses[code]}</div>
+    </div>`
+  ).join('');
+
+  const tags = op.tags || [];
+
+  return `
+  <div class="ep-header">
+    <div class="ep-title-row">
+      <span class="ep-method method-badge ${M}">${M}</span>
+      <span class="ep-path">${path}</span>
+    </div>
+    <div class="ep-summary">${op.summary || path}</div>
+    <div class="ep-desc">${op.description || ''}</div>
+    ${tags.length ? `<div class="ep-tags">${tags.map(t=>`<span class="ep-tag">${t}</span>`).join('')}</div>` : ''}
+  </div>
+  <div class="divider"></div>
+
+  ${paramsHtml}
+  ${reqBodyHtml}
+
+  <div class="section">
+    <div class="section-title">Code Samples</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">cURL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre>${buildCurl(method, path, schemaName).replace(/</g,'&lt;')}</pre>
+    </div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">JavaScript (fetch)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre>${buildJs(method, path, schemaName).replace(/</g,'&lt;')}</pre>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Responses</div>
+    <div class="response-tabs">${respTabsHtml}</div>
+    ${respPanelsHtml}
+  </div>`;
+}
+
+// ── nav ───────────────────────────────────────────────────────────────
+function buildNav(filter = '') {
+  const groups = {};
+  for (const [path, methods] of Object.entries(SPEC.paths)) {
+    for (const [method, op] of Object.entries(methods)) {
+      const tag = op.tags?.[0] || 'general';
+      if (!groups[tag]) groups[tag] = [];
+      const label = op.summary || path;
+      if (!filter || label.toLowerCase().includes(filter) || path.toLowerCase().includes(filter)) {
+        groups[tag].push({ path, method, label });
+      }
+    }
+  }
+  const nav = document.getElementById('nav');
+  nav.innerHTML = '';
+  for (const [tag, items] of Object.entries(groups)) {
+    if (!items.length) continue;
+    const g = document.createElement('div');
+    g.className = 'nav-group';
+    g.innerHTML = `<div class="nav-group-title">${tag}</div>` +
+      items.map(({ path, method, label }) => {
+        const M = methodColor(method);
+        const id = `${method}::${path}`;
+        return `<div class="nav-item" data-id="${id}" onclick="showEp('${method}','${path.replace(/'/g,"\\'")}')">
+          <span class="method-badge ${M}">${M}</span><span>${label}</span>
+        </div>`;
+      }).join('');
+    nav.appendChild(g);
+  }
+}
+
+let currentId = null;
+function showEp(method, path) {
+  const id = `${method}::${path}`;
+  if (currentId === id) return;
+  currentId = id;
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.id === id));
+  const op = SPEC.paths[path]?.[method];
+  if (!op) return;
+  document.getElementById('welcome').style.display = 'none';
+  const view = document.getElementById('ep-view');
+  view.style.display = 'block';
+  view.innerHTML = renderEndpoint(path, method, op);
+  document.getElementById('main').scrollTop = 0;
+}
+
+function switchTab(uid, code) {
+  document.querySelectorAll(`[id^="rp_${uid}_"]`).forEach(p => p.classList.remove('active'));
+  document.getElementById(`rp_${uid}_${code}`)?.classList.add('active');
+  document.querySelectorAll(`.response-tab`).forEach(t => {
+    if (t.getAttribute('onclick') === `switchTab('${uid}','${code}')`) t.classList.add('active');
+    else if (t.getAttribute('onclick')?.startsWith(`switchTab('${uid}'`)) t.classList.remove('active');
+  });
+}
+
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText);
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 1500);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  buildNav();
+  document.getElementById('searchInput').addEventListener('input', e => {
+    buildNav(e.target.value.toLowerCase().trim());
+  });
+});
+</script>
+</body>
+</html>
