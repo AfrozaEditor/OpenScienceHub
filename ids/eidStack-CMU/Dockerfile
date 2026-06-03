@@ -13,12 +13,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     netcat-openbsd procps jq \
     && rm -rf /var/lib/apt/lists/*
 
-# Optional Rust toolchain (remove if not needed)
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
-  && . $HOME/.cargo/env \
-  && rustc --version || true
-ENV PATH=$HOME/.cargo/bin:$PATH
-
 COPY package.json package-lock.json ./
 COPY prisma ./prisma/
 
