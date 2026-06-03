@@ -131,7 +131,7 @@ export default function DeposerPage() {
             Dépôt assisté par IA
           </Badge>
           <h1 className="font-heading text-2xl font-semibold tracking-tight text-brand sm:text-3xl">
-            Déposer un document scientifique
+            Déposer un document
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Téléversez votre PDF : l&apos;IA extrait automatiquement les
