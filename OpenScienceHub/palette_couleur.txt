@@ -1,0 +1,11 @@
+Primary : #0B132B
+Secondary : #1D4ED8
+AI Accent : #06B6D4
+Verified Accent : #10B981
+Background : #F8FAFC
+Cards : #FFFFFF
+Text : #111827
+Muted Text : #64748B
+Border : #E2E8F0
+Warning : #F59E0B
+Error : #EF4444
