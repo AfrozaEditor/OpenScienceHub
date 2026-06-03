@@ -12,9 +12,8 @@ import { Button } from "@/components/ui/button";
 const navItems = [
   { label: "Accueil", href: "/" },
   { label: "Explorer", href: "/explorer" },
-  { label: "Déposer", href: "/deposant/deposer" },
   { label: "Communautés", href: "/communautes" },
-  { label: "Statistiques", href: "/dashboard" },
+  { label: "FAQ", href: "/faq" },
 ];
 
 export function SiteHeader() {

@@ -28,6 +28,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SearchBar } from "@/components/search-bar";
 import { DocumentCard } from "@/components/document-card";
+import { AnimatedStats } from "@/components/animated-stats";
 import { documents, platformStats, popularDomains } from "@/lib/mock-data";
 
 const fr = new Intl.NumberFormat("fr-FR");
@@ -47,11 +48,11 @@ const suggestions = [
 ];
 
 const stats = [
-  { value: `${fr.format(platformStats.documents)}+`, label: "Documents archivés" },
-  { value: `${fr.format(platformStats.authors)}`, label: "Auteurs" },
-  { value: `${platformStats.departments}`, label: "Départements" },
-  { value: `${platformStats.domains}`, label: "Domaines scientifiques" },
-  { value: `${fr.format(platformStats.downloads)}`, label: "Téléchargements" },
+  { value: platformStats.documents, suffix: "+", label: "Documents archivés" },
+  { value: platformStats.authors, label: "Auteurs" },
+  { value: platformStats.departments, label: "Départements" },
+  { value: platformStats.domains, label: "Domaines scientifiques" },
+  { value: platformStats.downloads, label: "Téléchargements" },
 ];
 
 const steps = [
@@ -190,7 +191,7 @@ export default function Home() {
                   </Link>
                 </Button>
                 <Button variant="outline" size="lg" asChild className="px-5">
-                  <Link href="/deposer">
+                  <Link href="/deposant/deposer">
                     <Upload className="size-4" />
                     Déposer un document
                   </Link>
@@ -209,19 +210,8 @@ export default function Home() {
           </div>
 
           {/* Stats */}
-          <div className="mx-auto w-full max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-3 lg:grid-cols-5">
-              {stats.map((s) => (
-                <div key={s.label} className="bg-card px-5 py-6 text-center">
-                  <div className="font-heading text-2xl font-semibold text-brand lg:text-3xl">
-                    {s.value}
-                  </div>
-                  <div className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                    {s.label}
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="mx-auto w-full max-w-6xl px-4 pb-20 pt-4 sm:px-6 lg:px-8">
+            <AnimatedStats stats={stats} />
           </div>
         </section>
 
@@ -370,7 +360,7 @@ export default function Home() {
                 </p>
                 <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                   <Button size="lg" variant="secondary" asChild className="px-5">
-                    <Link href="/deposer">
+                    <Link href="/deposant/deposer">
                       Déposer un document
                       <ArrowRight className="size-4" />
                     </Link>
