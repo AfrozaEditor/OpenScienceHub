@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 const navItems = [
   { label: "Accueil", href: "/" },
   { label: "Explorer", href: "/explorer" },
-  { label: "Déposer", href: "/deposer" },
+  { label: "Déposer", href: "/deposant/deposer" },
   { label: "Communautés", href: "/communautes" },
   { label: "Statistiques", href: "/dashboard" },
 ];
@@ -68,7 +68,7 @@ export function SiteHeader() {
             <Link href="/login">Connexion</Link>
           </Button>
           <Button size="lg" asChild>
-            <Link href="/deposer">
+            <Link href="/deposant/deposer">
               <Upload className="size-4" />
               Déposer
             </Link>
@@ -111,7 +111,7 @@ export function SiteHeader() {
                 </Link>
               </Button>
               <Button size="lg" asChild>
-                <Link href="/deposer" onClick={() => setOpen(false)}>
+                <Link href="/deposant/deposer" onClick={() => setOpen(false)}>
                   Déposer un document
                   <ArrowRight className="size-4" />
                 </Link>

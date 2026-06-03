@@ -566,3 +566,393 @@ export const adminStats = {
   activeAuthors: 612,
   departments: 64,
 };
+
+// ---------------------------------------------------------------------------
+// Portail Déposant
+// ---------------------------------------------------------------------------
+
+export type DossierStatus = "Brouillon" | "En attente" | "Validé" | "Rejeté";
+
+export type TimelineState = "done" | "current" | "pending" | "rejected";
+
+export interface DossierEvent {
+  label: string;
+  date: string;
+  state: TimelineState;
+  description?: string;
+  actor?: string;
+}
+
+/**
+ * Preuve d'authenticité adossée à l'infrastructure de justificatifs
+ * vérifiables (Verifiable Credentials / AnonCreds / DIDComm).
+ */
+export interface ProofRecord {
+  reference: string;
+  status: "Vérifiée" | "En attente" | "Révoquée";
+  documentHash: string;
+  algorithm: string;
+  issuedAt: string;
+  schema: string;
+  credentialId: string;
+  issuerDid: string;
+  holderDid: string;
+  registry: string;
+  anchor: string;
+}
+
+export interface Dossier {
+  id: string;
+  reference: string;
+  title: string;
+  type: DocumentType;
+  status: DossierStatus;
+  domain: string;
+  faculty: string;
+  department: string;
+  level: string;
+  language: string;
+  abstract: string;
+  keywords: string[];
+  pages: number;
+  fileSize: string;
+  submittedAt: string;
+  updatedAt: string;
+  views: number;
+  downloads: number;
+  aiConfidence: number;
+  reviewer?: string;
+  rejectionReason?: string;
+  timeline: DossierEvent[];
+  proof?: ProofRecord;
+}
+
+export const depositor = {
+  name: "Kamdem Tiotsop Brice",
+  firstName: "Brice",
+  initials: "KB",
+  email: "brice.kamdem@univ-yaounde1.cm",
+  role: "Déposant",
+  institution: INSTITUTION,
+  faculty: "École Nationale Supérieure Polytechnique",
+  department: "Génie Informatique",
+  level: "Master 2",
+  memberSince: "2024",
+};
+
+export const myDossiers: Dossier[] = [
+  {
+    id: "extraction-metadonnees-pdf",
+    reference: "OSH-2026-0042",
+    title:
+      "Extraction automatique de métadonnées à partir de documents PDF académiques",
+    type: "Mémoire",
+    status: "Validé",
+    domain: "Intelligence Artificielle",
+    faculty: "École Nationale Supérieure Polytechnique",
+    department: "Génie Informatique",
+    level: "Master 2",
+    language: "Français",
+    abstract:
+      "Ce travail développe un pipeline d'extraction de métadonnées (titre, auteurs, résumé, mots-clés) à partir de fichiers PDF hétérogènes. La méthode s'appuie sur l'analyse de mise en page et un modèle de langage affiné pour atteindre une précision moyenne de 91 %.",
+    keywords: [
+      "Extraction d'information",
+      "Analyse de PDF",
+      "Métadonnées",
+      "Modèle de langage",
+    ],
+    pages: 96,
+    fileSize: "4,2 Mo",
+    submittedAt: "2026-05-24",
+    updatedAt: "2026-05-30",
+    views: 1043,
+    downloads: 287,
+    aiConfidence: 91,
+    reviewer: "Dr. Ondoa Mvondo Alice",
+    timeline: [
+      {
+        label: "Dépôt soumis",
+        date: "2026-05-24",
+        state: "done",
+        description: "Document téléversé et soumis pour validation.",
+        actor: "Vous",
+      },
+      {
+        label: "Extraction IA des métadonnées",
+        date: "2026-05-24",
+        state: "done",
+        description: "Métadonnées détectées avec une confiance de 91 %.",
+        actor: "OpenScience IA",
+      },
+      {
+        label: "Validation départementale",
+        date: "2026-05-29",
+        state: "done",
+        description: "Métadonnées vérifiées et approuvées par le département.",
+        actor: "Dr. Ondoa Mvondo Alice",
+      },
+      {
+        label: "Preuve d'authenticité émise",
+        date: "2026-05-30",
+        state: "done",
+        description: "Justificatif vérifiable ancré sur le registre.",
+        actor: "Autorité de certification OSH",
+      },
+      {
+        label: "Publication en accès libre",
+        date: "2026-05-30",
+        state: "current",
+        description: "Le travail est consultable et téléchargeable.",
+      },
+    ],
+    proof: {
+      reference: "OSH-AUTH-2026-0042",
+      status: "Vérifiée",
+      documentHash:
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      algorithm: "SHA-256",
+      issuedAt: "2026-05-30T14:22:00",
+      schema: "anoncreds:OSH/depot-scientifique/1.2",
+      credentialId: "urn:uuid:6f9b2c14-3a7d-4e21-9c8b-1f0a2d5e7c93",
+      issuerDid: "did:indy:bcovrin:test:7Zr2k9Qd4mN1pVbAOSHiss",
+      holderDid: "did:key:z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH",
+      registry: "Hyperledger Indy — BCovrin (testnet)",
+      anchor: "txn #1284503 · 2026-05-30",
+    },
+  },
+  {
+    id: "classification-disciplinaire-bert",
+    reference: "OSH-2026-0039",
+    title:
+      "Classification disciplinaire de documents scientifiques par transformeurs multilingues",
+    type: "Article",
+    status: "Validé",
+    domain: "Intelligence Artificielle",
+    faculty: "École Nationale Supérieure Polytechnique",
+    department: "Génie Informatique",
+    level: "Master 2",
+    language: "Français",
+    abstract:
+      "Cet article compare plusieurs approches de classification automatique appliquées à un corpus académique francophone. Les modèles de type BERT multilingue obtiennent les meilleurs scores de F1 sur la catégorisation disciplinaire.",
+    keywords: ["Classification de texte", "Transformeurs", "TAL", "F1-score"],
+    pages: 18,
+    fileSize: "1,8 Mo",
+    submittedAt: "2026-04-12",
+    updatedAt: "2026-04-21",
+    views: 642,
+    downloads: 154,
+    aiConfidence: 94,
+    reviewer: "Dr. Owona Essomba Paul",
+    timeline: [
+      { label: "Dépôt soumis", date: "2026-04-12", state: "done", actor: "Vous" },
+      {
+        label: "Extraction IA des métadonnées",
+        date: "2026-04-12",
+        state: "done",
+        actor: "OpenScience IA",
+      },
+      {
+        label: "Validation départementale",
+        date: "2026-04-20",
+        state: "done",
+        actor: "Dr. Owona Essomba Paul",
+      },
+      { label: "Preuve d'authenticité émise", date: "2026-04-21", state: "done" },
+      { label: "Publication en accès libre", date: "2026-04-21", state: "current" },
+    ],
+    proof: {
+      reference: "OSH-AUTH-2026-0039",
+      status: "Vérifiée",
+      documentHash:
+        "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+      algorithm: "SHA-256",
+      issuedAt: "2026-04-21T09:48:00",
+      schema: "anoncreds:OSH/depot-scientifique/1.2",
+      credentialId: "urn:uuid:b1d8f0a2-77c4-4e63-9a10-2f5c8e1d4b06",
+      issuerDid: "did:indy:bcovrin:test:7Zr2k9Qd4mN1pVbAOSHiss",
+      holderDid: "did:key:z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH",
+      registry: "Hyperledger Indy — BCovrin (testnet)",
+      anchor: "txn #1271980 · 2026-04-21",
+    },
+  },
+  {
+    id: "resume-automatique-theses",
+    reference: "OSH-2026-0051",
+    title: "Résumé automatique extractif de thèses universitaires longues",
+    type: "Thèse",
+    status: "En attente",
+    domain: "Intelligence Artificielle",
+    faculty: "École Nationale Supérieure Polytechnique",
+    department: "Génie Informatique",
+    level: "Doctorat",
+    language: "Français",
+    abstract:
+      "Cette thèse propose une méthode de résumé extractif adaptée aux documents académiques longs, combinant segmentation thématique et pondération sémantique des passages.",
+    keywords: ["Résumé automatique", "TAL", "Documents longs", "Sémantique"],
+    pages: 164,
+    fileSize: "6,7 Mo",
+    submittedAt: "2026-05-28",
+    updatedAt: "2026-05-28",
+    views: 0,
+    downloads: 0,
+    aiConfidence: 87,
+    reviewer: "Dr. Ondoa Mvondo Alice",
+    timeline: [
+      { label: "Dépôt soumis", date: "2026-05-28", state: "done", actor: "Vous" },
+      {
+        label: "Extraction IA des métadonnées",
+        date: "2026-05-28",
+        state: "done",
+        description: "Métadonnées détectées avec une confiance de 87 %.",
+        actor: "OpenScience IA",
+      },
+      {
+        label: "Validation départementale",
+        date: "—",
+        state: "current",
+        description: "En cours d'examen par le département.",
+        actor: "Dr. Ondoa Mvondo Alice",
+      },
+      { label: "Preuve d'authenticité", date: "—", state: "pending" },
+      { label: "Publication en accès libre", date: "—", state: "pending" },
+    ],
+  },
+  {
+    id: "indexation-semantique-corpus",
+    reference: "OSH-2026-0048",
+    title: "Indexation sémantique d'un corpus scientifique francophone",
+    type: "Article",
+    status: "En attente",
+    domain: "Informatique",
+    faculty: "École Nationale Supérieure Polytechnique",
+    department: "Génie Informatique",
+    level: "Master 2",
+    language: "Français",
+    abstract:
+      "Présentation d'une méthode d'indexation sémantique fondée sur des plongements contextuels adaptés au français scientifique, surpassant les méthodes lexicales classiques.",
+    keywords: ["Indexation sémantique", "Plongements", "Recherche d'information"],
+    pages: 16,
+    fileSize: "1,5 Mo",
+    submittedAt: "2026-05-19",
+    updatedAt: "2026-05-22",
+    views: 0,
+    downloads: 0,
+    aiConfidence: 89,
+    reviewer: "Pr. Fokou Tagne Michel",
+    timeline: [
+      { label: "Dépôt soumis", date: "2026-05-19", state: "done", actor: "Vous" },
+      {
+        label: "Extraction IA des métadonnées",
+        date: "2026-05-19",
+        state: "done",
+        actor: "OpenScience IA",
+      },
+      {
+        label: "Validation départementale",
+        date: "—",
+        state: "current",
+        description: "Compléments demandés : préciser le protocole d'évaluation.",
+        actor: "Pr. Fokou Tagne Michel",
+      },
+      { label: "Preuve d'authenticité", date: "—", state: "pending" },
+      { label: "Publication en accès libre", date: "—", state: "pending" },
+    ],
+  },
+  {
+    id: "detection-plagiat-embeddings",
+    reference: "OSH-2026-0055",
+    title: "Détection de plagiat translingue par plongements de phrases",
+    type: "Mémoire",
+    status: "Brouillon",
+    domain: "Intelligence Artificielle",
+    faculty: "École Nationale Supérieure Polytechnique",
+    department: "Génie Informatique",
+    level: "Master 2",
+    language: "Français",
+    abstract:
+      "Brouillon de travail portant sur la détection de similarités translingues entre documents à l'aide de plongements de phrases multilingues.",
+    keywords: ["Plagiat", "Plongements multilingues", "Similarité"],
+    pages: 0,
+    fileSize: "—",
+    submittedAt: "—",
+    updatedAt: "2026-06-01",
+    views: 0,
+    downloads: 0,
+    aiConfidence: 0,
+    timeline: [
+      {
+        label: "Brouillon créé",
+        date: "2026-06-01",
+        state: "current",
+        description: "Document non encore soumis pour validation.",
+        actor: "Vous",
+      },
+      { label: "Extraction IA des métadonnées", date: "—", state: "pending" },
+      { label: "Validation départementale", date: "—", state: "pending" },
+      { label: "Preuve d'authenticité", date: "—", state: "pending" },
+      { label: "Publication en accès libre", date: "—", state: "pending" },
+    ],
+  },
+  {
+    id: "ontologie-science-ouverte",
+    reference: "OSH-2026-0031",
+    title: "Vers une ontologie partagée pour la science ouverte universitaire",
+    type: "Rapport",
+    status: "Rejeté",
+    domain: "Sciences de l'Information",
+    faculty: "Faculté des Sciences",
+    department: "Sciences de l'Information",
+    level: "Master 2",
+    language: "Français",
+    abstract:
+      "Proposition d'une ontologie commune pour décrire les travaux scientifiques. Le rapport doit être complété pour préciser l'alignement avec les standards existants.",
+    keywords: ["Ontologie", "Science ouverte", "Métadonnées"],
+    pages: 24,
+    fileSize: "2,1 Mo",
+    submittedAt: "2026-03-05",
+    updatedAt: "2026-03-14",
+    views: 0,
+    downloads: 0,
+    aiConfidence: 78,
+    reviewer: "Pr. Tabi Manga Joseph",
+    rejectionReason:
+      "Le document doit aligner l'ontologie proposée sur les standards existants (Dublin Core, schema.org) et fournir des exemples d'instanciation avant une nouvelle soumission.",
+    timeline: [
+      { label: "Dépôt soumis", date: "2026-03-05", state: "done", actor: "Vous" },
+      {
+        label: "Extraction IA des métadonnées",
+        date: "2026-03-05",
+        state: "done",
+        actor: "OpenScience IA",
+      },
+      {
+        label: "Validation départementale",
+        date: "2026-03-14",
+        state: "rejected",
+        description: "Dépôt renvoyé pour révision.",
+        actor: "Pr. Tabi Manga Joseph",
+      },
+    ],
+  },
+];
+
+export function getDossier(id: string): Dossier | undefined {
+  return myDossiers.find((d) => d.id === id);
+}
+
+export function getProofDossier(id: string): Dossier | undefined {
+  return myDossiers.find((d) => d.id === id && d.proof);
+}
+
+const countByStatus = (s: DossierStatus) =>
+  myDossiers.filter((d) => d.status === s).length;
+
+export const depositorStats = {
+  total: myDossiers.length,
+  validated: countByStatus("Validé"),
+  pending: countByStatus("En attente"),
+  draft: countByStatus("Brouillon"),
+  rejected: countByStatus("Rejeté"),
+  views: myDossiers.reduce((sum, d) => sum + d.views, 0),
+  downloads: myDossiers.reduce((sum, d) => sum + d.downloads, 0),
+};

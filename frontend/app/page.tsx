@@ -160,7 +160,7 @@ export default function Home() {
                   </Link>
                 </Button>
                 <Button variant="outline" size="lg" asChild className="px-5">
-                  <Link href="/deposer">
+                  <Link href="/deposant/deposer">
                     <Upload className="size-4" />
                     Déposer un document
                   </Link>
@@ -403,7 +403,7 @@ export default function Home() {
                 </p>
                 <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                   <Button size="lg" variant="secondary" asChild className="px-5">
-                    <Link href="/deposer">
+                    <Link href="/deposant/deposer">
                       Déposer un document
                       <ArrowRight className="size-4" />
                     </Link>
