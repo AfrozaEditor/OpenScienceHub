@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 export function SearchBar({
   defaultValue = "",
   size = "lg",
+  shape = "default",
   className,
   autoFocus,
   onSearch,
@@ -17,6 +18,7 @@ export function SearchBar({
 }: {
   defaultValue?: string;
   size?: "lg" | "md";
+  shape?: "default" | "pill";
   className?: string;
   autoFocus?: boolean;
   onSearch?: (value: string) => void;
@@ -42,7 +44,8 @@ export function SearchBar({
     <form
       onSubmit={handleSubmit}
       className={cn(
-        "flex items-center gap-2 rounded-xl border border-border bg-card shadow-sm transition-colors focus-within:border-primary focus-within:ring-3 focus-within:ring-primary/20",
+        "flex items-center gap-2 border border-border bg-card shadow-sm transition-colors focus-within:border-primary focus-within:ring-3 focus-within:ring-primary/20",
+        shape === "pill" ? "rounded-full" : "rounded-xl",
         size === "lg" ? "p-2" : "p-1.5",
         className
       )}
@@ -66,7 +69,11 @@ export function SearchBar({
           size === "lg" ? "h-9 text-[15px]" : "h-8 text-sm"
         )}
       />
-      <Button type="submit" size={size === "lg" ? "lg" : "default"}>
+      <Button
+        type="submit"
+        size={size === "lg" ? "lg" : "default"}
+        className={cn(shape === "pill" && "rounded-full px-5")}
+      >
         Rechercher
       </Button>
     </form>

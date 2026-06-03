@@ -39,6 +39,13 @@ const trustBadges = [
   { label: "Archivage institutionnel", icon: Database },
 ];
 
+const suggestions = [
+  "Intelligence artificielle",
+  "Hydrologie",
+  "Cybersécurité",
+  "Science ouverte",
+];
+
 const stats = [
   { value: `${fr.format(platformStats.documents)}+`, label: "Documents archivés" },
   { value: `${fr.format(platformStats.authors)}`, label: "Auteurs" },
@@ -99,60 +106,83 @@ export default function Home() {
         {/* Hero */}
         <section className="relative overflow-hidden border-b border-border">
           {/* Layered institutional backdrop */}
-          <div className="pointer-events-none absolute inset-0 -z-10">
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle, rgba(11,19,43,0.05) 1px, transparent 1px)",
-                backgroundSize: "22px 22px",
-                maskImage:
-                  "radial-gradient(ellipse 75% 70% at 50% 28%, black, transparent 80%)",
-                WebkitMaskImage:
-                  "radial-gradient(ellipse 75% 70% at 50% 28%, black, transparent 80%)",
-              }}
-            />
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "radial-gradient(45% 45% at 82% 6%, rgba(6,182,212,0.13) 0%, rgba(248,250,252,0) 70%), radial-gradient(45% 50% at 8% 12%, rgba(29,78,216,0.10) 0%, rgba(248,250,252,0) 70%)",
-              }}
-            />
-          </div>
+          <div className="relative isolate">
+            {/* Fond : grille, halos et logo agrandi en filigrane */}
+            <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(circle, rgba(11,19,43,0.045) 1px, transparent 1px)",
+                  backgroundSize: "24px 24px",
+                  maskImage:
+                    "radial-gradient(ellipse 80% 80% at 50% 42%, black, transparent 78%)",
+                  WebkitMaskImage:
+                    "radial-gradient(ellipse 80% 80% at 50% 42%, black, transparent 78%)",
+                }}
+              />
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    "radial-gradient(38% 32% at 50% 2%, rgba(6,182,212,0.12) 0%, rgba(248,250,252,0) 72%), radial-gradient(42% 38% at 12% 6%, rgba(29,78,216,0.10) 0%, rgba(248,250,252,0) 72%), radial-gradient(42% 38% at 88% 6%, rgba(6,182,212,0.09) 0%, rgba(248,250,252,0) 72%)",
+                }}
+              />
+              <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-center">
+                <Image
+                  src="/logo-emblem.png"
+                  alt=""
+                  aria-hidden="true"
+                  width={1000}
+                  height={1000}
+                  priority
+                  className="w-[min(96vw,900px)] max-w-none select-none opacity-[0.05]"
+                  style={{
+                    maskImage:
+                      "radial-gradient(circle at 50% 46%, black 58%, transparent 88%)",
+                    WebkitMaskImage:
+                      "radial-gradient(circle at 50% 46%, black 58%, transparent 88%)",
+                  }}
+                />
+              </div>
+            </div>
 
-          <div className="mx-auto grid w-full max-w-7xl items-center gap-12 px-4 pt-16 pb-14 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-6 lg:px-8 lg:pt-24 lg:pb-20">
-            {/* Left: editorial */}
-            <div className="flex flex-col items-start text-left">
-              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground shadow-xs">
+            {/* Contenu central façon moteur de recherche */}
+            <div className="relative mx-auto flex w-full max-w-3xl flex-col items-center px-4 pt-24 pb-16 text-center sm:px-6 lg:pt-32 lg:pb-20">
+              {/* <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-xs backdrop-blur">
                 <span className="flex size-5 items-center justify-center rounded-full bg-ai/10 text-ai">
                   <Sparkles className="size-3" />
                 </span>
-                Métadonnées extraites par IA
-                <span className="h-3 w-px bg-border" />
-                <span className="text-foreground">Science ouverte</span>
-              </div>
+                Recherche intelligente · Métadonnées IA
+              </div> */}
 
-              <h1 className="mt-6 font-heading text-4xl font-semibold leading-[1.04] tracking-tight text-brand sm:text-5xl lg:text-[3.4rem]">
-                Toute la production{" "}
-                <span className="relative whitespace-nowrap text-primary">
-                  scientifique
-                  <span className="absolute inset-x-0 -bottom-1 h-1 rounded-full bg-ai/30" />
-                </span>{" "}
-                universitaire, enfin centralisée.
+              <h1 className="mt-6 font-heading text-4xl font-semibold leading-[1.05] tracking-tight text-brand sm:text-5xl lg:text-6xl">
+                Recherchez la{" "}
+                <span className="text-primary">science universitaire</span>
               </h1>
-
-              <p className="mt-5 max-w-xl text-lg leading-8 text-muted-foreground">
-                Archivez, classifiez et rendez consultables mémoires, thèses et
-                articles. OpenScience Hub allie recherche à facettes et
-                extraction automatique des métadonnées par IA.
+              <p className="mt-4 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
+                Mémoires, thèses, articles et rapports — un seul moteur de
+                recherche à facettes pour toute la production scientifique.
               </p>
 
-              <div className="mt-8 w-full max-w-xl">
-                <SearchBar />
+              <div className="mt-8 w-full max-w-2xl">
+                <SearchBar shape="pill" />
               </div>
 
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
+                <span className="text-muted-foreground/80">Suggestions :</span>
+                {suggestions.map((s) => (
+                  <Link
+                    key={s}
+                    href={`/explorer?q=${encodeURIComponent(s)}`}
+                    className="rounded-full border border-border bg-card px-2.5 py-1 transition-colors hover:border-primary/40 hover:text-foreground"
+                  >
+                    {s}
+                  </Link>
+                ))}
+              </div>
+
+              <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
                 <Button size="lg" asChild className="px-5">
                   <Link href="/explorer">
                     <Search className="size-4" />
@@ -160,83 +190,20 @@ export default function Home() {
                   </Link>
                 </Button>
                 <Button variant="outline" size="lg" asChild className="px-5">
-                  <Link href="/deposant/deposer">
+                  <Link href="/deposer">
                     <Upload className="size-4" />
                     Déposer un document
                   </Link>
                 </Button>
               </div>
 
-              <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+              <div className="mt-9 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
                 {trustBadges.map((b) => (
                   <span key={b.label} className="flex items-center gap-1.5">
                     <b.icon className="size-3.5 text-primary" />
                     {b.label}
                   </span>
                 ))}
-              </div>
-            </div>
-
-            {/* Right: emblem medallion */}
-            <div className="relative mx-auto w-full max-w-md lg:mx-0">
-              <div className="relative aspect-square w-full">
-                <div className="absolute inset-0 rounded-full border border-border/70" />
-                <div className="absolute inset-[7%] rounded-full border border-dashed border-primary/25" />
-                <div className="absolute inset-[14%] rounded-full border border-border/60" />
-                <div
-                  className="absolute inset-[10%] rounded-full"
-                  style={{
-                    background:
-                      "radial-gradient(circle at 50% 38%, rgba(6,182,212,0.12), rgba(255,255,255,0) 68%)",
-                  }}
-                />
-                <div className="absolute inset-[15%] flex items-center justify-center">
-                  <Image
-                    src="/logo-emblem.png"
-                    alt="Emblème OpenScience Hub"
-                    width={612}
-                    height={612}
-                    priority
-                    className="h-full w-full object-contain drop-shadow-[0_14px_34px_rgba(11,19,43,0.20)]"
-                  />
-                </div>
-              </div>
-
-              {/* floating: AI metadata */}
-              <div className="absolute top-4 -left-1 w-52 rounded-xl border border-border bg-card/95 p-3 shadow-lg backdrop-blur sm:top-8 sm:-left-4">
-                <div className="flex items-center gap-2">
-                  <span className="flex size-7 items-center justify-center rounded-md bg-ai/10 text-ai">
-                    <Sparkles className="size-3.5" />
-                  </span>
-                  <span className="text-xs font-semibold text-foreground">
-                    Métadonnées détectées
-                  </span>
-                </div>
-                <div className="mt-2.5 space-y-1.5">
-                  <div className="h-1.5 w-4/5 rounded-full bg-muted" />
-                  <div className="h-1.5 w-3/5 rounded-full bg-muted" />
-                </div>
-                <div className="mt-2.5 flex items-center justify-between">
-                  <span className="text-[11px] text-muted-foreground">
-                    Confiance IA
-                  </span>
-                  <span className="text-[11px] font-semibold text-ai">96 %</span>
-                </div>
-              </div>
-
-              {/* floating: validated */}
-              <div className="absolute -right-1 bottom-6 flex items-center gap-2 rounded-xl border border-border bg-card/95 px-3 py-2.5 shadow-lg backdrop-blur sm:-right-3 sm:bottom-10">
-                <span className="flex size-7 items-center justify-center rounded-md bg-success/12 text-success">
-                  <BadgeCheck className="size-4" />
-                </span>
-                <div className="leading-tight">
-                  <p className="text-xs font-semibold text-foreground">
-                    Document validé
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Archivé · Accès public
-                  </p>
-                </div>
               </div>
             </div>
           </div>
@@ -403,7 +370,7 @@ export default function Home() {
                 </p>
                 <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                   <Button size="lg" variant="secondary" asChild className="px-5">
-                    <Link href="/deposant/deposer">
+                    <Link href="/deposer">
                       Déposer un document
                       <ArrowRight className="size-4" />
                     </Link>
