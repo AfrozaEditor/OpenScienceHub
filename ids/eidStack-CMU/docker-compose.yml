@@ -9,7 +9,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5434:5432"
 
   app:
     build:
@@ -22,8 +22,7 @@ services:
       NODE_ENV: production         # force running from dist (production)
       PORT: 4000
       AGENT_PORT: 3021
-      # DATABASE_URL will be read from .env if present; default fallback included here
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/polyid_db?schema=public}
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/polyid_db?schema=public
     ports:
       - "4000:4000"
       - "3021:3021"
