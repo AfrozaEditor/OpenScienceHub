@@ -46,7 +46,7 @@ class ContributorType(models.TextChoices):
 
 
 class ScientificWork(TimeStampedModel):
-    reference_code = models.CharField(max_length=60, unique=True, blank=True)
+    reference_code = models.CharField(max_length=60, unique=True, blank=True, null=True)
     type = models.CharField(max_length=20, choices=WorkType.choices)
     title = models.CharField(max_length=500)
     abstract_text = models.TextField(blank=True)

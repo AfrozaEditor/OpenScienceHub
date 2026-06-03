@@ -7,6 +7,7 @@ from app.schemas.common import AnswerStatus, Visibility
 
 class AssistantFilters(BaseModel):
     allowed_visibilities: list[Visibility] = Field(default_factory=lambda: [Visibility.PUBLIC])
+    work_id: UUID | None = None
     type: str | None = None
     institution: str | None = None
     department: str | None = None

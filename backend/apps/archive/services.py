@@ -80,7 +80,9 @@ def _index_via_simba(record: ArchiveRecord):
             "year": work.academic_year, "keywords": work.keywords,
             "status": work.status,
         }
-        file_url = version.file.url if version.file else None
+        from apps.ai.files import build_document_file_url
+
+        file_url = build_document_file_url(version)
         try:
             SimbaClient().index(
                 work_id=work.id, document_id=version.id, version_id=version.id,

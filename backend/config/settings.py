@@ -170,3 +170,4 @@ EIDSTACK_CONNECTION_ID = env("EIDSTACK_CONNECTION_ID", default="")
 SSI_MODE = env("SSI_MODE", default="mock")
 
 PUBLIC_VERIFY_BASE_URL = env("PUBLIC_VERIFY_BASE_URL", default="http://localhost:5173/verify")
+BACKEND_PUBLIC_BASE_URL = env("BACKEND_PUBLIC_BASE_URL", default="http://127.0.0.1:8000")

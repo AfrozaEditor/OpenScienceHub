@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -43,6 +44,13 @@ class Settings(BaseSettings):
     default_top_k: int = 6
     chunk_size: int = 1000
     chunk_overlap: int = 150
+
+    @field_validator("embedding_dim", "default_top_k", "chunk_size", "chunk_overlap", mode="before")
+    @classmethod
+    def parse_inline_commented_int(cls, value):
+        if isinstance(value, str):
+            value = value.split("#", 1)[0].strip()
+        return value
 
     @property
     def llm_fallback_list(self) -> list[str]:

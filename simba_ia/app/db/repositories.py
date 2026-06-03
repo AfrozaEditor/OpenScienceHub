@@ -48,6 +48,7 @@ def search_chunks(
     q_embedding: list[float],
     allowed_visibilities: list[str],
     *,
+    work_id: UUID | None = None,
     type: str | None = None,
     institution: str | None = None,
     department: str | None = None,
@@ -58,6 +59,8 @@ def search_chunks(
     distance = AiChunk.embedding.cosine_distance(q_embedding)
     conds = [AiChunk.visibility.in_(allowed_visibilities)]
     meta = AiChunk.chunk_metadata
+    if work_id:
+        conds.append(AiChunk.work_id == work_id)
     if type:
         conds.append(meta["type"].astext == type)
     if institution:

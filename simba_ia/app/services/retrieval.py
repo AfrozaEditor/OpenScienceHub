@@ -18,6 +18,7 @@ def retrieve(
         db,
         q_emb,
         allowed,
+        work_id=filters.work_id,
         type=filters.type,
         institution=filters.institution,
         department=filters.department,

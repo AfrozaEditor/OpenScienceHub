@@ -5,6 +5,8 @@ PRIVATE_WORK = "77777777-7777-7777-7777-777777777902"
 PRIVATE_VER = "99999999-9999-9999-9999-999999999902"
 OTHER_WORK = "77777777-7777-7777-7777-777777777903"
 OTHER_VER = "99999999-9999-9999-9999-999999999903"
+FILTER_WORK = "77777777-7777-7777-7777-777777777904"
+FILTER_VER = "99999999-9999-9999-9999-999999999904"
 
 TEXT = (
     "OpenScience Hub archive les mémoires et thèses universitaires. "
@@ -81,6 +83,45 @@ def test_live_assistant_respects_visibility_filters(client, auth_headers):
     assert query_resp.status_code == 200
     sources = query_resp.json()["sources"]
     assert all(source["work_id"] != PRIVATE_WORK for source in sources)
+
+
+def test_live_assistant_can_filter_to_one_work(client, auth_headers):
+    client.post("/v1/index", headers=auth_headers, json=_index_payload())
+    client.post(
+        "/v1/index",
+        headers=auth_headers,
+        json=_index_payload(
+            work_id=FILTER_WORK,
+            version_id=FILTER_VER,
+            text=(
+                "Ce document parle d'agriculture durable et de collecte de données "
+                "sur les sols. Il ne traite pas de hash SHA-256."
+            ),
+            metadata={
+                "title": "Agriculture durable",
+                "author": "Autre Auteur",
+                "type": "MEMOIRE",
+                "department": "Agronomie",
+                "year": 2026,
+                "keywords": ["agriculture", "sols"],
+            },
+        ),
+    )
+
+    query_resp = client.post(
+        "/v1/assistant/query",
+        headers=auth_headers,
+        json={
+            "question": "Comment OpenScience Hub vérifie un mémoire avec un hash ?",
+            "filters": {"allowed_visibilities": ["PUBLIC"], "work_id": FILTER_WORK},
+            "top_k": 3,
+        },
+    )
+
+    assert query_resp.status_code == 200
+    sources = query_resp.json()["sources"]
+    assert sources
+    assert all(source["work_id"] == FILTER_WORK for source in sources)
 
 
 def test_live_delete_index_removes_context(client, auth_headers):

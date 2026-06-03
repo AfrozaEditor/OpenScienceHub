@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from apps.works.models import ScientificWork
 
 from .client import SimbaClient, SimbaError
+from .files import build_document_file_url
 from .models import AIQueryLog, ExtractionStatus, MetadataExtraction
 
 
@@ -20,7 +21,11 @@ class ExtractMetadataView(views.APIView):
         if not version:
             return Response({"detail": "Aucun document à analyser."}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            result = SimbaClient().extract(document_id=work.id, version_id=version.id)
+            result = SimbaClient().extract(
+                document_id=version.id,
+                version_id=version.id,
+                file_url=build_document_file_url(version, request=request),
+            )
         except SimbaError as exc:
             MetadataExtraction.objects.create(document_version=version, status=ExtractionStatus.FAILED, raw_json={"error": str(exc)})
             return Response({"detail": "Service IA indisponible.", "status": "FAILED"}, status=502)
@@ -29,11 +34,11 @@ class ExtractMetadataView(views.APIView):
         extraction = MetadataExtraction.objects.create(
             document_version=version,
             model_name=result.get("model_name", "simba_ia"),
-            extracted_title=meta.get("title", ""),
-            extracted_abstract=meta.get("abstract", ""),
-            extracted_keywords=meta.get("keywords", []),
-            suggested_domain=meta.get("scientific_domain", ""),
-            detected_language=meta.get("language", ""),
+            extracted_title=meta.get("title") or "",
+            extracted_abstract=meta.get("abstract") or "",
+            extracted_keywords=meta.get("keywords") or [],
+            suggested_domain=meta.get("scientific_domain") or "",
+            detected_language=meta.get("language") or "",
             confidence_score=result.get("confidence_score", 0) or 0,
             raw_json=result.get("raw_json", {}),
             status=ExtractionStatus.EXTRACTED,
