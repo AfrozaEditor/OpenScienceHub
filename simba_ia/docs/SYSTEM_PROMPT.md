@@ -43,7 +43,7 @@ Ne change pas de stack sans accord. Pas de Django ni de Node ici.
 4. **Recherche/Assistant** : recherche **hybride** (filtres structurés + similarité sémantique) → assemblage du contexte → génération d'une **réponse sourcée**.
 5. **Similarité** : travaux proches (proximité sémantique + métadonnées).
 6. **Résumé / fiche de lecture** : synthèse d'un document, citée.
-7. **Abstractions provider** (embeddings, LLM) + **mode `mock`** pour démo hors-ligne.
+7. **Abstractions provider** (embeddings, LLM) en mode full live strict.
 8. **Observabilité** : logs structurés, métriques simples, `/health`.
 
 ## 5. Garde-fous (RÈGLES NON NÉGOCIABLES)
@@ -55,7 +55,7 @@ Ne change pas de stack sans accord. Pas de Django ni de Node ici.
 5. **Déterminisme et traçabilité.** Journaliser question, sources utilisées, modèle, score ; température basse par défaut ; réponses reproductibles autant que possible.
 6. **Sécurité.** Secrets (API keys LLM/embeddings, `DATABASE_URL`) via variables d'environnement ; jamais en clair dans le code/les réponses. Modération/limitation des prompts.
 7. **Robustesse.** Gérer PDF illisibles, documents trop longs, provider indisponible → erreurs explicites (`FAILED`, `NO_CONTEXT_FOUND`) ; jamais d'échec silencieux.
-8. **Mode `mock`** : tout provider (embeddings/LLM) doit avoir une implémentation simulée derrière la **même interface**, pour démos sans clé/API.
+8. **Mode full live strict** : aucun provider simulé en runtime ; toute indisponibilité de provider doit produire une erreur explicite.
 
 ## 6. Conventions de code
 
@@ -70,7 +70,7 @@ Ne change pas de stack sans accord. Pas de Django ni de Node ici.
 
 1. Lis [PRD.md](PRD.md), [RAG_PIPELINE.md](RAG_PIPELINE.md), [API_SPEC.md](API_SPEC.md), [INTEGRATION.md](INTEGRATION.md) avant de coder.
 2. Implémente par tranches verticales démontrables (route → schéma → service → provider → test).
-3. Donne la priorité au **scope MVP** ([ROADMAP.md](ROADMAP.md) Phase 1) ; `mock` pour ce qui n'est pas prêt (même interface que le réel).
+3. Donne la priorité au **scope MVP** ([ROADMAP.md](ROADMAP.md) Phase 1) ; ne pas ajouter de simulation runtime.
 4. Vérifie linters + tests après chaque tranche.
 5. Garde l'API **stable et conforme** à ce que le backend attend ([INTEGRATION.md](INTEGRATION.md)).
 
@@ -85,4 +85,4 @@ Ne change pas de stack sans accord. Pas de Django ni de Node ici.
 - Routes + schémas Pydantic + services + providers + tests présents.
 - Contrat conforme à [API_SPEC.md](API_SPEC.md) / [INTEGRATION.md](INTEGRATION.md).
 - Garde-fous respectés (section 5) : réponses sourcées, respect des droits, pas de décision.
-- `mock` fonctionnel ; linters et tests au vert ; aucun secret exposé.
+- Full live fonctionnel ; linters et tests au vert ; aucun secret exposé.

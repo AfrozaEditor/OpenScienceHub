@@ -100,7 +100,7 @@ CREATE INDEX ai_chunk_vec_idx ON simba.ai_chunk USING hnsw (embedding vector_cos
 |---|---|---|
 | `id` | `UUID` PK | |
 | `query_id` | `UUID` (FK → `ai_query_log`) | |
-| `chunk_id` | `UUID` (FK → `ai_chunk`, null si mock) | |
+| `chunk_id` | `UUID` (FK → `ai_chunk`, null si live) | |
 | `work_id` | `UUID` | |
 | `excerpt` | `text` | extrait cité |
 | `score` | `numeric` | pertinence |

@@ -118,7 +118,7 @@ filtres : type=MEMOIRE, department=Informatique, year in [2022..2026], visibilit
 - Réponses **toujours sourcées** ; refus propre sans contexte.
 - Validation **Pydantic** des sorties JSON (extraction).
 - Journalisation des sources réellement utilisées pour audit côté backend.
-- Mode `mock` : la « génération » assemble une réponse à partir des passages récupérés (déterministe), ce qui garde le comportement « sourcé » même sans LLM réel.
+- Mode full live strict : la génération est assurée par le LLM réel configuré, avec réponse toujours sourcée ou `NO_CONTEXT_FOUND`.
 
 ## 10. Ce que le pipeline NE fait PAS
 

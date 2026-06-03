@@ -54,7 +54,7 @@ Pour un document : résumé court/long, problématique, méthodologie, résultat
 - **Respect des droits** : n'utiliser que les documents/visibilités autorisés par le backend (filtres transmis à chaque requête). Jamais de document privé dans une réponse publique.
 - **Fiabilité** : gérer PDF illisibles, documents très longs, provider LLM/embeddings indisponible → erreurs explicites + reprise.
 - **Performance** : ingestion asynchrone ; recherche < ~2 s sur corpus de démo ; top-k borné ; cache d'embeddings de requêtes fréquent (roadmap).
-- **Portabilité providers** : embeddings et LLM interchangeables (OpenAI / Mistral / local) via interface + **mode `mock`**.
+- **Portabilité providers** : embeddings et LLM interchangeables via interfaces, avec providers réels en runtime.
 - **Sécurité** : secrets via env ; modération de prompts ; pas d'exécution de contenu de document.
 - **Observabilité** : logs structurés (question, sources, modèle, latence), `/health`, métriques de base.
 - **Coût** : limiter les appels LLM (cache, troncature de contexte, top-k raisonnable).
@@ -62,13 +62,13 @@ Pour un document : résumé court/long, problématique, méthodologie, résultat
 ## 6. Contraintes compétition (hackathon)
 
 - Démo : un PDF déposé → extraction automatique (≥ 6 champs + score) → indexation → question Assistant IA **avec sources** → travaux similaires.
-- Fonctionner en **mode `mock`** si aucune clé LLM/embeddings (réponses simulées déterministes derrière la même API).
+- Fonctionner en **mode full live strict** avec clés et providers réels configurés.
 - Ne pas sur-ingénierer : pas de fine-tuning, pas de pipeline distribué.
 
 ## 7. Scope
 
 ### MVP (Phase 1)
-`/health`, `/extract`, `/index`, `/assistant/query` (sourcé), `/similar` basique ; pgvector ; 1 provider réel + `mock` ; chunking simple ; recherche hybride minimale ; logs.
+`/health`, `/extract`, `/index`, `/assistant/query` (sourcé), `/similar` basique ; pgvector ; providers réels ; chunking simple ; recherche hybride minimale ; logs.
 
 ### Hors scope MVP (roadmap)
 OCR PDF scannés, résumé multi-documents avancé, reranking, cache distribué, feedback/évaluation des réponses, multilingue avancé, détection de similarité fine. Voir [ROADMAP.md](ROADMAP.md).
@@ -80,7 +80,7 @@ OCR PDF scannés, résumé multi-documents avancé, reranking, cache distribué,
 - Similarité : top-k pertinent avec motifs explicites.
 - Latence requête Assistant IA acceptable sur le corpus de démo.
 - Robustesse : aucun crash sur PDF invalide (erreur `FAILED` propre).
-- Mode `mock` : démo complète sans clé externe.
+- Mode full live strict : démo complète avec Mistral, Groq/Gemini et pgvector configurés.
 
 ## 9. Règles métier (rappel)
 

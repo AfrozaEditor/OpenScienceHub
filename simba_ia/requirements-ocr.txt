@@ -1,0 +1,4 @@
+# OCR stack (PDF scannés). Nécessite aussi des binaires système :
+#   tesseract-ocr tesseract-ocr-fra tesseract-ocr-eng ghostscript
+# Installation : pip install -r requirements-ocr.txt
+ocrmypdf>=16,<17

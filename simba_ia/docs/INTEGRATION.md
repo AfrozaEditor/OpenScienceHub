@@ -7,7 +7,7 @@
 ## 1. Principe d'intégration
 
 - **Le backend est le seul appelant** de `simba_ia` (service interne, non exposé au public).
-- Communication **HTTP REST** ; le backend encapsule les appels dans `ai/simba_client.py` (timeouts, retries, mode `mock`).
+- Communication **HTTP REST** ; le backend encapsule les appels dans `ai/simba_client.py` (timeouts, retries, mode live strict).
 - **Séparation des responsabilités** :
   - **Backend** : dossiers, statuts, droits, **visibilités**, déclenchement des traitements, stockage des résultats officiels (`MetadataExtraction`, `AIQueryLog`).
   - **simba_ia** : texte, chunks, embeddings, retrieval, génération **sourcée** ; renvoie des **propositions** et des **réponses**.
@@ -79,13 +79,9 @@ Le backend stocke ensuite :
 | HTTP 503 (provider down) | Retry/backoff ; message « Assistant IA momentanément indisponible » |
 | Timeout | Annuler proprement ; ne pas bloquer le parcours de dépôt |
 
-## 7. Mode `mock` (démo hackathon)
+## 7. Mode full live strict
 
-- Si `SIMBA_MODE=mock` (ou pas de clé LLM/embeddings), `simba_ia` répond derrière la **même API** :
-  - `/extract` renvoie des métadonnées plausibles déterministes ;
-  - `/assistant/query` construit une réponse **à partir des passages récupérés** (reste « sourcé ») ;
-  - `/index` indexe avec des embeddings simulés.
-- Le backend peut lui aussi avoir un `SIMBA_MODE=mock` pour tourner totalement hors-ligne. Le passage en `live` ne change pas les contrats.
+`simba_ia` fonctionne uniquement avec des providers réels : Mistral pour les embeddings, Groq pour la génération et Gemini en fallback. Si une clé ou un service est absent, l'erreur doit être explicite. Les contrats HTTP restent stables pour le backend.
 
 ## 8. Configuration partagée
 
@@ -93,15 +89,15 @@ Backend :
 ```text
 SIMBA_IA_URL=http://localhost:8001
 SIMBA_API_KEY=...          # même valeur que côté simba_ia
-SIMBA_MODE=mock            # mock | live
+SIMBA_MODE=live
 ```
 simba_ia :
 ```text
 SIMBA_API_KEY=...          # vérifie X-API-Key
 DATABASE_URL=postgresql://...   # pgvector (peut être la base du backend, schéma simba)
-EMBEDDING_PROVIDER=openai|mistral|local|mock
-LLM_PROVIDER=openai|mistral|ollama|mock
-SIMBA_MODE=mock|live
+EMBEDDING_PROVIDER=mistral
+LLM_PROVIDER=groq
+SIMBA_MODE=live
 ```
 
 ## 9. Checklist d'intégration
@@ -112,4 +108,4 @@ SIMBA_MODE=mock|live
 - [ ] Indexation déclenchée à l'archivage (et réindexation/suppression sur changement de version/visibilité).
 - [ ] `allowed_visibilities` transmis à chaque requête Assistant/similar.
 - [ ] Réponses Assistant stockées avec leurs sources côté backend.
-- [ ] Mode `mock` testé de bout en bout (démo hors-ligne).
+- [ ] Mode full live strict testé de bout en bout.

@@ -19,7 +19,7 @@ simba_ia/
 │   ├── api/v1/            # extract, index, assistant, similar, summarize
 │   ├── schemas/           # Pydantic (requêtes/réponses)
 │   ├── services/          # extraction, ingestion, retrieval, generation, similarity
-│   ├── providers/         # base (interfaces), openai/local, mock
+│   ├── providers/         # base (interfaces), mistral, groq, gemini
 │   └── db/                # session, models (ai_chunk, ai_query_log...), repositories (pgvector)
 └── tests/
 ```
@@ -27,7 +27,7 @@ simba_ia/
 ## Conventions
 
 - **Schémas Pydantic** pour toutes les I/O ; API versionnée `/v1` ; conforme à `docs/API_SPEC.md`.
-- Logique IA dans les **services** ; providers derrière **interfaces** (`EmbeddingProvider`, `LLMProvider`) + factory + **`mock`**.
+- Logique IA dans les **services** ; providers derrière **interfaces** (`EmbeddingProvider`, `LLMProvider`) + factory live stricte.
 - Accès `pgvector` via repositories ; modèle de données = `docs/DATA_MODEL.md`.
 - Tests `pytest` : extraction (champs+score), chunking, retrieval (filtres/visibilité), réponse sourcée (≥1 source), refus sans contexte.
 - Qualité : `ruff` + `black`. Pas de commentaires qui paraphrasent le code.
@@ -48,10 +48,10 @@ ruff check . && black --check .
 ```text
 DATABASE_URL=postgresql://...      # pgvector (schéma simba)
 SIMBA_API_KEY=...                  # vérifie X-API-Key (même valeur que le backend)
-EMBEDDING_PROVIDER=openai|mistral|local|mock
-LLM_PROVIDER=openai|mistral|ollama|mock
+EMBEDDING_PROVIDER=mistral
+LLM_PROVIDER=groq
 OPENAI_API_KEY=... / MISTRAL_API_KEY=...   # jamais en clair dans le code
-SIMBA_MODE=mock                    # mock | live
+SIMBA_MODE=live
 ```
 
 ## Garde-fous (rappel)
@@ -61,5 +61,5 @@ SIMBA_MODE=mock                    # mock | live
 - **Respect des droits** : n'utiliser que les `allowed_visibilities`/filtres transmis par le backend ; jamais de document privé en réponse publique.
 - **Pas de vérité métier** ici (dossiers, statuts, droits = backend) ; `simba_ia` stocke chunks/vecteurs/logs.
 - **Secrets** via env ; auth `X-API-Key` ; pas d'exposition publique directe.
-- **`mock` toujours disponible** (même interface que le réel) pour démo hors-ligne.
+- **Full live** : pas de provider simulé en runtime ; si Groq/Mistral/pgvector sont indisponibles, l'erreur doit être explicite.
 - Suivre le scope **Phase 1** de `docs/ROADMAP.md`.

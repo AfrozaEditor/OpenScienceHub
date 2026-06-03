@@ -85,9 +85,9 @@ simba_ia/
 │   │   └── similarity.py     # travaux similaires
 │   ├── providers/
 │   │   ├── base.py           # interfaces EmbeddingProvider / LLMProvider
-│   │   ├── openai_provider.py
-│   │   ├── local_provider.py
-│   │   └── mock_provider.py  # mode démo hors-ligne
+│   │   ├── mistral.py        # embeddings Mistral
+│   │   ├── groq.py           # génération Groq
+│   │   └── gemini.py         # fallback Gemini
 │   └── db/
 │       ├── session.py        # connexion PostgreSQL
 │       ├── models.py         # tables IA (chunks, logs)
@@ -149,8 +149,8 @@ sequenceDiagram
 
 - `EmbeddingProvider.embed(texts) -> vectors` et `LLMProvider.generate(prompt, **opts) -> text`.
 - Sélection via config (`EMBEDDING_PROVIDER`, `LLM_PROVIDER`).
-- **`mock`** : embeddings déterministes (ex. hashing) + LLM gabarit (réponse construite à partir des passages), pour démo sans clé externe. Même interface que le réel.
-- Choix des modèles/fournisseurs **gratuits** (BGE-M3, Groq, Gemini, Ollama, GROBID, etc.), comparatif et licences : voir [FREE_STACK_OPTIONS.md](FREE_STACK_OPTIONS.md). Défaut recommandé : **embeddings BGE-M3 (local)** + **LLM Groq/Gemini (free)** ou **Ollama (hors-ligne)**.
+- **Full live strict** : les providers configurés doivent être réels. Aucun provider simulé n'est utilisé en runtime.
+- Choix retenu actuellement : **Mistral Embeddings** + **Groq**, avec fallback **Gemini**. GROBID reste optionnel et désactivé tant qu'il n'est pas nécessaire.
 
 ## 7. Données et stockage
 
@@ -169,12 +169,12 @@ sequenceDiagram
 
 - **Dev** : `uvicorn app.main:app --reload --port 8001`, PostgreSQL+pgvector via `docker-compose` (partagé avec le backend).
 - **Docs API** : OpenAPI automatique FastAPI (`/docs`, `/openapi.json`).
-- **Mode** : `SIMBA_MODE=mock|live`.
+- **Mode** : `SIMBA_MODE=live`.
 
 ## 10. Principes
 
 1. **Service d'assistance**, jamais de décision.
 2. **Réponses sourcées** ou refus ; pas d'hallucination.
 3. **Respect des droits** transmis par le backend.
-4. **Providers interchangeables** + `mock` toujours disponible.
+4. **Providers interchangeables**, mais uniquement avec des providers réels en runtime.
 5. **Stateless métier** : la vérité (dossiers, droits, statuts) reste au backend.

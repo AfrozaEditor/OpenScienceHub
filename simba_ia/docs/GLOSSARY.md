@@ -12,7 +12,7 @@
 | **Assistant IA** | Nom produit de la capacité de question/réponse sourcée sur l'archive. |
 | **Backend** | API Django, seul appelant de `simba_ia` ; détient dossiers, droits, statuts. |
 | **Provider** | Implémentation interchangeable d'un service externe (embeddings ou LLM), derrière une interface. |
-| **Mode `mock`** | Mode démo hors-ligne : embeddings et LLM simulés derrière la même API. |
+| **Mode full live strict** | Mode runtime utilisant uniquement des providers réels configurés (Mistral, Groq, Gemini) et pgvector. |
 
 ## IA / RAG
 
@@ -20,8 +20,8 @@
 |---|---|
 | **RAG (Retrieval-Augmented Generation)** | Récupérer des passages pertinents puis générer une réponse fondée dessus. Interne. |
 | **Embedding** | Vecteur numérique représentant un texte, pour la recherche sémantique. |
-| **EmbeddingProvider** | Interface produisant les embeddings (OpenAI / Mistral / local / mock). |
-| **LLMProvider** | Interface de génération de texte (OpenAI / Mistral / Ollama / mock). |
+| **EmbeddingProvider** | Interface produisant les embeddings (actuellement Mistral). |
+| **LLMProvider** | Interface de génération de texte (actuellement Groq, fallback Gemini). |
 | **Chunk** | Segment de document (texte + métadonnées + embedding) stocké pour le retrieval. |
 | **Chunking** | Découpage du texte en segments (avec chevauchement). |
 | **Retrieval** | Récupération des chunks les plus pertinents (filtres + similarité). |

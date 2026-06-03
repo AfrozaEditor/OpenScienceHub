@@ -6,10 +6,10 @@
 
 ## 0. Principes de choix
 
-1. **Gratuit et reproductible** : priorité à l'open-source auto-hébergeable ; les API « free tier » servent d'accélérateur mais on garde un **fallback local** (mode `mock`/`local`).
+1. **Gratuit et reproductible** : priorité à l'open-source auto-hébergeable ; les API « free tier » servent d'accélérateur. Le runtime actuel reste en full live strict.
 2. **Licences sûres pour un produit** : préférer **MIT / Apache-2.0 / BSD**. ⚠️ Éviter ou isoler : **AGPL** (PyMuPDF), **CC-BY-NC / non-commercial** (Jina v3, certains rerankers), modèles à licence restrictive.
 3. **Multilingue FR/EN** obligatoire (corpus camerounais FR + EN).
-4. **Interchangeables** : tout passe par les interfaces `EmbeddingProvider` / `LLMProvider` (+ `mock`) → on peut changer de fournisseur sans toucher au reste.
+4. **Interchangeables** : tout passe par les interfaces `EmbeddingProvider` / `LLMProvider` → on peut changer de fournisseur réel sans toucher au reste.
 5. **Souveraineté / RGPD** : pour des documents institutionnels, le **local** (Ollama + modèle open) évite d'envoyer le contenu à un tiers ; à arbitrer selon l'institution.
 
 ---
@@ -119,7 +119,7 @@ Modèles ouverts adaptés (servis via Ollama) : **Qwen2.5 / Qwen3** (Apache-2.0)
 - **Démo rapide gratuite** : **Groq** (vitesse, généreux, sans carte) ou **Google Gemini** (qualité, gros contexte).
 - **EU / souveraineté** : **Mistral** (API) ou **Ollama + Mistral/Qwen** en local.
 - **Hors-ligne total / sans clé** : **Ollama** (Qwen2.5-7B ou Llama-3.1-8B) → branché derrière `LLMProvider`.
-- **Stratégie « stacking »** : configurer un fournisseur principal + un **fallback** (ex. Groq → Gemini → mock) pour absorber les quotas.
+- **Stratégie « stacking »** : configurer un fournisseur principal + un **fallback réel** (ex. Groq → Gemini) pour absorber les quotas.
 
 ## 7. Reranking (précision du retrieval) — Phase 2
 
@@ -159,9 +159,9 @@ Pour des mémoires/thèses/articles, le meilleur résultat gratuit vient d'un **
 ```text
 PDF texte      : pdfplumber
 Métadonnées    : GROBID + LLM
-Embeddings     : BGE-M3 (local, sentence-transformers)  -> vector(1024)
+Embeddings     : Mistral Embeddings -> vector(1024)
 Vector store   : pgvector (HNSW cosine)
-LLM            : Groq (free) en principal, fallback Gemini, puis mock
+LLM            : Groq (free) en principal, fallback Gemini
 Framework      : maison (FastAPI)
 Reranking      : aucun (MVP)
 ```
@@ -190,17 +190,17 @@ Reste          : identique au profil A
 
 Variables d'environnement (voir [INTEGRATION.md](INTEGRATION.md)) :
 ```text
-EMBEDDING_PROVIDER=local|mistral|openrouter|mock
-EMBEDDING_MODEL=BAAI/bge-m3            # ou intfloat/multilingual-e5-large, ibm-granite/...
+EMBEDDING_PROVIDER=mistral
+EMBEDDING_MODEL=mistral-embed
 EMBEDDING_DIM=1024                     # doit correspondre à vector(N) en base
-LLM_PROVIDER=groq|gemini|mistral|ollama|openrouter|mock
-LLM_MODEL=llama-3.3-70b-versatile      # selon le fournisseur
-LLM_FALLBACKS=gemini,mock              # stratégie de repli sur quota
+LLM_PROVIDER=groq
+LLM_MODEL=qwen/qwen3-32b
+LLM_FALLBACKS=gemini                   # fallback réel
 GROBID_URL=http://localhost:8070       # si extraction académique activée
-SIMBA_MODE=mock|live
+SIMBA_MODE=live
 ```
 
-Interfaces (rappel) : `EmbeddingProvider.embed()` et `LLMProvider.generate()` ; chaque fournisseur (local, groq, gemini, mistral, ollama, openrouter, **mock**) implémente la même interface. Changer de modèle = changer la config (+ réindexer si la **dimension** d'embedding change).
+Interfaces (rappel) : `EmbeddingProvider.embed()` et `LLMProvider.generate()` ; les fournisseurs réels configurés implémentent la même interface. Changer de modèle d'embedding = changer la config puis réindexer.
 
 ## 12. Tableau licences (vigilance produit)
 
@@ -217,10 +217,10 @@ Interfaces (rappel) : `EmbeddingProvider.embed()` et `LLMProvider.generate()` ; 
 
 ## 13. Synthèse (la plus adaptée à OpenScience Hub)
 
-- **Embeddings** : **BGE-M3** (gratuit, local, MIT, FR/EN excellent) — meilleur défaut.
+- **Embeddings** : **Mistral Embeddings** en runtime actuel ; BGE-M3 reste une option locale future.
 - **Vector store** : **pgvector** (déjà en place).
 - **Extraction métadonnées** : **GROBID + LLM** (combo gratuit le plus fiable pour l'académique).
-- **LLM** : **Groq** (free, rapide) ou **Gemini** (free, qualité) pour la démo ; **Ollama** local pour le hors-ligne / souveraineté.
+- **LLM** : **Groq** en principal, **Gemini** en fallback.
 - **Texte PDF** : **pdfplumber** (MVP), **Docling** si qualité.
 - **Framework** : **maison** (transparent, démontrable).
-- **Tout interchangeable** via `EmbeddingProvider` / `LLMProvider` + `mock`, avec **fallback** sur quota.
+- **Tout interchangeable** via `EmbeddingProvider` / `LLMProvider`, avec fallback réel sur quota.

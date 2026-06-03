@@ -14,14 +14,14 @@ Objectif : alimenter la démo backend — dépôt → **extraction IA** → inde
 - Retrieval hybride minimal (filtres `allowed_visibilities`, `type`, `department`, `year` + similarité cosine).
 - Génération **sourcée** (citations) + refus `NO_CONTEXT_FOUND` sans contexte.
 - Similarité basique (top-k + motifs).
-- Providers : 1 réel (OpenAI **ou** Mistral **ou** local) + **`mock`** (embeddings + LLM simulés).
+- Providers : Mistral embeddings + Groq génération + Gemini fallback, sans provider simulé.
 - Auth `X-API-Key`, logs structurés, `ai_chunk` / `ai_query_log`.
 
 ### Critères de sortie Phase 1
 - Extraction renvoie ≥ 6 champs + score sur un PDF de démo.
 - 100 % des réponses `ANSWERED` contiennent ≥ 1 source ; refus propre sinon.
 - Respect des `allowed_visibilities` (jamais de privé en public).
-- Démo complète possible en **mode `mock`** (sans clé externe).
+- Démo complète possible en **mode full live strict** avec providers configurés.
 
 ## Phase 2 — Qualité et robustesse
 
@@ -53,12 +53,12 @@ Objectif : alimenter la démo backend — dépôt → **extraction IA** → inde
 
 ```text
 1. app/core (config, logging, auth X-API-Key) + /health
-2. providers (interfaces + mock) 
-3. ingestion : parse PDF -> chunk -> embeddings (mock) -> pgvector
+2. providers (interfaces + providers réels)
+3. ingestion : parse PDF -> chunk -> embeddings -> pgvector
 4. /index
 5. retrieval hybride + /assistant/query (sourcé)
 6. /extract (métadonnées + score)
 7. /similar
-8. provider réel (OpenAI/Mistral/local) + bascule live
+8. providers réels (Mistral/Groq/Gemini) + configuration live
 9. logs ai_query_log + tests garde-fous
 ```
