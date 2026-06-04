@@ -9,7 +9,7 @@
 - Le backend **orchestre** ; e-IDStack **émet et vérifie** les Verifiable Credentials. Aucune cryptographie « maison » côté backend.
 - **Modèle SANS wallet** : **Issuer** = Institution · **Holder/dépositaire** = **la plateforme OpenScience Hub** (le credential est stocké en base, pas dans une appli mobile) · **Verifier** = Public/Recruteur/Jury via une **page web** (`/verify/{code}`).
 - Le wallet mobile `e-IDapp` n'est **pas** utilisé dans ce produit (option roadmap). Conséquence : on n'attend **aucune acceptation d'offre par un holder externe** ; la plateforme est à la fois émettrice (via le DID institutionnel d'e-IDStack) et conservatrice de la preuve.
-- Toute la logique d'appel est encapsulée dans `ssi/eidstack_client.py` (timeouts, retries, mode `mock`, gestion `SSI_PENDING`).
+- Toute la logique d'appel est encapsulée dans `backend/apps/ssi/client.py` (timeouts, mode live/mock, gestion `SSI_PENDING`).
 - Vocabulaire : on dit toujours **« e-IDStack de IDS »** (jamais « eidStack-CMU »/« CMU ») dans le produit et l'API publique.
 
 ## 2. Service e-IDStack (rappel technique)
@@ -21,30 +21,49 @@
   - **Mode `mock` (MVP)** : la plateforme produit une **attestation signée par le DID institutionnel** (claims + hash) conservée en base, vérifiable côté serveur. Même interface, même page `/verify`.
 - Dans les deux cas, la **vérification reste web** (QR → `/verify/{code}`), sans wallet.
 
-### 2.1 Endpoints e-IDStack utilisés (réels)
+### 2.1 Endpoints e-IDStack utilisés par OpenScience Hub
 
 | Domaine | Méthode + chemin | Usage |
 |---|---|---|
-| Agent | `POST /credo-agent/initAgent` | Initialiser l'agent |
-| Agent | `GET /credo-agent/getIssuerDid` | Récupérer le DID issuer |
-| Agent | `GET /credo-agent/did` | DID de l'agent |
-| Agent | `GET /credo-agent/getAgent` | Statut (sanitisé) |
-| Connexion | `POST /connection/createInvitation` | Invitation de connexion OOB |
-| Schémas | `POST /issuance/schemas` · `GET /issuance/schemas` · `GET /issuance/listSchemas` | Gérer les schémas |
-| Cred. def. | `POST /issuance/credential-definitions` · `GET /issuance/credential-definitions` | Gérer les definitions |
-| Émission | `POST /issuance/offer` | Offrir un credential (OOB) |
-| Émission | `GET /issuance/offerStatus?...` | Statut de l'offre |
-| Vérif. | `POST /verification/createProofRequest` | Créer une demande de preuve |
-| Vérif. | `GET /verification/proofStatus?proofRecordId=...` | Statut de la preuve |
-| URL courte | `POST /short-url/create` · `GET /short-url/s/:code` | Lien court / QR |
-| Email | `POST /email/send-invite-url` | Envoyer l'invitation par email |
+| Bootstrap OpenScience | `POST /openscience/bootstrap` | Initialiser l'agent, obtenir le DID issuer, créer ou retrouver le schema et la credential definition |
+| Credential custodian | `POST /openscience/credentials` | Enregistrer/émettre côté e-IDStack un credential custodian sans wallet externe |
+| Statut credential | `GET /openscience/credentials/{credentialId}/status` | Vérifier le statut du credential custodian |
+| Agent bas niveau | `POST /credo-agent/initAgent` · `GET /credo-agent/getIssuerDid` | Utilisés par `/openscience/bootstrap` |
+| Schémas/cred-def bas niveau | `POST /issuance/schemas` · `POST /issuance/credential-definitions` | Utilisés par `/openscience/bootstrap` |
 
-### 2.2 Payload d'émission (`POST /issuance/offer`)
+### 2.2 Payload bootstrap (`POST /openscience/bootstrap`)
+
+```json
+{
+  "walletId": "openscience-hub-issuer-local",
+  "walletKey": "<secret>",
+  "endpoint": "http://localhost:3021",
+  "label": "OpenScienceHub IDS Local",
+  "seed": "<32 chars>",
+  "schemaName": "ScientificWorkArchiveCredential",
+  "schemaVersion": "1.0",
+  "credentialDefinitionTag": "openscience-hub-archive-v1"
+}
+```
+
+Réponse :
+
+```json
+{
+  "success": true,
+  "data": {
+    "issuerDid": "did:indy:bcovrin:test:...",
+    "schemaId": ".../SCHEMA/ScientificWorkArchiveCredential/1.0",
+    "credentialDefinitionId": ".../CLAIM_DEF/..."
+  }
+}
+```
+
+### 2.3 Payload d'émission custodian (`POST /openscience/credentials`)
 
 ```json
 {
   "credentialDefinitionId": "<cred-def-id>",
-  "connectionId": "<optional>",
   "attributes": [
     { "name": "workId", "value": "OSH-UY1-INF-2026-0001" },
     { "name": "title", "value": "..." },
@@ -55,12 +74,12 @@
     { "name": "academicStatus", "value": "VALIDATED" },
     { "name": "issuedAt", "value": "2026-06-02" }
   ],
-  "comment": "AcademicWork archive credential"
+  "comment": "ScientificWorkArchiveCredential"
 }
 ```
 
 > Les `attributes` doivent correspondre au schema/cred-def configuré. Adapter selon la cred-def réellement créée dans e-IDStack.
-> Sans wallet, **`connectionId` est omis** (pas de holder externe à connecter) ; l'endpoint `POST /connection/createInvitation` n'est donc **pas utilisé** dans le flux nominal.
+> Sans wallet, **`connectionId` est omis** (pas de holder externe à connecter) ; `POST /connection/createInvitation` et `POST /issuance/offer` ne sont donc **pas utilisés** dans le flux nominal OpenScience Hub.
 
 ## 3. Credential `ScientificWorkArchiveCredential`
 
@@ -90,13 +109,11 @@ sequenceDiagram
     participant Registry as DID/Registry
 
     API->>API: ArchiveRecord cree + version finale verrouillee (hash)
-    API->>EID: GET /credo-agent/getIssuerDid
-    EID-->>API: issuerDid
-    API->>EID: POST /issuance/offer (credentialDefinitionId + attributes)
-    EID->>Registry: Resoudre DID / schema / cred-def
-    EID-->>API: offer cree (credentialId / offerId)
-    API->>EID: GET /issuance/offerStatus (polling)
-    EID-->>API: statut (offer-sent / done)
+    API->>EID: POST /openscience/bootstrap
+    EID->>Registry: DID + schema + cred-def si absents
+    EID-->>API: issuerDid + schemaId + credentialDefinitionId
+    API->>EID: POST /openscience/credentials (credentialDefinitionId + attributes)
+    EID-->>API: credentialId + statut done
     API->>API: Creer VerifiableCredential + VerificationProof
     API->>EID: POST /short-url/create (verificationUrl)
     EID-->>API: code court
@@ -111,9 +128,10 @@ def issue_proof_for_archive(archive_record):
     if not conn.is_active:
         return mark_pending(archive_record, reason="SSI_NOT_CONFIGURED")
     try:
-        issuer_did = client.get_issuer_did(conn)
+        bootstrap = client.bootstrap_openscience()
+        issuer_did = bootstrap["issuerDid"]
         attrs = build_attributes(archive_record)         # claims = hash final, etc.
-        offer = client.offer_credential(conn, attrs)     # POST /issuance/offer
+        offer = client.offer_credential(attrs)           # POST /openscience/credentials
         vc = persist_verifiable_credential(offer, issuer_did)
         proof = create_verification_proof(archive_record, vc)  # document_hash == version finale
         proof.verification_url = build_verify_url(proof.proof_code)
@@ -136,7 +154,7 @@ sequenceDiagram
     Verifier->>API: GET /verify/{proof_code}
     API->>API: Charger VerificationProof + ArchiveRecord
     API->>API: Comparer hash document final
-    API->>EID: Verifier statut/preuve du VC
+    API->>EID: GET /openscience/credentials/{credentialId}/status
     EID-->>API: resultat (valide / revoque / ...)
     API->>API: Creer VerificationCheck
     API-->>Verifier: VALID / INVALID_HASH / NOT_FOUND / REVOKED / EXPIRED + metadonnees publiques
@@ -162,21 +180,26 @@ Politique institutionnelle : soit **bloquer l'archivage** tant que la preuve éc
 Modèle `EidStackConnection` (voir [DATA_MODEL.md](DATA_MODEL.md)). Variables d'environnement backend :
 
 ```text
-EIDSTACK_BASE_URL=http://localhost:3000
+EIDSTACK_BASE_URL=http://ids:4000
 EIDSTACK_API_KEY=...            # jamais renvoyé par l'API
 EIDSTACK_ENVIRONMENT=TEST       # TEST | STAGING | PRODUCTION
-EIDSTACK_CREDENTIAL_DEFINITION_ID=...
-SSI_MODE=mock                   # mock | live  (mock = démo hors-ligne)
+EIDSTACK_WALLET_ID=openscience-hub-issuer-local
+EIDSTACK_WALLET_KEY=...
+EIDSTACK_AGENT_ENDPOINT=http://localhost:3021
+EIDSTACK_AGENT_LABEL=OpenScienceHub IDS Local
+EIDSTACK_AGENT_SEED=00000000000000000000000000000001
+EIDSTACK_CREDENTIAL_DEFINITION_ID= # optionnel, sinon bootstrap auto
+SSI_MODE=live
 ```
 
 Règles de sécurité : clés/API tokens jamais exposés ; toute modification de config SSI est **auditée** ; tests de connexion (`getAgent` / `getIssuerDid`) avant passage en `PRODUCTION`.
 
-## 8. Mode `mock` (démo hackathon)
+## 8. Mode `mock` (tests hors-ligne uniquement)
 
 Si `SSI_MODE=mock` ou e-IDStack indisponible, le client renvoie des réponses simulées **derrière la même interface** :
 - `issue_proof_for_archive` crée un `VerifiableCredential` factice + `VerificationProof` réel (avec vrai hash).
 - `/verify/{code}` valide localement le hash et renvoie `VALID` (en marquant la preuve comme simulée).
-- Le passage en mode `live` ne change pas l'API publique.
+- Le compose principal utilise `SSI_MODE=live`. Le mock ne doit pas être utilisé pour une validation complète IDS.
 
 ## 9. Checklist d'intégration
 

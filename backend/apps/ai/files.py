@@ -14,10 +14,12 @@ def build_document_file_url(version, request=None) -> str | None:
 
     if file_url.startswith(("http://", "https://")):
         return file_url
+
+    base_url = getattr(settings, "BACKEND_PUBLIC_BASE_URL", "").rstrip("/")
+    if base_url:
+        return urljoin(f"{base_url}/", file_url.lstrip("/"))
+
     if request is not None:
         return request.build_absolute_uri(file_url)
 
-    base_url = getattr(settings, "BACKEND_PUBLIC_BASE_URL", "").rstrip("/")
-    if not base_url:
-        return file_url
-    return urljoin(f"{base_url}/", file_url.lstrip("/"))
+    return file_url

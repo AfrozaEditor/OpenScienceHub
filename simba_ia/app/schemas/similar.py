@@ -16,7 +16,7 @@ class SimilarResult(BaseModel):
     work_id: UUID | None = None
     title: str | None = None
     type: str | None = None
-    year: int | None = None
+    year: str | int | None = None
     score: float = 0.0
     motifs: list[str] = Field(default_factory=list)
 

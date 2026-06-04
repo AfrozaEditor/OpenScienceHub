@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { askar } from '@openwallet-foundation/askar-nodejs';
 import axios from 'axios';
 import type { Agent as CredoAgent, InitConfig } from '@credo-ts/core';
 
@@ -44,7 +45,6 @@ export class CredoAgentService {
       askarModule,
       indyVdrModule,
       anoncredsModule,
-      askarNode,
       indyVdrNode,
       anoncredsNode,
     ] = await Promise.all([
@@ -54,7 +54,6 @@ export class CredoAgentService {
       import('@credo-ts/askar'),
       import('@credo-ts/indy-vdr'),
       import('@credo-ts/anoncreds'),
-      import('@openwallet-foundation/askar-nodejs'),
       import('@hyperledger/indy-vdr-nodejs'),
       import('@hyperledger/anoncreds-nodejs'),
     ]);
@@ -85,7 +84,9 @@ export class CredoAgentService {
 
     const config: InitConfig = {
       logger: new ConsoleLogger(LogLevel.Info),
-      allowInsecureHttpUrls: process.env.NODE_ENV !== 'production',
+      allowInsecureHttpUrls:
+        process.env.NODE_ENV !== 'production' ||
+        process.env.CREDO_ALLOW_INSECURE_HTTP === 'true',
       autoUpdateStorageOnStartup: true,
     };
 
@@ -94,12 +95,11 @@ export class CredoAgentService {
       resolvers: [new IndyVdrIndyDidResolver()],
     });
 
-    // Build agent
-    const agent = new Agent({
-      config,
-      dependencies: agentDependencies,
-      modules: {
-        indyVdr: new IndyVdrModule({
+    const disableDidComm =
+      process.env.OPENSCIENCE_DISABLE_DIDCOMM === 'true';
+
+    const modules: Record<string, any> = {
+      indyVdr: new IndyVdrModule({
           indyVdr: indyVdrNode.indyVdr,
           networks: [
             {
@@ -111,19 +111,21 @@ export class CredoAgentService {
           ],
         }),
 
-        anoncreds: new AnonCredsModule({
+      anoncreds: new AnonCredsModule({
           registries: [new IndyVdrAnonCredsRegistry()],
           anoncreds: anoncredsNode.anoncreds,
         }),
 
-        askar: new AskarModule({
-          askar: askarNode.askar,
+      askar: new AskarModule({
+          askar,
           store: { id: walletId, key: walletKey },
         }),
 
-        dids: didsModule,
+      dids: didsModule,
+    };
 
-        didcomm: new DidCommModule({
+    if (!disableDidComm) {
+      modules.didcomm = new DidCommModule({
           endpoints: [endpoint],
           transports: {
             inbound: [
@@ -159,8 +161,14 @@ export class CredoAgentService {
               }),
             ],
           },
-        }),
-      },
+        });
+    }
+
+    // Build agent
+    const agent = new Agent({
+      config,
+      dependencies: agentDependencies,
+      modules,
     });
 
     await agent.initialize();
@@ -174,7 +182,9 @@ export class CredoAgentService {
     // ---------------------------------------------------------
     // AUTO MEDIATOR CONNECTION (NON-BLOCKING)
     // ---------------------------------------------------------
-    const mediator = await this.tryConnectToMediator(agent);
+    const mediator = disableDidComm
+      ? { connected: false, skipped: true, reason: 'DidComm disabled' }
+      : await this.tryConnectToMediator(agent);
 
     // Register events (single call)
     this.eventsService.registerEventHandlers(agent);
@@ -223,46 +233,65 @@ export class CredoAgentService {
       verkey?: string;
     }
     try {
+      const [{ TypedArrayEncoder, Kms }, { transformSeedToPrivateJwk }] =
+        await Promise.all([import('@credo-ts/core'), import('@credo-ts/askar')]);
+
+      const { privateJwk } = transformSeedToPrivateJwk({
+        type: { kty: 'OKP', crv: 'Ed25519' },
+        seed: TypedArrayEncoder.fromUtf8String(seed),
+      });
+      const publicJwk = Kms.publicJwkFromPrivateJwk(privateJwk);
+      if (publicJwk.kty !== 'OKP' || publicJwk.crv !== 'Ed25519') {
+        throw new Error('BCovrin DID registration requires an Ed25519 seed key.');
+      }
+
+      const publicKeyBytes = TypedArrayEncoder.fromBase64Url(publicJwk.x);
+      const localDid = TypedArrayEncoder.toBase58(publicKeyBytes.slice(0, 16));
+      const localVerkey = TypedArrayEncoder.toBase58(publicKeyBytes);
+      const issuerDid = `did:indy:bcovrin:test:${localDid}`;
+      privateJwk.kid = `${issuerDid}#verkey`;
+
+      let keyId = privateJwk.kid;
+      try {
+        const importedKey = await agent.kms.importKey({ privateJwk });
+        keyId = importedKey.keyId;
+      } catch (err: any) {
+        const message = err?.message ?? String(err);
+        if (!message.toLowerCase().includes('exists')) {
+          throw err;
+        }
+      }
+
       const response = await axios.post<BcovrinResponse>(
         process.env.BCOVRIN_TESTNET_URL,
         {
           role: 'ENDORSER',
           alias: 'eID-Backend-Agent', //agent.config.label,
-          seed,
+          did: localDid,
+          verkey: localVerkey,
         },
       );
 
       if (response.data && response.data.did) {
+        if (response.data.did !== localDid) {
+          throw new Error(
+            `BCovrin registered DID ${response.data.did}, expected ${localDid}`,
+          );
+        }
+
         console.log(
           '✅ Credo Agent DID registered on BCovrin:',
           response.data.did,
         );
 
-        const [{ TypedArrayEncoder }, { transformSeedToPrivateJwk }] =
-          await Promise.all([
-            import('@credo-ts/core'),
-            import('@credo-ts/askar'),
-          ]);
-        const issuerDid = `did:indy:bcovrin:test:${response.data.did}`;
-        const didDocument = await agent.dids.resolveDidDocument(issuerDid);
-        const verificationMethodId = didDocument.verificationMethod?.[0]?.id;
-        const didDocumentRelativeKeyId = verificationMethodId
-          ? verificationMethodId.replace(issuerDid, '')
-          : '#key-1';
-        const { privateJwk } = transformSeedToPrivateJwk({
-          type: { kty: 'OKP', crv: 'Ed25519' },
-          seed: TypedArrayEncoder.fromUtf8String(seed),
-        });
-        const { keyId } = await agent.kms.importKey({ privateJwk });
-
-        // Import the DID into the wallet and link its DID Document key to the KMS key.
+        // Link the deterministic BCovrin seed key to the did:indy #verkey.
         await agent.dids.import({
           did: issuerDid,
           overwrite: true,
           keys: [
             {
               kmsKeyId: keyId,
-              didDocumentRelativeKeyId,
+              didDocumentRelativeKeyId: '#verkey',
             },
           ],
         });

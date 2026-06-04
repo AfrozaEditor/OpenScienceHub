@@ -39,6 +39,7 @@ export async function handleController(fn: () => Promise<any>) {
   try {
     return await fn();
   } catch (err) {
+    console.error('Controller error:', getErrorMessage(err), err);
     if (err instanceof HttpException) throw err;
     if (isDuplicateKeyError(err)) {
       throw new ConflictException({

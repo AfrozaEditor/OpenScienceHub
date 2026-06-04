@@ -7,6 +7,7 @@ import { VerificationModule } from './verification/verification.module';
 import { ShortUrlModule } from './short-url/short-url.module';
 import { CleanupModule } from './cleanup/cleanup.module';
 import { EmailModule } from './email/email.module';
+import { OpenScienceModule } from './openscience/openscience.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { EmailModule } from './email/email.module';
     PrismaModule,
     CleanupModule,
     EmailModule, // optional for now, but can be used for email notifications in the future
+    OpenScienceModule,
   ],
 })
 export class AppModule {}

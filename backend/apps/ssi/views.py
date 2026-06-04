@@ -34,6 +34,7 @@ class WorkProofView(views.APIView):
         if not proof:
             return Response({"detail": "Preuve non disponible.", "proof_status": "NONE"})
         return Response({
+            "id": str(proof.id),
             "proof_code": proof.proof_code,
             "document_hash": proof.document_hash,
             "verification_url": proof.verification_url,
@@ -120,7 +121,11 @@ class SsiTestConnectionView(views.APIView):
         inst_id = request.data.get("institution")
         conn = EidStackConnection.objects.filter(institution_id=inst_id).first() if inst_id else None
         try:
-            did = client.get_issuer_did()
+            if client.mode == "live":
+                bootstrap = client.bootstrap_openscience()
+                did = bootstrap.get("issuerDid")
+            else:
+                did = client.get_issuer_did()
             status_value = ConnectionStatus.CONNECTED
             ok = True
         except EidStackError:

@@ -162,7 +162,7 @@ def test_live_similar_returns_other_public_work(client, auth_headers):
                 "author": "Autre Auteur",
                 "type": "MEMOIRE",
                 "department": "Informatique",
-                "year": 2025,
+                "year": "2025-2026",
                 "keywords": ["document", "preuve"],
             },
         ),
@@ -182,4 +182,5 @@ def test_live_similar_returns_other_public_work(client, auth_headers):
     results = resp.json()["results"]
     assert results
     assert all(result["work_id"] != WORK for result in results)
+    assert results[0]["year"] == "2025-2026"
     assert 0.0 <= results[0]["score"] <= 1.0

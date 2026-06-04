@@ -117,7 +117,7 @@ Facettes : `type, institution, faculty, department, program, scientificDomain, a
 | Méthode | Endpoint | Auth | Description |
 |---|---|---|---|
 | GET | `/verify/{proofCode}` | public | Vérifier (hash + statut dossier + statut VC) → `VALID/INVALID_HASH/NOT_FOUND/REVOKED/EXPIRED` |
-| GET | `/works/{id}/proof` | user | Preuve du dossier (QR, verificationUrl, statut) |
+| GET | `/works/{id}/proof` | user | Preuve du dossier (`id`, QR, verificationUrl, statut) |
 | POST | `/ssi/proofs/{id}/revoke` | admin | Révoquer une preuve (justifié, audité) |
 | POST | `/ssi/proofs/{id}/reissue` | admin | Réémettre (nouvelle entrée) |
 | GET | `/admin/ssi/connection` | admin SSI | Config e-IDStack (sans secrets) |

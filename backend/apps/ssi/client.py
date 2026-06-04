@@ -42,6 +42,65 @@ class EidStackClient:
         except requests.RequestException as exc:  # pragma: no cover
             raise EidStackError(str(exc)) from exc
 
+    def bootstrap_openscience(self) -> dict:
+        if self.is_mock:
+            return {
+                "issuerDid": self.get_issuer_did(),
+                "schemaId": "mock-schema-scientific-work-archive",
+                "credentialDefinitionId": "mock-cred-def-scientific-work-archive",
+                "mock": True,
+            }
+        payload = {
+            "walletId": getattr(settings, "EIDSTACK_WALLET_ID", "openscience-hub-issuer-local"),
+            "walletKey": getattr(settings, "EIDSTACK_WALLET_KEY", "openscience-hub-wallet-key"),
+            "endpoint": getattr(settings, "EIDSTACK_AGENT_ENDPOINT", "http://localhost:3021"),
+            "label": getattr(settings, "EIDSTACK_AGENT_LABEL", "OpenScienceHub IDS Local"),
+            "seed": getattr(settings, "EIDSTACK_AGENT_SEED", "00000000000000000000000000000001"),
+        }
+        try:
+            r = requests.post(
+                f"{self.base_url}/openscience/bootstrap",
+                json=payload,
+                headers=self._headers(),
+                timeout=max(self.timeout, 90),
+            )
+            r.raise_for_status()
+            return self._unwrap(r.json())
+        except requests.RequestException as exc:
+            raise EidStackError(str(exc)) from exc
+
+    def issue_openscience_credential(
+        self,
+        *,
+        credential_definition_id: str,
+        attributes: list[dict],
+        comment: str = "",
+    ) -> dict:
+        if self.is_mock:
+            return {
+                "credentialId": f"OSH-VC-{uuid.uuid4().hex[:12]}",
+                "issuerDid": self.get_issuer_did(),
+                "credentialDefinitionId": credential_definition_id,
+                "state": "done",
+                "credentialAttributes": attributes,
+                "mock": True,
+            }
+        try:
+            r = requests.post(
+                f"{self.base_url}/openscience/credentials",
+                json={
+                    "credentialDefinitionId": credential_definition_id,
+                    "attributes": attributes,
+                    "comment": comment,
+                },
+                headers=self._headers(),
+                timeout=self.timeout,
+            )
+            r.raise_for_status()
+            return self._unwrap(r.json())
+        except requests.RequestException as exc:
+            raise EidStackError(str(exc)) from exc
+
     def offer_credential(self, attributes: list[dict], comment: str = "") -> dict:
         """Émet/prépare un credential. En mock : credential factice cohérent."""
         if self.is_mock:
@@ -51,37 +110,38 @@ class EidStackClient:
                 "attributes": attributes,
                 "mock": True,
             }
-        try:
-            payload = {
-                "credentialDefinitionId": getattr(settings, "EIDSTACK_CREDENTIAL_DEFINITION_ID", ""),
-                "connectionId": getattr(settings, "EIDSTACK_CONNECTION_ID", ""),
-                "attributes": attributes,
-                "comment": comment,
-            }
-            r = requests.post(f"{self.base_url}/issuance/offer", json=payload, headers=self._headers(), timeout=self.timeout)
-            r.raise_for_status()
-            data = self._unwrap(r.json())
-            credential_id = data.get("credentialId") or data.get("credentialExchangeId")
-            return {
-                "credentialId": credential_id,
-                "issuerDid": data.get("issuerDid") or self.get_issuer_did(),
-                "attributes": data.get("credentialAttributes") or attributes,
-                "raw": data,
-            }
-        except requests.RequestException as exc:
-            raise EidStackError(str(exc)) from exc
+
+        bootstrap = self.bootstrap_openscience()
+        credential_definition_id = (
+            getattr(settings, "EIDSTACK_CREDENTIAL_DEFINITION_ID", "")
+            or bootstrap.get("credentialDefinitionId")
+        )
+        data = self.issue_openscience_credential(
+            credential_definition_id=credential_definition_id,
+            attributes=attributes,
+            comment=comment,
+        )
+        return {
+            "credentialId": data.get("credentialId"),
+            "issuerDid": data.get("issuerDid") or bootstrap.get("issuerDid") or self.get_issuer_did(),
+            "credentialDefinitionId": data.get("credentialDefinitionId") or credential_definition_id,
+            "attributes": data.get("credentialAttributes") or attributes,
+            "state": data.get("state"),
+            "raw": data,
+        }
 
     def verify_credential(self, credential_id: str) -> dict:
         if self.is_mock:
             return {"credentialId": credential_id, "status": "ACTIVE", "valid": True, "mock": True}
         try:
             r = requests.get(
-                f"{self.base_url}/issuance/offerStatus",
-                params={"credentialExchangeId": credential_id}, headers=self._headers(), timeout=self.timeout,
+                f"{self.base_url}/openscience/credentials/{credential_id}/status",
+                headers=self._headers(),
+                timeout=self.timeout,
             )
             r.raise_for_status()
             data = self._unwrap(r.json())
-            state = data.get("state") if isinstance(data, dict) else str(data)
+            state = data.get("status") or data.get("state") if isinstance(data, dict) else str(data)
             invalid_states = {"not-found", "abandoned", "problem-report"}
             return {
                 "credentialId": credential_id,
