@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -23,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/empty-state";
 import { getDossier } from "@/lib/mock-data";
+import { getWorkProof, useApiResource } from "@/lib/api";
 
 const QR_SIZE = 25;
 
@@ -85,7 +88,28 @@ function buildQr(seed: string, size = QR_SIZE): boolean[][] {
 export default function PreuvePage() {
   const params = useParams<{ id: string }>();
   const dossier = getDossier(params.id);
-  const proof = dossier?.proof;
+  const liveProof = useApiResource(() => getWorkProof(params.id), [params.id], null);
+  const proof = liveProof.data
+    ? {
+        reference: liveProof.data.proof_code || liveProof.data.id || params.id,
+        status:
+          liveProof.data.status === "REVOKED"
+            ? "Révoquée"
+            : liveProof.data.status === "PENDING"
+              ? "En attente"
+              : "Vérifiée",
+        documentHash: liveProof.data.document_hash || "—",
+        algorithm: "SHA-256",
+        issuedAt: liveProof.data.issued_at || new Date().toISOString(),
+        schema: "OpenScienceProof",
+        credentialId: liveProof.data.id || liveProof.data.proof_code || params.id,
+        issuerDid: "e-IDStack de IDS",
+        holderDid: "OpenScience Hub",
+        registry: "SSI / backend",
+        anchor: liveProof.data.verification_url || liveProof.data.proof_code || "—",
+      }
+    : dossier?.proof;
+  const qrCodeUrl = liveProof.data?.qr_code_url;
 
   const [copied, setCopied] = React.useState<string | null>(null);
 
@@ -94,7 +118,7 @@ export default function PreuvePage() {
     [proof]
   );
 
-  if (!dossier || !proof) {
+  if ((!dossier && !liveProof.data) || (!proof && !liveProof.loading)) {
     return (
       <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
         <EmptyState
@@ -109,6 +133,18 @@ export default function PreuvePage() {
               </Link>
             </Button>
           }
+        />
+      </div>
+    );
+  }
+
+  if (!proof) {
+    return (
+      <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+        <EmptyState
+          icon={ShieldCheck}
+          title="Chargement de la preuve"
+          description="Récupération de la preuve d'authenticité depuis le backend."
         />
       </div>
     );
@@ -149,7 +185,7 @@ export default function PreuvePage() {
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       <Button variant="ghost" size="sm" asChild className="mb-4 -ml-2">
-        <Link href={`/deposant/dossier/${dossier.id}`}>
+        <Link href={`/deposant/dossier/${dossier?.id || params.id}`}>
           <ArrowLeft className="size-4" />
           Retour au dossier
         </Link>
@@ -170,7 +206,7 @@ export default function PreuvePage() {
                 {proof.reference}
               </h1>
               <p className="truncate text-sm text-muted-foreground">
-                {dossier.title}
+                {dossier?.title || "Dossier archivé"}
               </p>
             </div>
           </div>
@@ -262,22 +298,30 @@ export default function PreuvePage() {
             <Card className="gap-0 py-5">
               <CardContent className="flex flex-col items-center gap-3 text-center">
                 <div className="aspect-square w-full max-w-[190px] rounded-xl bg-white p-3 ring-1 ring-border">
-                  <div
-                    className="grid size-full"
-                    style={{
-                      gridTemplateColumns: `repeat(${QR_SIZE}, minmax(0,1fr))`,
-                      gridTemplateRows: `repeat(${QR_SIZE}, minmax(0,1fr))`,
-                    }}
-                  >
-                    {matrix.map((row, r) =>
-                      row.map((on, c) => (
-                        <div
-                          key={`${r}-${c}`}
-                          className={on ? "bg-brand" : "bg-transparent"}
-                        />
-                      ))
-                    )}
-                  </div>
+                  {qrCodeUrl ? (
+                    <img
+                      src={qrCodeUrl}
+                      alt={`QR code de vérification ${proof.reference}`}
+                      className="size-full rounded-lg object-contain"
+                    />
+                  ) : (
+                    <div
+                      className="grid size-full"
+                      style={{
+                        gridTemplateColumns: `repeat(${QR_SIZE}, minmax(0,1fr))`,
+                        gridTemplateRows: `repeat(${QR_SIZE}, minmax(0,1fr))`,
+                      }}
+                    >
+                      {matrix.map((row, r) =>
+                        row.map((on, c) => (
+                          <div
+                            key={`${r}-${c}`}
+                            className={on ? "bg-brand" : "bg-transparent"}
+                          />
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">
@@ -324,7 +368,7 @@ export default function PreuvePage() {
                   Copier le lien de vérification
                 </Button>
                 <Button variant="ghost" asChild>
-                  <Link href={`/deposant/dossier/${dossier.id}`}>
+                  <Link href={`/deposant/dossier/${dossier?.id || params.id}`}>
                     <FileText className="size-4" />
                     Voir le dossier
                   </Link>

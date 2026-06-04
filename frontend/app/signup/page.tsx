@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/auth-provider";
+import { messageForApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,11 +79,14 @@ function passwordStrength(pwd: string) {
 }
 
 export default function SignupPage() {
+  const { register } = useAuth();
   const [form, setForm] = React.useState<FormState>(emptyForm);
   const [errors, setErrors] = React.useState<FieldErrors>({});
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirm, setShowConfirm] = React.useState(false);
   const [submitted, setSubmitted] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
+  const [apiError, setApiError] = React.useState<string | null>(null);
 
   const faculties = facets.faculties;
   const strength = passwordStrength(form.password);
@@ -109,12 +114,26 @@ export default function SignupPage() {
     return next;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const found = validate(form);
     setErrors(found);
+    setApiError(null);
     if (Object.keys(found).length === 0) {
-      setSubmitted(true);
+      setSubmitting(true);
+      try {
+        await register({
+          email: form.email,
+          full_name: `${form.firstName.trim()} ${form.lastName.trim()}`.trim(),
+          password: form.password,
+          preferred_language: "fr",
+        });
+        setSubmitted(true);
+      } catch (err) {
+        setApiError(messageForApiError(err));
+      } finally {
+        setSubmitting(false);
+      }
     }
   }
 
@@ -436,9 +455,21 @@ export default function SignupPage() {
                   )}
                 </div>
 
-                <Button type="submit" size="lg" className="mt-1 w-full">
-                  Créer mon compte
-                  <ArrowRight className="size-4" />
+                {apiError && (
+                  <p className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                    {apiError}
+                  </p>
+                )}
+
+                <Button type="submit" size="lg" className="mt-1 w-full" disabled={submitting}>
+                  {submitting ? (
+                    "Création du compte..."
+                  ) : (
+                    <>
+                      Créer mon compte
+                      <ArrowRight className="size-4" />
+                    </>
+                  )}
                 </Button>
               </form>
 

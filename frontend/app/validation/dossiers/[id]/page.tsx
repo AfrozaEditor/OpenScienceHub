@@ -38,7 +38,6 @@ import { Select } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { PortalModal } from "@/components/validation/portal-modal";
-import { ValidationPageHeader } from "@/components/validation/validation-page-header";
 import {
   archiveChecklist,
   buildAiAnalysis,
@@ -52,6 +51,7 @@ import {
   seedReviews,
   validationAccount,
   type Correction,
+  type Dossier,
   type DossierState,
   type EventType,
   type FieldStatus,
@@ -60,6 +60,19 @@ import {
   type Review,
   type WorkflowEvent,
 } from "@/lib/validation-data";
+import { useAuth } from "@/components/auth-provider";
+import {
+  addCorrection as apiAddCorrection,
+  addReview as apiAddReview,
+  archiveWork,
+  assignWork,
+  decideWork,
+  getWork,
+  messageForApiError,
+  useApiResource,
+  validateWorkMetadata,
+  workToScientificDocument,
+} from "@/lib/api";
 
 /* ------------------------------ variant maps ----------------------------- */
 
@@ -133,8 +146,37 @@ function DetailInner() {
   const params = useParams();
   const search = useSearchParams();
   const id = String(params.id ?? "");
-  const dossier = getDossier(id);
-  const doc = dossier ? getDossierWork(dossier) : undefined;
+  const { user } = useAuth();
+  const liveWork = useApiResource(() => getWork(id), [id], null);
+  const liveDoc = liveWork.data ? workToScientificDocument(liveWork.data) : undefined;
+  const mockDossier = getDossier(id);
+  const liveDossier = React.useMemo<Dossier | undefined>(() => {
+    if (!liveWork.data) return undefined;
+    const submitted = liveWork.data.submitted_at ? new Date(liveWork.data.submitted_at) : null;
+    const ageDays = submitted
+      ? Math.max(0, Math.floor((Date.now() - submitted.getTime()) / 86_400_000))
+      : 0;
+    const state: DossierState =
+      liveWork.data.status === "REJECTED"
+        ? "Rejeté"
+        : ["VALIDATED", "ARCHIVED"].includes(liveWork.data.status)
+          ? "Validé"
+          : liveWork.data.status === "CORRECTION_REQUESTED"
+            ? "En correction"
+            : "À traiter";
+    return {
+      id: liveWork.data.id,
+      workSlug: liveWork.data.id,
+      priority: ageDays > 3 ? "Haute" : "Normale",
+      state,
+      assignee: null,
+      slaDays: 7,
+      ageDays,
+      versionHash: liveWork.data.reference_code || liveWork.data.id.slice(0, 12),
+    };
+  }, [liveWork.data]);
+  const dossier = mockDossier || liveDossier;
+  const doc = mockDossier ? getDossierWork(mockDossier) : liveDoc;
 
   const initialTab =
     TAB_KEYS.includes(search.get("tab") ?? "") ? (search.get("tab") as string) : "document";
@@ -188,6 +230,16 @@ function DetailInner() {
     if (flashTimer.current) clearTimeout(flashTimer.current);
   }, []);
 
+  if (!dossier && liveWork.loading) {
+    return (
+      <Card className="mx-auto max-w-md text-center">
+        <CardContent className="py-10">
+          <p className="text-sm text-muted-foreground">Chargement du dossier...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!dossier || !doc) {
     return (
       <Card className="mx-auto max-w-md text-center">
@@ -211,6 +263,7 @@ function DetailInner() {
 
   const metaRows = buildMetadataRows(doc);
   const ai = buildAiAnalysis(doc);
+  const docFileSize = "fileSize" in doc ? String(doc.fileSize) : "3,2 Mo";
   const mine = assignee === validationAccount.name;
   const stageIndex =
     state === "À traiter"
@@ -229,22 +282,59 @@ function DetailInner() {
     ]);
   }
 
-  function assignToMe() {
+  async function assignToMe() {
+    if (liveWork.data && user?.id) {
+      try {
+        await assignWork(liveWork.data.id, {
+          assignment_type: "PEER_REVIEW",
+          assignee: user.id,
+          status: "IN_PROGRESS",
+        });
+      } catch (err) {
+        notify(messageForApiError(err));
+        return;
+      }
+    }
     setAssignee(validationAccount.name);
     setState((s) => (s === "À traiter" ? "En cours" : s));
     pushEvent(`Dossier affecté à ${validationAccount.name}`, "assign");
     notify("Dossier assigné. Vous en êtes le validateur.");
   }
 
-  function validateMetadata() {
+  async function validateMetadata() {
+    if (liveWork.data) {
+      try {
+        await validateWorkMetadata(liveWork.data.id);
+      } catch (err) {
+        notify(messageForApiError(err));
+        return;
+      }
+    }
     setMetaValidated(true);
     pushEvent("Métadonnées validées par l'institution", "review");
     notify("Métadonnées validées et figées.");
   }
 
-  function submitReview(e: React.FormEvent) {
+  async function submitReview(e: React.FormEvent) {
     e.preventDefault();
     if (!revComment.trim()) return;
+    if (liveWork.data) {
+      try {
+        await apiAddReview(liveWork.data.id, {
+          comment: revComment.trim(),
+          recommendation:
+            revRecommendation === "Rejeter"
+              ? "REJECT"
+              : revRecommendation === "Accepter avec corrections"
+                ? "MINOR_CORRECTION"
+                : "ACCEPT",
+          conformity_score: 90,
+        });
+      } catch (err) {
+        notify(messageForApiError(err));
+        return;
+      }
+    }
     const review: Review = {
       id: `rev-${Date.now()}`,
       reviewer: validationAccount.name,
@@ -258,9 +348,21 @@ function DetailInner() {
     notify("Avis enregistré.");
   }
 
-  function addCorrection(e: React.FormEvent) {
+  async function addCorrection(e: React.FormEvent) {
     e.preventDefault();
     if (!corrRequest.trim()) return;
+    if (liveWork.data) {
+      try {
+        await apiAddCorrection(liveWork.data.id, {
+          type: "METADATA",
+          message: `${corrField}: ${corrRequest.trim()}`,
+          priority: "NORMAL",
+        });
+      } catch (err) {
+        notify(messageForApiError(err));
+        return;
+      }
+    }
     const correction: Correction = {
       id: `cor-${Date.now()}`,
       field: corrField,
@@ -284,9 +386,20 @@ function DetailInner() {
     );
   }
 
-  function confirmDecision() {
+  async function confirmDecision() {
     if (!decisionChoice || !decisionChecks.every(Boolean)) return;
     const next: DossierState = decisionChoice === "Valider" ? "Validé" : "Rejeté";
+    if (liveWork.data) {
+      try {
+        await decideWork(liveWork.data.id, {
+          decision_type: decisionChoice === "Valider" ? "VALIDATE_AFTER_DEFENSE" : "REJECT",
+          comment: decisionComment,
+        });
+      } catch (err) {
+        notify(messageForApiError(err));
+        return;
+      }
+    }
     setState(next);
     pushEvent(
       `Décision : ${next === "Validé" ? "validé" : "rejeté"}`,
@@ -297,8 +410,16 @@ function DetailInner() {
     if (next === "Validé") setTab("archivage");
   }
 
-  function confirmArchive() {
+  async function confirmArchive() {
     if (!archiveChecks.every(Boolean)) return;
+    if (liveWork.data) {
+      try {
+        await archiveWork(liveWork.data.id);
+      } catch (err) {
+        notify(messageForApiError(err));
+        return;
+      }
+    }
     const p = { hash: randomHash(), at: new Date().toLocaleString("fr-FR") };
     setProof(p);
     pushEvent("Preuve d'intégrité émise et document publié", "archive");
@@ -495,7 +616,7 @@ function DetailInner() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Taille</span>
-                    <span className="font-medium text-foreground">{doc.fileSize ?? "3,2 Mo"}</span>
+                    <span className="font-medium text-foreground">{docFileSize}</span>
                   </div>
                   <Button variant="outline" size="sm" className="w-full">
                     <Download className="size-4" />

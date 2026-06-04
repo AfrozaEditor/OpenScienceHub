@@ -1,8 +1,36 @@
+import tempfile
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, override_settings
+from PIL import Image
 
 from apps.ssi.client import EidStackClient
+from apps.ssi.services import _generate_qr
+
+
+class BrandedQrGenerationTests(SimpleTestCase):
+    def test_generates_branded_qr_with_palette_and_center_icon(self):
+        with tempfile.TemporaryDirectory() as media_root:
+            with override_settings(MEDIA_ROOT=media_root, MEDIA_URL="/media/"):
+                qr_url = _generate_qr(
+                    "https://openscience.example/verify/OSH-VC-2026-TEST",
+                    "OSH-VC-2026-TEST",
+                )
+
+                self.assertEqual(qr_url, "/media/qrcodes/OSH-VC-2026-TEST.png")
+                qr_path = Path(media_root) / "qrcodes" / "OSH-VC-2026-TEST.png"
+                self.assertTrue(qr_path.exists())
+
+                image = Image.open(qr_path).convert("RGBA")
+                self.assertEqual(image.size, (860, 860))
+
+                pixels = set(image.getdata())
+                self.assertIn((11, 19, 43, 255), pixels)  # Primary QR modules.
+                self.assertIn((29, 78, 216, 255), pixels)  # Secondary border.
+
+                center = image.crop((343, 343, 517, 517))
+                self.assertGreater(len(set(center.getdata())), 20)
 
 
 @override_settings(

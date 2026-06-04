@@ -17,7 +17,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { depositor } from "@/lib/mock-data";
+import { useAuth } from "@/components/auth-provider";
 
 type NavItem = {
   label: string;
@@ -58,10 +58,23 @@ function sectionTitle(pathname: string) {
 function SidebarContent({
   pathname,
   onNavigate,
+  userName,
+  userRole,
+  onLogout,
 }: {
   pathname: string;
   onNavigate?: () => void;
+  userName: string;
+  userRole: string;
+  onLogout: () => void;
 }) {
+  const initials = userName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "OS";
+
   return (
     <div className="flex h-full flex-col">
       <Link
@@ -138,24 +151,27 @@ function SidebarContent({
       <div className="border-t border-sidebar-border p-3">
         <div className="flex items-center gap-3 rounded-lg px-2 py-2">
           <span className="grid size-9 shrink-0 place-items-center rounded-full bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
-            {depositor.initials}
+            {initials}
           </span>
           <div className="min-w-0 flex-1 leading-tight">
             <p className="truncate text-sm font-medium text-sidebar-foreground">
-              {depositor.name}
+              {userName}
             </p>
             <p className="truncate text-[11px] text-sidebar-foreground/55">
-              {depositor.role} · {depositor.faculty}
+              {userRole}
             </p>
           </div>
-          <Link
-            href="/login"
-            onClick={onNavigate}
+          <button
+            type="button"
+            onClick={() => {
+              onNavigate?.();
+              onLogout();
+            }}
             aria-label="Se déconnecter"
             className="grid size-8 shrink-0 place-items-center rounded-md text-sidebar-foreground/60 transition-colors hover:bg-white/5 hover:text-sidebar-foreground"
           >
             <LogOut className="size-4" />
-          </Link>
+          </button>
         </div>
       </div>
     </div>
@@ -165,12 +181,15 @@ function SidebarContent({
 export function DeposantShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const { user, logout } = useAuth();
+  const userName = user?.full_name || user?.email || "Utilisateur";
+  const userRole = user?.roles?.[0]?.label || user?.roles?.[0]?.role || "Espace déposant";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 bg-sidebar lg:block">
-        <SidebarContent pathname={pathname} />
+        <SidebarContent pathname={pathname} userName={userName} userRole={userRole} onLogout={logout} />
       </aside>
 
       {/* Mobile drawer */}
@@ -192,6 +211,9 @@ export function DeposantShell({ children }: { children: React.ReactNode }) {
             <SidebarContent
               pathname={pathname}
               onNavigate={() => setMobileOpen(false)}
+              userName={userName}
+              userRole={userRole}
+              onLogout={logout}
             />
           </aside>
         </div>

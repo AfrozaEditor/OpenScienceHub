@@ -26,6 +26,15 @@ import {
   type UserRole,
   type UserStatus,
 } from "@/lib/admin-data";
+import {
+  createAdminUser,
+  deleteAdminUser,
+  listAdminUsers,
+  messageForApiError,
+  updateAdminUser,
+  useApiResource,
+  type CurrentUser,
+} from "@/lib/api";
 
 type BadgeVariant =
   | "default"
@@ -72,6 +81,24 @@ function initialsOf(name: string) {
     .join("");
 }
 
+function listFrom<T>(data: { results: T[] } | T[]) {
+  return Array.isArray(data) ? data : data.results;
+}
+
+function apiUserToAdminUser(user: CurrentUser): AdminUser {
+  const role = user.is_superuser || user.is_staff ? "Administrateur" : "Déposant";
+  return {
+    id: user.id,
+    name: user.full_name || user.email,
+    email: user.email,
+    role,
+    structure: String(user.institution || "OpenScience Hub"),
+    status: user.status === "SUSPENDED" ? "Suspendu" : "Actif",
+    initials: initialsOf(user.full_name || user.email) || "OS",
+    lastActive: "—",
+  };
+}
+
 const emptyForm = {
   name: "",
   email: "",
@@ -81,6 +108,7 @@ const emptyForm = {
 };
 
 export default function AdminUsersPage() {
+  const liveUsers = useApiResource(() => listAdminUsers(), [], null);
   const [users, setUsers] = React.useState<AdminUser[]>(adminUsers);
   const [query, setQuery] = React.useState("");
   const [roleFilter, setRoleFilter] = React.useState<string>("all");
@@ -89,6 +117,11 @@ export default function AdminUsersPage() {
   const [showForm, setShowForm] = React.useState(false);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [form, setForm] = React.useState(emptyForm);
+  const [feedback, setFeedback] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (liveUsers.data) setUsers(listFrom(liveUsers.data).map(apiUserToAdminUser));
+  }, [liveUsers.data]);
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -126,11 +159,21 @@ export default function AdminUsersPage() {
     setShowForm(true);
   }
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim() || !form.email.trim()) return;
 
     if (editingId) {
+      try {
+        await updateAdminUser(editingId, {
+          full_name: form.name,
+          email: form.email,
+          status: form.status === "Suspendu" ? "SUSPENDED" : "ACTIVE",
+        });
+      } catch (err) {
+        setFeedback(messageForApiError(err));
+        return;
+      }
       setUsers((prev) =>
         prev.map((u) =>
           u.id === editingId
@@ -139,22 +182,37 @@ export default function AdminUsersPage() {
         )
       );
     } else {
-      setUsers((prev) => [
-        {
-          id: `u-${Date.now()}`,
-          ...form,
-          initials: initialsOf(form.name) || "??",
-          lastActive: "Jamais connecté",
-        },
-        ...prev,
-      ]);
+      try {
+        const created = await createAdminUser({
+          full_name: form.name,
+          email: form.email,
+          password: crypto.randomUUID(),
+          status: form.status === "Suspendu" ? "SUSPENDED" : "ACTIVE",
+        });
+        setUsers((prev) => [apiUserToAdminUser(created), ...prev]);
+      } catch (err) {
+        setFeedback(messageForApiError(err));
+        return;
+      }
+      setShowForm(false);
+      setEditingId(null);
+      setForm(emptyForm);
+      return;
     }
     setShowForm(false);
     setEditingId(null);
     setForm(emptyForm);
   }
 
-  function toggleStatus(id: string) {
+  async function toggleStatus(id: string) {
+    const user = users.find((u) => u.id === id);
+    const nextStatus = user?.status === "Suspendu" ? "ACTIVE" : "SUSPENDED";
+    try {
+      await updateAdminUser(id, { status: nextStatus });
+    } catch (err) {
+      setFeedback(messageForApiError(err));
+      return;
+    }
     setUsers((prev) =>
       prev.map((u) =>
         u.id === id
@@ -164,12 +222,18 @@ export default function AdminUsersPage() {
     );
   }
 
-  function remove(id: string) {
+  async function remove(id: string) {
     if (
       typeof window !== "undefined" &&
       !window.confirm("Supprimer définitivement cet utilisateur ?")
     )
       return;
+    try {
+      await deleteAdminUser(id);
+    } catch (err) {
+      setFeedback(messageForApiError(err));
+      return;
+    }
     setUsers((prev) => prev.filter((u) => u.id !== id));
   }
 
@@ -184,6 +248,12 @@ export default function AdminUsersPage() {
           Nouvel utilisateur
         </Button>
       </AdminPageHeader>
+
+      {feedback && (
+        <div className="mb-5 rounded-lg border border-warning/30 bg-warning/10 px-4 py-2.5 text-sm text-foreground">
+          {feedback}
+        </div>
+      )}
 
       {/* Résumé */}
       <div className="mb-5 flex flex-wrap items-center gap-2 text-sm">

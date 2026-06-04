@@ -13,6 +13,7 @@ env = environ.Env(
     DJANGO_DEBUG=(bool, False),
     DJANGO_ALLOWED_HOSTS=(list, ["localhost", "127.0.0.1"]),
     CORS_ALLOWED_ORIGINS=(list, ["http://localhost:5173"]),
+    CORS_ALLOWED_ORIGIN_REGEXES=(str, ""),
 )
 
 # Charge .env si present (dev local). En Docker, les variables sont injectees.
@@ -156,6 +157,12 @@ SPECTACULAR_SETTINGS = {
 
 # --- CORS -----------------------------------------------------------------
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
+_cors_allowed_origin_regexes = env("CORS_ALLOWED_ORIGIN_REGEXES").strip()
+CORS_ALLOWED_ORIGIN_REGEXES = (
+    [pattern.strip() for pattern in _cors_allowed_origin_regexes.split(";;") if pattern.strip()]
+    if _cors_allowed_origin_regexes
+    else []
+)
 
 # --- Integrations externes (clients) -------------------------------------
 SIMBA_IA_URL = env("SIMBA_IA_URL", default="http://localhost:8001")

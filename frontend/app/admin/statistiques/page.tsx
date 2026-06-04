@@ -24,6 +24,7 @@ import {
   platformStats,
 } from "@/lib/mock-data";
 import { roles } from "@/lib/admin-data";
+import { getAdminStats, useApiResource } from "@/lib/api";
 
 const fr = new Intl.NumberFormat("fr-FR");
 
@@ -66,7 +67,15 @@ function HBar({
 }
 
 export default function AdminStatsPage() {
+  const liveStats = useApiResource(() => getAdminStats(), [], null);
   const [feedback, setFeedback] = React.useState<string | null>(null);
+  const metric = (keys: string[], fallback: number) => {
+    for (const key of keys) {
+      const value = liveStats.data?.[key];
+      if (typeof value === "number") return value;
+    }
+    return fallback;
+  };
 
   React.useEffect(() => {
     if (!feedback) return;
@@ -114,7 +123,7 @@ export default function AdminStatsPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           label="Documents archivés"
-          value={fr.format(platformStats.documents)}
+          value={fr.format(metric(["documents_total", "archived_total", "works_total"], platformStats.documents))}
           icon={FileText}
           accent="primary"
           trend={{ value: "+18%" }}
@@ -122,7 +131,7 @@ export default function AdminStatsPage() {
         />
         <StatsCard
           label="Documents validés"
-          value={fr.format(adminStats.validated)}
+          value={fr.format(metric(["validated", "works_validated"], adminStats.validated))}
           icon={BadgeCheck}
           accent="success"
           trend={{ value: "+8%" }}
@@ -130,7 +139,7 @@ export default function AdminStatsPage() {
         />
         <StatsCard
           label="Téléchargements"
-          value={fr.format(platformStats.downloads)}
+          value={fr.format(metric(["downloads", "downloads_total"], platformStats.downloads))}
           icon={Download}
           accent="ai"
           trend={{ value: "+23%" }}
@@ -138,7 +147,7 @@ export default function AdminStatsPage() {
         />
         <StatsCard
           label="Auteurs"
-          value={fr.format(platformStats.authors)}
+          value={fr.format(metric(["authors", "active_authors", "users_total"], platformStats.authors))}
           icon={Users}
           accent="brand"
           trend={{ value: "+5%" }}

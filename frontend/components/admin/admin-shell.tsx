@@ -4,11 +4,12 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, ExternalLink, Menu, ShieldCheck, X } from "lucide-react";
+import { ArrowLeft, ExternalLink, LogOut, Menu, ShieldCheck, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { INSTITUTION } from "@/lib/mock-data";
-import { adminAccount, adminNav } from "@/lib/admin-data";
+import { adminNav } from "@/lib/admin-data";
+import { useAuth } from "@/components/auth-provider";
 
 function useActive() {
   const pathname = usePathname();
@@ -96,6 +97,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
+  const { user, logout } = useAuth();
+  const displayName = user?.full_name || user?.email || "Administrateur";
+  const initials =
+    displayName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") || "AD";
 
   React.useEffect(() => {
     setOpen(false);
@@ -171,16 +181,24 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             </Link>
             <div className="flex items-center gap-2.5 rounded-full border border-border bg-card py-1 pl-1 pr-3">
               <span className="flex size-8 items-center justify-center rounded-full bg-brand text-xs font-semibold text-brand-foreground">
-                {adminAccount.initials}
+                {initials}
               </span>
               <span className="hidden leading-tight sm:flex sm:flex-col">
                 <span className="text-xs font-semibold text-foreground">
-                  {adminAccount.name}
+                  {displayName}
                 </span>
                 <span className="text-[11px] text-muted-foreground">
-                  {adminAccount.role}
+                  Administration
                 </span>
               </span>
+              <button
+                type="button"
+                onClick={logout}
+                aria-label="Se déconnecter"
+                className="ml-1 grid size-7 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <LogOut className="size-3.5" />
+              </button>
             </div>
           </div>
         </header>

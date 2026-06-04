@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -25,6 +28,7 @@ import {
   type DossierState,
   type Priority,
 } from "@/lib/validation-data";
+import { getValidationInbox, useApiResource, workToScientificDocument } from "@/lib/api";
 
 const priorityVariant: Record<Priority, "destructive" | "default" | "secondary"> = {
   Haute: "destructive",
@@ -70,16 +74,46 @@ const stats = [
 ];
 
 export default function ValidationDashboardPage() {
-  const queue = priorityQueue()
-    .map((d) => ({ d, doc: getDossierWork(d) }))
+  const inbox = useApiResource(() => getValidationInbox({ ordering: "-submitted_at" }), [], null);
+  const liveQueue = React.useMemo(
+    () =>
+      inbox.data?.results?.map((work, index) => ({
+        d: {
+          id: work.id,
+          workSlug: work.id,
+          priority: index < 2 ? ("Haute" as Priority) : ("Normale" as Priority),
+          state: "À traiter" as DossierState,
+          assignee: null,
+          slaDays: 7,
+          ageDays: 0,
+          versionHash: work.reference_code || work.id.slice(0, 12),
+        },
+        doc: workToScientificDocument(work),
+      })) || [],
+    [inbox.data],
+  );
+  const queue = (liveQueue.length > 0
+    ? liveQueue
+    : priorityQueue()
+        .map((d) => ({ d, doc: getDossierWork(d) }))
+        .filter((x) => x.doc))
     .filter((x) => x.doc)
     .slice(0, 6);
 
+  const typeSource = queue.map((row) => row.doc!);
   const typeSummary = DOC_TYPES.map((type) => ({
     type,
-    count: dossiers.filter((d) => getDossierWork(d)?.type === type).length,
+    count:
+      typeSource.length > 0
+        ? typeSource.filter((doc) => doc.type === type).length
+        : dossiers.filter((d) => getDossierWork(d)?.type === type).length,
   }));
   const maxType = Math.max(1, ...typeSummary.map((t) => t.count));
+  const renderedStats = stats.map((stat) =>
+    stat.label === "À traiter" && inbox.data
+      ? { ...stat, value: inbox.data.count || inbox.data.results.length }
+      : stat,
+  );
 
   return (
     <>
@@ -90,7 +124,7 @@ export default function ValidationDashboardPage() {
 
       {/* Stats cliquables */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {stats.map((s) => (
+        {renderedStats.map((s) => (
           <Link
             key={s.label}
             href={s.href}

@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminToggle } from "@/components/admin/admin-toggle";
 import { ssiConfig, type SsiEmission } from "@/lib/admin-data";
+import { getSsiConnection, messageForApiError, testSsiConnection, useApiResource } from "@/lib/api";
 
 type BadgeVariant = "success" | "warning" | "destructive";
 const emissionVariant: Record<SsiEmission["status"], BadgeVariant> = {
@@ -28,9 +29,10 @@ const emissionVariant: Record<SsiEmission["status"], BadgeVariant> = {
 };
 
 export default function AdminSsiPage() {
+  const connection = useApiResource(() => getSsiConnection(), [], null);
   const [endpoint, setEndpoint] = React.useState(ssiConfig.endpoint);
   const [clientId, setClientId] = React.useState(ssiConfig.clientId);
-  const [secret, setSecret] = React.useState(ssiConfig.secret);
+  const [secret, setSecret] = React.useState("secret géré par variables d'environnement");
   const [reveal, setReveal] = React.useState(false);
   const [autoEmit, setAutoEmit] = React.useState(ssiConfig.autoEmit);
   const [feedback, setFeedback] = React.useState<string | null>(null);
@@ -41,11 +43,18 @@ export default function AdminSsiPage() {
     return () => clearTimeout(t);
   }, [feedback]);
 
+  React.useEffect(() => {
+    if (!connection.data) return;
+    const data = connection.data as Record<string, unknown>;
+    setEndpoint(String(data.base_url || data.endpoint || endpoint));
+    setClientId(String(data.mode || data.status || clientId));
+  }, [clientId, connection.data, endpoint]);
+
   function regenerate() {
     const hex = Array.from({ length: 24 }, () =>
       Math.floor(Math.random() * 16).toString(16)
     ).join("");
-    setSecret(`sk_live_${hex}`);
+    setSecret(`secret-${hex}`);
     setReveal(false);
     setFeedback("Secret régénéré. Pensez à mettre à jour vos intégrations.");
   }
@@ -56,9 +65,9 @@ export default function AdminSsiPage() {
         title="SSI / e-IDStack"
         description="Connexion au socle de confiance et émission de preuves d'intégrité."
       >
-        <Badge variant={ssiConfig.connected ? "success" : "destructive"}>
+        <Badge variant={connection.data ? "success" : connection.error ? "destructive" : "warning"}>
           <PlugZap className="size-3" />
-          {ssiConfig.connected ? "Connecté" : "Déconnecté"}
+          {connection.loading ? "Test..." : connection.data ? "Connecté" : "Déconnecté"}
         </Badge>
       </AdminPageHeader>
 
@@ -141,7 +150,14 @@ export default function AdminSsiPage() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => setFeedback("Connexion réussie — e-IDStack répond (200 OK).")}
+              onClick={async () => {
+                try {
+                  await testSsiConnection();
+                  setFeedback("Connexion réussie — e-IDStack répond.");
+                } catch (err) {
+                  setFeedback(messageForApiError(err));
+                }
+              }}
             >
               <PlugZap className="size-4" />
               Tester la connexion

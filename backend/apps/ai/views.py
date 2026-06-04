@@ -1,3 +1,6 @@
+import re
+
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import permissions, status, views
@@ -70,6 +73,12 @@ class MetadataAcceptView(views.APIView):
             MetadataExtraction.objects.filter(document_version=version).update(
                 status=ExtractionStatus.REVIEWED, reviewed_at=timezone.now()
             )
+        try:
+            from apps.ai.indexing import index_work_for_assistant
+
+            index_work_for_assistant(work, request=request)
+        except Exception:
+            pass
         return Response({"detail": "Métadonnées validées.", "work_id": str(work.id)})
 
 
@@ -78,15 +87,55 @@ class AssistantQueryView(views.APIView):
 
     permission_classes = [permissions.AllowAny]
 
+    def _filters_for_request(self, request, question: str, filters: dict) -> dict:
+        filters = dict(filters or {})
+        allowed = ["PUBLIC"]
+        user = request.user
+
+        if user.is_authenticated:
+            if user.is_staff:
+                allowed = ["PUBLIC", "INSTITUTION_ONLY", "RESTRICTED", "PRIVATE"]
+            else:
+                accessible = ScientificWork.objects.filter(
+                    Q(created_by=user) | Q(contributors__user=user)
+                ).distinct()
+                requested_work_id = filters.get("work_id")
+                if requested_work_id:
+                    if accessible.filter(pk=requested_work_id).exists():
+                        allowed = ["PUBLIC", "INSTITUTION_ONLY", "RESTRICTED", "PRIVATE"]
+                    else:
+                        filters.pop("work_id", None)
+                else:
+                    terms = [
+                        term for term in re.split(r"\W+", question)
+                        if len(term) >= 4
+                    ][:10]
+                    query = Q()
+                    for term in terms:
+                        query |= (
+                            Q(title__icontains=term)
+                            | Q(reference_code__icontains=term)
+                            | Q(keywords__icontains=term)
+                        )
+                    matched = accessible.filter(query).order_by("-updated_at").first() if terms else None
+                    if matched:
+                        filters["work_id"] = str(matched.id)
+                        allowed = ["PUBLIC", "INSTITUTION_ONLY", "RESTRICTED", "PRIVATE"]
+
+        filters["allowed_visibilities"] = allowed
+        return filters
+
     def post(self, request):
         question = request.data.get("question", "").strip()
         if not question:
             return Response({"detail": "Question requise."}, status=status.HTTP_400_BAD_REQUEST)
-        filters = request.data.get("filters", {})
-        # Public : seuls les documents publics sont interrogeables
-        allowed = ["PUBLIC"]
+        filters = self._filters_for_request(request, question, request.data.get("filters", {}))
         try:
-            result = SimbaClient().assistant_query(question=question, allowed_visibilities=allowed, filters=filters)
+            result = SimbaClient().assistant_query(
+                question=question,
+                allowed_visibilities=filters["allowed_visibilities"],
+                filters={k: v for k, v in filters.items() if k != "allowed_visibilities"},
+            )
         except SimbaError:
             return Response({"answer_status": "FAILED", "answer": None, "sources": []}, status=502)
 
@@ -94,7 +143,7 @@ class AssistantQueryView(views.APIView):
             question=question,
             answer=result.get("answer") or "",
             answer_status=result.get("answer_status", "ANSWERED"),
-            filters={"allowed_visibilities": allowed, **(filters or {})},
+            filters=filters,
             user=request.user if request.user.is_authenticated else None,
         )
         return Response(result)

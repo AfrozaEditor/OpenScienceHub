@@ -27,6 +27,7 @@ docker compose up -d --build
 Services exposés :
 
 - backend : `http://localhost:8000`
+- frontend : `http://localhost:3000`
 - `simba_ia` : `http://localhost:8001`
 - e-IDStack de IDS API : `http://localhost:4000` (`IDS_API_PORT=4001` si le port 4000 est déjà occupé)
 - agent e-IDStack : `http://localhost:3021`
@@ -79,12 +80,14 @@ Ce mode monte les sources en volume :
 - backend : `python manage.py runserver`
 - `simba_ia` : `uvicorn --reload`
 - IDS : target Docker `builder` + `npm run start:dev`
+- frontend : `next dev` avec sources montées
 
 Rebuild seulement si ces fichiers changent :
 
 - `backend/requirements.txt`
 - `simba_ia/requirements.txt`
 - `ids/eidStack-CMU/package-lock.json`
+- `frontend/package-lock.json`
 - un `Dockerfile`
 - une dépendance système
 
@@ -115,8 +118,32 @@ BACKEND_PUBLIC_BASE_URL=http://backend:8000
 SSI_MODE=live
 EIDSTACK_BASE_URL=http://ids:4000
 EIDSTACK_AGENT_ENDPOINT=http://localhost:3021
-PUBLIC_VERIFY_BASE_URL=http://localhost:8000/api/v1/verify
+PUBLIC_VERIFY_BASE_URL=http://localhost:3000/verify
 ```
+
+Frontend :
+
+```text
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_FRONTEND_VERIFY_BASE_URL=http://localhost:3000/verify
+```
+
+## Test Depuis Une Autre Machine Du Réseau
+
+1. Trouver l'IP de la machine qui lance Docker, par exemple `192.168.1.20`.
+2. Démarrer avec :
+
+```bash
+LAN_HOST_IP=192.168.1.20 docker compose up -d --build
+```
+
+3. Depuis un téléphone ou un autre PC du même réseau, ouvrir :
+
+```text
+http://192.168.1.20:3000
+```
+
+Le frontend appelle alors `http://192.168.1.20:8000/api/v1`. Les QR codes doivent pointer vers `http://192.168.1.20:3000/verify/{proofCode}` afin que le scan mobile affiche la page publique, puis que cette page interroge le backend pour vérifier la preuve et le hash.
 
 IDS :
 

@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -30,6 +33,7 @@ import { SearchBar } from "@/components/search-bar";
 import { DocumentCard } from "@/components/document-card";
 import { AnimatedStats } from "@/components/animated-stats";
 import { documents, platformStats, popularDomains } from "@/lib/mock-data";
+import { catalogToDocument, listCatalog, useApiResource } from "@/lib/api";
 
 const fr = new Intl.NumberFormat("fr-FR");
 
@@ -95,9 +99,22 @@ const domainIcons = {
 } as const;
 
 export default function Home() {
-  const recentDocs = [...documents]
+  const liveCatalog = useApiResource(() => listCatalog({ page_size: 4 }), [], null);
+  const catalogData = liveCatalog.data;
+  const liveDocs = React.useMemo(
+    () => catalogData?.results?.map(catalogToDocument) || [],
+    [catalogData],
+  );
+  const recentDocs = [...(liveDocs.length > 0 ? liveDocs : documents)]
     .sort((a, b) => +new Date(b.submittedAt) - +new Date(a.submittedAt))
     .slice(0, 4);
+  const liveStats = catalogData
+    ? stats.map((stat) =>
+        stat.label === "Documents archivés"
+          ? { ...stat, value: catalogData.count || recentDocs.length }
+          : stat,
+      )
+    : stats;
 
   return (
     <div className="flex flex-1 flex-col bg-background text-foreground">
@@ -211,7 +228,7 @@ export default function Home() {
 
           {/* Stats */}
           <div className="mx-auto w-full max-w-6xl px-4 pb-20 pt-4 sm:px-6 lg:px-8">
-            <AnimatedStats stats={stats} />
+            <AnimatedStats stats={liveStats} />
           </div>
         </section>
 

@@ -40,6 +40,12 @@ def submit_work(work: ScientificWork, actor) -> ScientificWork:
     work.save(update_fields=["status", "submitted_at", "reference_code", "updated_at"])
     _log_event(work, previous, WorkStatus.SUBMITTED, "SUBMISSION", actor)
     _audit("METADATA_UPDATED", actor, work, comment="Soumission officielle", status=WorkStatus.SUBMITTED)
+    try:
+        from apps.ai.indexing import index_work_for_assistant
+
+        index_work_for_assistant(work)
+    except Exception:
+        pass
     return work
 
 

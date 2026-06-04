@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -23,6 +26,7 @@ import {
   services,
   type ServiceStatus,
 } from "@/lib/admin-data";
+import { getAdminDashboard, getAdminStats, useApiResource } from "@/lib/api";
 
 const fr = new Intl.NumberFormat("fr-FR");
 
@@ -57,6 +61,16 @@ const quickLinks = [
 ];
 
 export default function AdminDashboardPage() {
+  const dashboard = useApiResource(() => getAdminDashboard(), [], null);
+  const liveStats = useApiResource(() => getAdminStats(), [], null);
+  const kpis = dashboard.data?.kpis || liveStats.data || {};
+  const metric = (keys: string[], fallback: number) => {
+    for (const key of keys) {
+      const value = (kpis as Record<string, unknown>)[key];
+      if (typeof value === "number") return value;
+    }
+    return fallback;
+  };
   const operational = services.filter((s) => s.status === "operational").length;
   const incidents = services.filter((s) => s.status !== "operational");
 
@@ -82,7 +96,7 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatsCard
           label="Documents déposés"
-          value={fr.format(adminStats.deposited)}
+          value={fr.format(metric(["deposited", "works_total", "documents_total"], adminStats.deposited))}
           icon={FileText}
           accent="primary"
           trend={{ value: "+12%" }}
@@ -90,7 +104,7 @@ export default function AdminDashboardPage() {
         />
         <StatsCard
           label="Documents validés"
-          value={fr.format(adminStats.validated)}
+          value={fr.format(metric(["validated", "works_validated", "archived_total"], adminStats.validated))}
           icon={BadgeCheck}
           accent="success"
           trend={{ value: "+8%" }}
@@ -98,14 +112,14 @@ export default function AdminDashboardPage() {
         />
         <StatsCard
           label="En attente"
-          value={fr.format(adminStats.pending)}
+          value={fr.format(metric(["pending", "works_pending", "submitted_total"], adminStats.pending))}
           icon={Clock}
           accent="warning"
           hint="à traiter"
         />
         <StatsCard
           label="Téléchargements"
-          value={fr.format(adminStats.downloads)}
+          value={fr.format(metric(["downloads", "downloads_total"], adminStats.downloads))}
           icon={Download}
           accent="ai"
           trend={{ value: "+23%" }}
@@ -113,7 +127,7 @@ export default function AdminDashboardPage() {
         />
         <StatsCard
           label="Auteurs actifs"
-          value={fr.format(adminStats.activeAuthors)}
+          value={fr.format(metric(["active_authors", "users_total"], adminStats.activeAuthors))}
           icon={Users}
           accent="brand"
           trend={{ value: "+5%" }}
@@ -121,7 +135,7 @@ export default function AdminDashboardPage() {
         />
         <StatsCard
           label="Départements couverts"
-          value={adminStats.departments}
+          value={metric(["departments", "departments_total"], adminStats.departments)}
           icon={Boxes}
           accent="primary"
           hint="sur 7 facultés"

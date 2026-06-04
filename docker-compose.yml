@@ -120,9 +120,10 @@ services:
     environment:
       DJANGO_SECRET_KEY: dev-openscience-hub-local-secret-key-change-in-prod
       DJANGO_DEBUG: "True"
-      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,0.0.0.0,testserver,backend
       DATABASE_URL: postgresql://osh:osh@backend_db:5432/osh
-      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,0.0.0.0,testserver,backend,*
+      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000,http://${LAN_HOST_IP:-localhost}:3000
+      CORS_ALLOWED_ORIGIN_REGEXES: ^http://([0-9]{1,3}\.){3}[0-9]{1,3}:3000$
       SIMBA_MODE: live
       SIMBA_IA_URL: http://simba_ia:8001
       SIMBA_API_KEY: dev-simba-key
@@ -138,7 +139,7 @@ services:
       EIDSTACK_AGENT_ENDPOINT: http://localhost:3021
       EIDSTACK_AGENT_LABEL: OpenScienceHub IDS Local
       EIDSTACK_AGENT_SEED: "00000000000000000000000000000001"
-      PUBLIC_VERIFY_BASE_URL: http://localhost:8000/api/v1/verify
+      PUBLIC_VERIFY_BASE_URL: ${PUBLIC_VERIFY_BASE_URL:-http://${LAN_HOST_IP:-localhost}:3000/verify}
       DJANGO_SUPERUSER_EMAIL: admin@openscience.local
       DJANGO_SUPERUSER_PASSWORD: adminpass
     ports:
@@ -158,6 +159,24 @@ services:
       timeout: 5s
       retries: 30
       start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://${LAN_HOST_IP:-localhost}:8000/api/v1}
+        NEXT_PUBLIC_FRONTEND_VERIFY_BASE_URL: ${NEXT_PUBLIC_FRONTEND_VERIFY_BASE_URL:-http://${LAN_HOST_IP:-localhost}:3000/verify}
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://${LAN_HOST_IP:-localhost}:8000/api/v1}
+      NEXT_PUBLIC_FRONTEND_VERIFY_BASE_URL: ${NEXT_PUBLIC_FRONTEND_VERIFY_BASE_URL:-http://${LAN_HOST_IP:-localhost}:3000/verify}
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
 
 volumes:
   osh_backend_pgdata:

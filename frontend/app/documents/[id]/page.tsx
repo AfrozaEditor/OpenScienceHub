@@ -9,7 +9,6 @@ import {
   BookOpen,
   Check,
   ChevronRight,
-  Copy,
   Download,
   FileDown,
   FileText,
@@ -36,11 +35,27 @@ import { SimilarDocuments } from "@/components/similar-documents";
 import { EmptyState } from "@/components/empty-state";
 import { formatNumber } from "@/components/document-card";
 import { getDocument, getSimilarDocuments } from "@/lib/mock-data";
+import {
+  catalogToDocument,
+  getCatalogItem,
+  getSimilarWorks,
+  similarToDocument,
+  useApiResource,
+} from "@/lib/api";
 
 export default function DocumentDetailPage() {
   const params = useParams();
   const id = (Array.isArray(params.id) ? params.id[0] : params.id) ?? "";
-  const doc = getDocument(id);
+  const liveCatalog = useApiResource(() => getCatalogItem(id), [id], null);
+  const liveSimilar = useApiResource(
+    () =>
+      liveCatalog.data?.work_id
+        ? getSimilarWorks(liveCatalog.data.work_id)
+        : Promise.resolve({ results: [] }),
+    [liveCatalog.data?.work_id],
+    null,
+  );
+  const doc = liveCatalog.data ? catalogToDocument(liveCatalog.data) : getDocument(id);
 
   const [copied, setCopied] = React.useState<string | null>(null);
 
@@ -84,7 +99,7 @@ export default function DocumentDetailPage() {
     flash("bibtex");
   }
 
-  if (!doc) {
+  if (!doc && !liveCatalog.loading) {
     return (
       <div className="flex flex-1 flex-col bg-background">
         <SiteHeader />
@@ -105,7 +120,24 @@ export default function DocumentDetailPage() {
     );
   }
 
-  const similar = getSimilarDocuments(doc);
+  if (!doc) {
+    return (
+      <div className="flex flex-1 flex-col bg-background">
+        <SiteHeader />
+        <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-20 sm:px-6">
+          <EmptyState
+            icon={FileText}
+            title="Chargement du document"
+            description="Récupération de la fiche depuis le catalogue."
+          />
+        </main>
+        <SiteFooter />
+      </div>
+    );
+  }
+
+  const similar =
+    liveSimilar.data?.results?.map(similarToDocument) || getSimilarDocuments(doc);
 
   const infoRows = [
     { label: "Auteur(s)", value: doc.authors.join(", ") },

@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AiAssistant } from "@/components/ai-assistant";
+import { AuthProvider } from "@/components/auth-provider";
 
 const marianne = localFont({
   variable: "--font-sans",
@@ -37,8 +38,10 @@ export default function RootLayout({
       className={`${marianne.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
-        <AiAssistant />
+        <AuthProvider>
+          {children}
+          <AiAssistant />
+        </AuthProvider>
       </body>
     </html>
   );

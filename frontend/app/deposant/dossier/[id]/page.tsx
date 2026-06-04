@@ -22,7 +22,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { EmptyState } from "@/components/empty-state";
 import { DossierStatusBadge } from "@/components/dossier-status-badge";
-import { getDossier, type TimelineState } from "@/lib/mock-data";
+import { getDossier, type Dossier, type TimelineState } from "@/lib/mock-data";
+import { getWork, listDocuments, useApiResource, workToDossier } from "@/lib/api";
 
 const dateFmt = new Intl.DateTimeFormat("fr-FR", {
   day: "numeric",
@@ -60,9 +61,55 @@ const nodeStyle: Record<
 
 export default function DossierDetailPage() {
   const params = useParams<{ id: string }>();
-  const dossier = getDossier(params.id);
+  const liveWork = useApiResource(() => getWork(params.id), [params.id], null);
+  const liveDocuments = useApiResource(() => listDocuments(params.id), [params.id], []);
+  const mockDossier = getDossier(params.id);
+  const latestDocument = React.useMemo(() => {
+    const docs = liveDocuments.data || [];
+    return [...docs].sort((a, b) => b.version_number - a.version_number)[0];
+  }, [liveDocuments.data]);
+  const liveDossier = React.useMemo<Dossier | null>(() => {
+    if (!liveWork.data) return null;
+    const base = workToDossier(liveWork.data);
+    return {
+      id: base.id,
+      reference: base.reference,
+      title: base.title,
+      type: base.type,
+      status: base.status,
+      domain: base.domain,
+      faculty: "—",
+      department: "—",
+      level: liveWork.data.type,
+      language: liveWork.data.language || "FR",
+      abstract: liveWork.data.abstract_text || "Résumé non renseigné.",
+      keywords: base.keywords,
+      pages: latestDocument?.page_count || 0,
+      fileSize: latestDocument?.file_name || latestDocument?.file || "—",
+      submittedAt: liveWork.data.submitted_at || "—",
+      updatedAt: base.updatedAt,
+      views: 0,
+      downloads: 0,
+      aiConfidence: 0,
+      timeline: [
+        { label: "Création", date: liveWork.data.created_at || "—", state: "done" },
+        {
+          label: "Soumission",
+          date: liveWork.data.submitted_at || "—",
+          state: liveWork.data.submitted_at ? "done" : "pending",
+        },
+        {
+          label: "Validation",
+          date: "—",
+          state: ["VALIDATED", "ARCHIVED"].includes(liveWork.data.status) ? "done" : "pending",
+        },
+      ],
+      proof: base.proof ? mockDossier?.proof : undefined,
+    };
+  }, [liveWork.data, latestDocument, mockDossier]);
+  const dossier = liveDossier || mockDossier;
 
-  if (!dossier) {
+  if (!dossier && !liveWork.loading) {
     return (
       <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
         <EmptyState
@@ -77,6 +124,18 @@ export default function DossierDetailPage() {
               </Link>
             </Button>
           }
+        />
+      </div>
+    );
+  }
+
+  if (!dossier) {
+    return (
+      <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+        <EmptyState
+          icon={FileText}
+          title="Chargement du dossier"
+          description="Récupération des informations depuis le backend."
         />
       </div>
     );

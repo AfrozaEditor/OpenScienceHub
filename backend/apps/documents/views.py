@@ -51,6 +51,12 @@ class DocumentUploadView(views.APIView):
                       institution=work.institution, comment=f"v{version.version_number} · {work.reference_code or work.id}")
         except Exception:
             pass
+        try:
+            from apps.ai.indexing import index_work_for_assistant
+
+            index_work_for_assistant(work, request=request)
+        except Exception:
+            pass
         return Response(DocumentVersionSerializer(version).data, status=status.HTTP_201_CREATED)
 
 

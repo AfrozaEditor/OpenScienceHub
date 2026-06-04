@@ -10,8 +10,10 @@ import { Select } from "@/components/ui/select";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminToggle } from "@/components/admin/admin-toggle";
 import { aiDefaults, aiLanguages, aiModels } from "@/lib/admin-data";
+import { getAdminAiSettings, useApiResource } from "@/lib/api";
 
 export default function AdminAiPage() {
+  const liveSettings = useApiResource(() => getAdminAiSettings(), [], null);
   const [s, setS] = React.useState(aiDefaults);
   const [feedback, setFeedback] = React.useState<string | null>(null);
 
@@ -20,6 +22,18 @@ export default function AdminAiPage() {
     const t = setTimeout(() => setFeedback(null), 3000);
     return () => clearTimeout(t);
   }, [feedback]);
+
+  React.useEffect(() => {
+    if (!liveSettings.data) return;
+    const data = liveSettings.data;
+    setS((prev) => ({
+      ...prev,
+      model: String(data.model || data.extraction_model || prev.model),
+      threshold: Number(data.confidence_threshold || data.threshold || prev.threshold),
+      autoExtraction: Boolean(data.auto_extraction ?? prev.autoExtraction),
+      assistantEnabled: Boolean(data.assistant_enabled ?? prev.assistantEnabled),
+    }));
+  }, [liveSettings.data]);
 
   function toggleField(key: string) {
     setS((prev) => ({
@@ -36,7 +50,11 @@ export default function AdminAiPage() {
         title="Paramètres IA"
         description="Extraction automatique, Assistant et garde-fous de sécurité."
       >
-        <Button onClick={() => setFeedback("Paramètres IA enregistrés.")}>
+        <Button
+          onClick={() =>
+            setFeedback("Lecture backend synchronisée. La modification IA n'a pas encore de PUT backend réel.")
+          }
+        >
           <Save className="size-4" />
           Enregistrer
         </Button>

@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { institutions, type Institution } from "@/lib/admin-data";
+import { listInstitutions, useApiResource, type Institution as ApiInstitution } from "@/lib/api";
 
 const fr = new Intl.NumberFormat("fr-FR");
 const TYPES: Institution["type"][] = ["Université", "Grande École", "Institut"];
@@ -36,10 +37,19 @@ const emptyForm = {
 };
 
 export default function AdminInstitutionsPage() {
+  const liveInstitutions = useApiResource(() => listInstitutions(), [], null);
   const [items, setItems] = React.useState<Institution[]>(institutions);
   const [showForm, setShowForm] = React.useState(false);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [form, setForm] = React.useState(emptyForm);
+
+  React.useEffect(() => {
+    if (!liveInstitutions.data) return;
+    const rows = Array.isArray(liveInstitutions.data)
+      ? liveInstitutions.data
+      : liveInstitutions.data.results;
+    setItems(rows.map(apiInstitutionToAdmin));
+  }, [liveInstitutions.data]);
 
   function openCreate() {
     setForm(emptyForm);
@@ -284,4 +294,23 @@ export default function AdminInstitutionsPage() {
       </div>
     </>
   );
+}
+
+function apiInstitutionToAdmin(item: ApiInstitution): Institution {
+  return {
+    id: item.id,
+    name: item.name,
+    acronym: item.short_name || item.name.slice(0, 6).toUpperCase(),
+    type:
+      item.type === "SCHOOL"
+        ? "Grande École"
+        : item.type === "INSTITUTE"
+          ? "Institut"
+          : "Université",
+    city: item.city || "—",
+    emailDomain: item.official_email?.split("@")[1] || "—",
+    license: "Standard",
+    status: item.status === "INACTIVE" ? "Inactive" : "Active",
+    documents: 0,
+  };
 }

@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -16,6 +19,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatsCard } from "@/components/stats-card";
 import { DossierStatusBadge } from "@/components/dossier-status-badge";
 import { depositor, depositorStats, myDossiers } from "@/lib/mock-data";
+import { listWorks, useApiResource, workToDossier } from "@/lib/api";
+import { useAuth } from "@/components/auth-provider";
 
 const nf = new Intl.NumberFormat("fr-FR");
 const dateFmt = new Intl.DateTimeFormat("fr-FR", {
@@ -31,21 +36,37 @@ function fmtDate(value: string) {
 }
 
 export default function DeposantDashboardPage() {
-  const recent = [...myDossiers]
+  const { user } = useAuth();
+  const works = useApiResource(() => listWorks({ ordering: "-updated_at" }), [], null);
+  const liveDossiers = React.useMemo(
+    () => works.data?.results?.map(workToDossier) || [],
+    [works.data],
+  );
+  const dossierSource = liveDossiers.length > 0 ? liveDossiers : myDossiers;
+  const liveStats = {
+    total: dossierSource.length,
+    validated: dossierSource.filter((d) => d.status === "Validé").length,
+    pending: dossierSource.filter((d) => d.status === "En attente").length,
+    draft: dossierSource.filter((d) => d.status === "Brouillon").length,
+    rejected: dossierSource.filter((d) => d.status === "Rejeté").length,
+    views: depositorStats.views,
+    downloads: depositorStats.downloads,
+  };
+  const recent = [...dossierSource]
     .sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt))
     .slice(0, 5);
 
-  const proofs = myDossiers.filter((d) => d.proof);
+  const proofs = dossierSource.filter((d) => d.proof);
 
   const breakdown = [
-    { label: "Validés", value: depositorStats.validated, bar: "bg-success" },
-    { label: "En attente", value: depositorStats.pending, bar: "bg-warning" },
+    { label: "Validés", value: liveStats.validated, bar: "bg-success" },
+    { label: "En attente", value: liveStats.pending, bar: "bg-warning" },
     {
       label: "Brouillons",
-      value: depositorStats.draft,
+      value: liveStats.draft,
       bar: "bg-muted-foreground/40",
     },
-    { label: "Rejetés", value: depositorStats.rejected, bar: "bg-destructive" },
+    { label: "Rejetés", value: liveStats.rejected, bar: "bg-destructive" },
   ];
 
   return (
@@ -66,7 +87,7 @@ export default function DeposantDashboardPage() {
               Espace déposant
             </span>
             <h1 className="mt-3 font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
-              Bonjour, {depositor.firstName}
+              Bonjour, {user?.full_name?.split(" ")[0] || depositor.firstName}
             </h1>
             <p className="mt-1.5 max-w-md text-sm text-white/70">
               Suivez vos dépôts, leur validation et leurs preuves
@@ -95,31 +116,31 @@ export default function DeposantDashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           label="Dépôts au total"
-          value={depositorStats.total}
+          value={liveStats.total}
           icon={FolderTree}
           accent="primary"
           hint="tous statuts confondus"
         />
         <StatsCard
           label="Validés"
-          value={depositorStats.validated}
+          value={liveStats.validated}
           icon={BadgeCheck}
           accent="success"
           hint="publiés en accès libre"
         />
         <StatsCard
           label="En attente"
-          value={depositorStats.pending}
+          value={liveStats.pending}
           icon={Clock}
           accent="warning"
           hint="en cours de validation"
         />
         <StatsCard
           label="Vues cumulées"
-          value={nf.format(depositorStats.views)}
+          value={nf.format(liveStats.views)}
           icon={Eye}
           accent="ai"
-          hint={`${nf.format(depositorStats.downloads)} téléchargements`}
+          hint={`${nf.format(liveStats.downloads)} téléchargements`}
         />
       </div>
 
@@ -186,8 +207,8 @@ export default function DeposantDashboardPage() {
                       className={`h-full rounded-full ${b.bar}`}
                       style={{
                         width: `${
-                          depositorStats.total
-                            ? (b.value / depositorStats.total) * 100
+                          liveStats.total
+                            ? (b.value / liveStats.total) * 100
                             : 0
                         }%`,
                       }}

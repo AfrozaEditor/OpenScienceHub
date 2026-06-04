@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import io
 import uuid
+from pathlib import Path
 
 import qrcode
 from django.conf import settings
@@ -10,6 +11,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
+from PIL import Image, ImageDraw
 
 from .client import EidStackClient, EidStackError
 from .models import (
@@ -22,6 +24,15 @@ from .models import (
     VerificationResult,
     VerificationSource,
 )
+
+QR_PALETTE = {
+    "primary": "#0B132B",
+    "secondary": "#1D4ED8",
+    "background": "#F8FAFC",
+    "card": "#FFFFFF",
+    "border": "#E2E8F0",
+}
+QR_ICON_PATH = Path(__file__).resolve().parent / "assets" / "openscience_icon.png"
 
 
 def _build_attributes(work, final_version) -> list[dict]:
@@ -39,7 +50,71 @@ def _build_attributes(work, final_version) -> list[dict]:
 
 
 def _generate_qr(verification_url: str, proof_code: str) -> str:
-    img = qrcode.make(verification_url)
+    qr = qrcode.QRCode(
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=16,
+        border=4,
+    )
+    qr.add_data(verification_url)
+    qr.make(fit=True)
+    qr_img = qr.make_image(
+        fill_color=QR_PALETTE["primary"],
+        back_color=QR_PALETTE["background"],
+    ).convert("RGBA")
+    qr_img = qr_img.resize((720, 720), Image.Resampling.NEAREST)
+
+    canvas_size = 860
+    img = Image.new("RGBA", (canvas_size, canvas_size), QR_PALETTE["background"])
+    draw = ImageDraw.Draw(img)
+
+    shadow_box = (54, 58, canvas_size - 54, canvas_size - 50)
+    draw.rounded_rectangle(shadow_box, radius=44, fill=(11, 19, 43, 16))
+    card_box = (50, 50, canvas_size - 58, canvas_size - 58)
+    draw.rounded_rectangle(
+        card_box,
+        radius=44,
+        fill=QR_PALETTE["card"],
+        outline=QR_PALETTE["border"],
+        width=3,
+    )
+    draw.rounded_rectangle(
+        card_box,
+        radius=44,
+        outline=QR_PALETTE["secondary"],
+        width=4,
+    )
+    img.alpha_composite(qr_img, ((canvas_size - 720) // 2, (canvas_size - 720) // 2))
+
+    icon = Image.open(QR_ICON_PATH).convert("RGBA")
+    icon.thumbnail((150, 150), Image.Resampling.LANCZOS)
+    icon_box_size = 174
+    icon_box = Image.new("RGBA", (icon_box_size, icon_box_size), (255, 255, 255, 0))
+    icon_draw = ImageDraw.Draw(icon_box)
+    icon_draw.rounded_rectangle(
+        (0, 0, icon_box_size - 1, icon_box_size - 1),
+        radius=30,
+        fill=QR_PALETTE["card"],
+        outline=QR_PALETTE["border"],
+        width=2,
+    )
+    icon_box.alpha_composite(
+        icon,
+        ((icon_box_size - icon.width) // 2, (icon_box_size - icon.height) // 2),
+    )
+    icon_mask = Image.new("L", (icon_box_size, icon_box_size), 0)
+    mask_draw = ImageDraw.Draw(icon_mask)
+    mask_draw.rounded_rectangle(
+        (0, 0, icon_box_size - 1, icon_box_size - 1),
+        radius=30,
+        fill=255,
+    )
+    rounded_icon = Image.new("RGBA", (icon_box_size, icon_box_size), (255, 255, 255, 0))
+    rounded_icon.paste(icon_box, (0, 0), icon_mask)
+    img.alpha_composite(
+        rounded_icon,
+        ((canvas_size - icon_box_size) // 2, (canvas_size - icon_box_size) // 2),
+    )
+
     buffer = io.BytesIO()
     img.save(buffer, format="PNG")
     path = f"qrcodes/{proof_code}.png"

@@ -28,7 +28,9 @@ import { FacetFilter } from "@/components/facet-filter";
 import { DocumentCard } from "@/components/document-card";
 import { DocumentListSkeleton } from "@/components/loading-skeleton";
 import { EmptyState } from "@/components/empty-state";
+import { ApiState } from "@/components/api-state";
 import { documents, facets, type ScientificDocument } from "@/lib/mock-data";
+import { catalogToDocument, searchCatalog, useApiResource } from "@/lib/api";
 
 const groups = [
   { id: "type", title: "Type de document", icon: FileText, options: facets.types },
@@ -59,7 +61,6 @@ function ExplorerContent() {
   const [query, setQuery] = React.useState("");
   const [filters, setFilters] = React.useState<Filters>({});
   const [sort, setSort] = React.useState("relevance");
-  const [loading, setLoading] = React.useState(true);
   const [showFilters, setShowFilters] = React.useState(false);
 
   React.useEffect(() => {
@@ -68,15 +69,26 @@ function ExplorerContent() {
     if (domain) setFilters((f) => ({ ...f, domain: [domain] }));
   }, [sp]);
 
-  React.useEffect(() => {
-    setLoading(true);
-    const t = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(t);
-  }, [query, filters, sort]);
+  const liveCatalog = useApiResource(
+    () =>
+      searchCatalog({
+        q: query,
+        search: query,
+        ordering: sort === "recent" ? "-archived_at" : undefined,
+      }),
+    [query, sort],
+    null,
+  );
+
+  const liveDocuments = React.useMemo(
+    () => liveCatalog.data?.results?.map(catalogToDocument) || [],
+    [liveCatalog.data],
+  );
 
   const results = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-    const filtered = documents.filter((d) => {
+    const source = liveDocuments.length > 0 ? liveDocuments : documents;
+    const filtered = source.filter((d) => {
       if (q) {
         const haystack = [
           d.title,
@@ -113,7 +125,7 @@ function ExplorerContent() {
         sorted.sort((a, b) => b.views - a.views);
     }
     return sorted;
-  }, [query, filters, sort]);
+  }, [liveDocuments, query, filters, sort]);
 
   const activeChips = groups.flatMap((g) =>
     (filters[g.id] ?? []).map((value) => ({ groupId: g.id, value }))
@@ -213,7 +225,7 @@ function ExplorerContent() {
           <div className="min-w-0 flex-1">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-muted-foreground">
-                {loading ? (
+                {liveCatalog.loading ? (
                   "Recherche en cours…"
                 ) : (
                   <>
@@ -268,32 +280,39 @@ function ExplorerContent() {
             )}
 
             <div className="mt-6">
-              {loading ? (
-                <DocumentListSkeleton count={4} />
-              ) : results.length === 0 ? (
-                <EmptyState
-                  icon={SearchX}
-                  title="Aucun résultat trouvé"
-                  description="Essayez d'élargir votre recherche ou de retirer certains filtres."
-                  action={
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setQuery("");
-                        setFilters({});
-                      }}
-                    >
-                      Réinitialiser la recherche
-                    </Button>
-                  }
-                />
-              ) : (
-                <div className="flex flex-col gap-5">
-                  {results.map((doc) => (
-                    <DocumentCard key={doc.id} doc={doc} />
-                  ))}
-                </div>
-              )}
+              <ApiState
+                loading={liveCatalog.loading}
+                error={liveCatalog.error}
+                empty={results.length === 0}
+                emptyTitle="Aucun résultat trouvé"
+                emptyDescription="Essayez d'élargir votre recherche ou de retirer certains filtres."
+                onRetry={liveCatalog.reload}
+              >
+                {results.length === 0 ? (
+                  <EmptyState
+                    icon={SearchX}
+                    title="Aucun résultat trouvé"
+                    description="Essayez d'élargir votre recherche ou de retirer certains filtres."
+                    action={
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setQuery("");
+                          setFilters({});
+                        }}
+                      >
+                        Réinitialiser la recherche
+                      </Button>
+                    }
+                  />
+                ) : (
+                  <div className="flex flex-col gap-5">
+                    {results.map((doc) => (
+                      <DocumentCard key={doc.id} doc={doc} />
+                    ))}
+                  </div>
+                )}
+              </ApiState>
             </div>
           </div>
         </div>

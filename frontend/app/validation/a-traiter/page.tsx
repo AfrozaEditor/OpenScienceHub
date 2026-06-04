@@ -28,6 +28,7 @@ import {
   type DossierState,
   type Priority,
 } from "@/lib/validation-data";
+import { getValidationInbox, useApiResource, workToScientificDocument } from "@/lib/api";
 
 const STATES: DossierState[] = ["À traiter", "En cours", "En correction", "Validé", "Rejeté"];
 const PRIORITIES: Priority[] = ["Haute", "Normale", "Basse"];
@@ -54,12 +55,32 @@ function InboxInner() {
   const [stateFilter, setStateFilter] = React.useState(params.get("state") ?? "all");
   const [priorityFilter, setPriorityFilter] = React.useState("all");
   const [typeFilter, setTypeFilter] = React.useState(params.get("type") ?? "all");
+  const inbox = useApiResource(() => getValidationInbox({ ordering: "-submitted_at" }), [], null);
+  const liveRows = React.useMemo(
+    () =>
+      inbox.data?.results?.map((work, index) => ({
+        d: {
+          id: work.id,
+          workSlug: work.id,
+          priority: index < 2 ? ("Haute" as Priority) : ("Normale" as Priority),
+          state: "À traiter" as DossierState,
+          assignee: null,
+          slaDays: 7,
+          ageDays: 0,
+          versionHash: work.reference_code || work.id.slice(0, 12),
+        },
+        doc: workToScientificDocument(work),
+      })) || [],
+    [inbox.data],
+  );
 
   const rows = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-    return items
-      .map((d) => ({ d, doc: getDossierWork(d) }))
-      .filter((x) => x.doc)
+    const base =
+      liveRows.length > 0
+        ? liveRows
+        : items.map((d) => ({ d, doc: getDossierWork(d) })).filter((x) => x.doc);
+    return base
       .filter(({ d, doc }) => {
         const matchesQuery =
           !q ||
@@ -76,7 +97,7 @@ function InboxInner() {
           priorityRank[a.d.priority] - priorityRank[b.d.priority] ||
           b.d.ageDays - a.d.ageDays
       );
-  }, [items, query, stateFilter, priorityFilter, typeFilter]);
+  }, [items, liveRows, query, stateFilter, priorityFilter, typeFilter]);
 
   function assignToMe(id: string) {
     setItems((prev) =>
@@ -108,7 +129,9 @@ function InboxInner() {
         title="Dossiers à traiter"
         description="File de validation : recherchez, filtrez, assignez et ouvrez les dossiers."
       >
-        <Badge variant="outline">{rows.length} dossier(s)</Badge>
+        <Badge variant="outline">
+          {inbox.loading ? "Chargement..." : `${rows.length} dossier(s)`}
+        </Badge>
       </ValidationPageHeader>
 
       {/* Filtres */}
