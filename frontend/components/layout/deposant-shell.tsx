@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { depositor } from "@/lib/mock-data";
+import { PortalSwitcher } from "@/components/layout/portal-switcher";
 
 type NavItem = {
   label: string;
@@ -210,6 +211,7 @@ export function DeposantShell({ children }: { children: React.ReactNode }) {
           <p className="min-w-0 flex-1 truncate font-heading text-sm font-semibold text-foreground">
             {sectionTitle(pathname)}
           </p>
+          <PortalSwitcher />
           <Button asChild size="lg" className="hidden sm:inline-flex">
             <Link href="/deposant/deposer">
               <UploadCloud className="size-4" />

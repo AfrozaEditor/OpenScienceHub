@@ -5,8 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight, Menu, Upload, X } from "lucide-react";
-
 import { cn } from "@/lib/utils";
+import { PortalSwitcher } from "@/components/layout/portal-switcher";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
@@ -63,6 +63,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
+        <PortalSwitcher />
           <Button variant="ghost" size="lg" asChild>
             <Link href="/login">Connexion</Link>
           </Button>
