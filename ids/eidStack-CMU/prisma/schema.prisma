@@ -90,3 +90,18 @@ model ShortUrl {
   originalUrl String
   createdAt   DateTime @default(now())
 }
+
+model OpenScienceCredential {
+  id                     Int      @id @default(autoincrement())
+  credentialId           String   @unique
+  issuerDid              String
+  credentialDefinitionId String
+  workId                 String
+  documentHash           String
+  state                  String   @default("done")
+  claimsJson             Json
+  rawJson                Json     @default("{}")
+  comment                String   @default("")
+  createDate             DateTime @default(now())
+  updateDate             DateTime @updatedAt
+}

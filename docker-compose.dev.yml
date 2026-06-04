@@ -1,0 +1,30 @@
+services:
+  backend:
+    volumes:
+      - ./backend:/app
+      - osh_backend_media:/app/media
+    entrypoint: ["/bin/sh", "-lc"]
+    command: "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
+
+  simba_ia:
+    volumes:
+      - ./simba_ia:/app
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
+
+  ids:
+    build:
+      context: ./ids/eidStack-CMU
+      dockerfile: Dockerfile
+      target: builder
+    volumes:
+      - ./ids/eidStack-CMU:/usr/src/app
+      - osh_ids_node_modules:/usr/src/app/node_modules
+    user: root
+    command: >
+      sh -lc "npx prisma generate &&
+              npx prisma migrate deploy &&
+              npm run start:dev"
+
+volumes:
+  osh_backend_media:
+  osh_ids_node_modules:

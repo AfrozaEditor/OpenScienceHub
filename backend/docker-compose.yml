@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: osh
+      POSTGRES_PASSWORD: osh
+      POSTGRES_DB: osh
+    ports:
+      - "5432:5432"
+    volumes:
+      - osh_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U osh"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  web:
+    build: .
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DJANGO_SECRET_KEY: dev-insecure-secret-key
+      DJANGO_DEBUG: "True"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0,web"
+      DATABASE_URL: postgresql://osh:osh@db:5432/osh
+      CORS_ALLOWED_ORIGINS: "http://localhost:5173,http://localhost:3000"
+      SIMBA_IA_URL: http://simba_ia:8001
+      SIMBA_API_KEY: dev-simba-key
+      SIMBA_MODE: mock
+      EIDSTACK_BASE_URL: http://eidstack:4000
+      EIDSTACK_API_KEY: dev-eidstack-key
+      EIDSTACK_ENVIRONMENT: TEST
+      EIDSTACK_CREDENTIAL_DEFINITION_ID: ""
+      EIDSTACK_CONNECTION_ID: ""
+      SSI_MODE: mock
+      PUBLIC_VERIFY_BASE_URL: http://localhost:5173/verify
+      DJANGO_SUPERUSER_EMAIL: admin@openscience.local
+      DJANGO_SUPERUSER_PASSWORD: adminpass
+    ports:
+      - "8000:8000"
+    volumes:
+      - osh_media:/app/media
+
+volumes:
+  osh_pgdata:
+  osh_media:
