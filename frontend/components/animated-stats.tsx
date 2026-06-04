@@ -49,7 +49,7 @@ function AnimatedNumber({
 }
 
 export function AnimatedStats({ stats }: { stats: StatItem[] }) {
-  const ref = React.useRef<HTMLDivElement | null>(null);
+  const ref = React.useRef<HTMLDListElement | null>(null);
   const durationRef = React.useRef(2000);
   const [active, setActive] = React.useState(false);
 
