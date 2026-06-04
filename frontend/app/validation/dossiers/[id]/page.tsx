@@ -455,7 +455,7 @@ function DetailInner() {
                   <Button variant="ghost" size="icon-sm" aria-label="Page précédente">
                     <ChevronLeft className="size-4" />
                   </Button>
-                  <span className="text-xs">1 / {doc.pages ?? 64}</span>
+                  <span className="text-xs">1 / {doc.pages}</span>
                   <Button variant="ghost" size="icon-sm" aria-label="Page suivante">
                     <ChevronRight className="size-4" />
                   </Button>
@@ -491,11 +491,13 @@ function DetailInner() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Pages</span>
-                    <span className="font-medium text-foreground">{doc.pages ?? 64}</span>
+                    <span className="font-medium text-foreground">{doc.pages}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Taille</span>
-                    <span className="font-medium text-foreground">{doc.fileSize ?? "3,2 Mo"}</span>
+                    <span className="font-medium text-foreground">
+                      {(doc.pages * 0.045 + 0.4).toFixed(1).replace(".", ",")} Mo
+                    </span>
                   </div>
                   <Button variant="outline" size="sm" className="w-full">
                     <Download className="size-4" />

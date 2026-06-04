@@ -4,11 +4,12 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, ExternalLink, Menu, ShieldCheck, X } from "lucide-react";
+import { ArrowLeft, Menu, ShieldCheck, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { INSTITUTION } from "@/lib/mock-data";
 import { adminAccount, adminNav } from "@/lib/admin-data";
+import { PortalSwitcher } from "@/components/layout/portal-switcher";
 
 function useActive() {
   const pathname = usePathname();
@@ -162,13 +163,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="hidden items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex"
-            >
-              <ExternalLink className="size-3.5" />
-              Site public
-            </Link>
+            <PortalSwitcher />
             <div className="flex items-center gap-2.5 rounded-full border border-border bg-card py-1 pl-1 pr-3">
               <span className="flex size-8 items-center justify-center rounded-full bg-brand text-xs font-semibold text-brand-foreground">
                 {adminAccount.initials}
