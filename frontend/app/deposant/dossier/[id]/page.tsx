@@ -33,6 +33,18 @@ const dateFmt = new Intl.DateTimeFormat("fr-FR", {
   year: "numeric",
 });
 
+function documentFileUrl(file?: string) {
+  if (!file) return "";
+  try {
+    const url = new URL(file);
+    if (url.hostname === "backend" || url.port === "8000") {
+      return `${url.pathname}${url.search}${url.hash}`;
+    }
+  } catch {}
+  if (/^https?:\/\//.test(file)) return file;
+  return file.startsWith("/") ? file : `/${file}`;
+}
+
 function fmtDate(value: string) {
   if (!value || value === "—") return "—";
   const d = new Date(value);
@@ -109,6 +121,8 @@ export default function DossierDetailPage() {
     };
   }, [liveWork.data, latestDocument]);
   const dossier = liveDossier;
+  const latestDocumentUrl = documentFileUrl(latestDocument?.file);
+  const latestDocumentName = latestDocument?.file_name || "document.pdf";
 
   if (!dossier && !liveWork.loading) {
     return (
@@ -268,10 +282,19 @@ export default function DossierDetailPage() {
               ) : null}
 
               {dossier.status !== "Brouillon" && (
-                <Button variant="outline">
-                  <Download className="size-4" />
-                  Télécharger le PDF
-                </Button>
+                latestDocumentUrl ? (
+                  <Button variant="outline" asChild>
+                    <a href={latestDocumentUrl} download={latestDocumentName}>
+                      <Download className="size-4" />
+                      Télécharger le PDF
+                    </a>
+                  </Button>
+                ) : (
+                  <Button variant="outline" disabled>
+                    <Download className="size-4" />
+                    PDF indisponible
+                  </Button>
+                )
               )}
 
               <div className="mt-1 grid grid-cols-2 gap-3 border-t border-border pt-4">

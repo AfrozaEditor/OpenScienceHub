@@ -15,12 +15,14 @@ function getLocalNetworkOrigins() {
 }
 
 const localNetworkOrigins = getLocalNetworkOrigins();
+const configuredLanHost = process.env.LAN_HOST_IP;
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: [
     "localhost",
     "127.0.0.1",
     "0.0.0.0",
+    ...(configuredLanHost ? [configuredLanHost] : []),
     ...localNetworkOrigins,
   ],
   async rewrites() {

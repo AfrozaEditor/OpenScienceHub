@@ -167,6 +167,23 @@ class AdminUserApiGovernanceTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("institution", response.data)
 
+    def test_admin_user_creation_requires_explicit_initial_role(self):
+        self.client.force_authenticate(self.platform_admin)
+
+        response = self.client.post(
+            "/api/v1/accounts/users",
+            {
+                "email": "no-role@example.com",
+                "full_name": "No Role",
+                "password": "pass12345",
+                "institution": str(self.institution.id),
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("role_code", response.data)
+
     def test_institution_admin_cannot_create_outside_institution_or_global_role(self):
         self.client.force_authenticate(self.institution_admin)
 
@@ -220,6 +237,69 @@ class AdminUserApiGovernanceTests(TestCase):
                 scope_id=self.institution.id,
             ).exists()
         )
+
+    def test_institution_admin_patch_is_scoped_and_cannot_move_user(self):
+        own_user = get_user_model().objects.create_user(
+            email="own-user@example.com",
+            password="pass12345",
+            full_name="Own User",
+            institution=self.institution,
+        )
+        outside_user = get_user_model().objects.create_user(
+            email="outside-user@example.com",
+            password="pass12345",
+            full_name="Outside User",
+            institution=self.other_institution,
+        )
+        self.client.force_authenticate(self.institution_admin)
+
+        outside_response = self.client.patch(
+            f"/api/v1/accounts/users/{outside_user.id}",
+            {"full_name": "Outside Updated"},
+            format="json",
+        )
+        own_response = self.client.patch(
+            f"/api/v1/accounts/users/{own_user.id}",
+            {"full_name": "Own Updated"},
+            format="json",
+        )
+        move_response = self.client.patch(
+            f"/api/v1/accounts/users/{own_user.id}",
+            {"institution": str(self.other_institution.id)},
+            format="json",
+        )
+
+        self.assertEqual(outside_response.status_code, 404)
+        self.assertEqual(own_response.status_code, 200)
+        self.assertEqual(move_response.status_code, 400)
+        own_user.refresh_from_db()
+        outside_user.refresh_from_db()
+        self.assertEqual(own_user.full_name, "Own Updated")
+        self.assertEqual(own_user.institution_id, self.institution.id)
+        self.assertEqual(outside_user.full_name, "Outside User")
+
+    def test_institution_admin_delete_is_scoped_to_own_institution(self):
+        own_user = get_user_model().objects.create_user(
+            email="own-delete@example.com",
+            password="pass12345",
+            full_name="Own Delete",
+            institution=self.institution,
+        )
+        outside_user = get_user_model().objects.create_user(
+            email="outside-delete@example.com",
+            password="pass12345",
+            full_name="Outside Delete",
+            institution=self.other_institution,
+        )
+        self.client.force_authenticate(self.institution_admin)
+
+        outside_response = self.client.delete(f"/api/v1/accounts/users/{outside_user.id}")
+        own_response = self.client.delete(f"/api/v1/accounts/users/{own_user.id}")
+
+        self.assertEqual(outside_response.status_code, 404)
+        self.assertEqual(own_response.status_code, 204)
+        self.assertTrue(get_user_model().objects.filter(id=outside_user.id).exists())
+        self.assertFalse(get_user_model().objects.filter(id=own_user.id).exists())
 
     def test_without_institution_endpoint_excludes_platform_superusers(self):
         self.client.force_authenticate(self.platform_admin)

@@ -159,7 +159,7 @@ export default function AdminDashboardPage() {
           value={fr.format(kpiValue(kpis, "verifiable_documents"))}
           icon={ShieldCheck}
           accent="brand"
-          hint="preuves SSI actives"
+          hint="preuves actives après archivage"
         />
         <StatsCard
           label="Requêtes Assistant IA"

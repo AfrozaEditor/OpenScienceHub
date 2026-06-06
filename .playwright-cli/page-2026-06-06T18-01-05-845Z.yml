@@ -1,0 +1,60 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e25]:
+    - generic [ref=e26]:
+      - link "OpenScience Hub OpenScience Hub" [ref=e27] [cursor=pointer]:
+        - /url: /
+        - img "OpenScience Hub" [ref=e29]
+        - generic [ref=e30]: OpenScience Hub
+      - generic [ref=e31]:
+        - heading "Le répertoire institutionnel intelligent de la science ouverte universitaire." [level=1] [ref=e32]
+        - list [ref=e33]:
+          - listitem [ref=e34]:
+            - img [ref=e36]
+            - generic [ref=e39]: Extraction automatique des métadonnées par IA
+          - listitem [ref=e40]:
+            - img [ref=e42]
+            - generic [ref=e46]: Archivage institutionnel pérenne et structuré
+          - listitem [ref=e47]:
+            - img [ref=e49]
+            - generic [ref=e52]: Validation académique et science ouverte
+      - paragraph [ref=e53]: © 2026 OpenScience Hub
+    - generic [ref=e55]:
+      - heading "Connexion" [level=2] [ref=e56]
+      - paragraph [ref=e57]: Accédez à votre espace de dépôt et de gestion documentaire.
+      - generic [ref=e58]:
+        - generic [ref=e59]:
+          - generic [ref=e60]: Adresse e-mail institutionnelle
+          - textbox "Adresse e-mail institutionnelle" [ref=e61]:
+            - /placeholder: prenom.nom@univ-yaounde1.cm
+            - text: admin@openscience.local
+        - generic [ref=e62]:
+          - generic [ref=e63]:
+            - generic [ref=e64]: Mot de passe
+            - link "Mot de passe oublié ?" [ref=e65] [cursor=pointer]:
+              - /url: mailto:contact@openscience-hub.cm?subject=Réinitialisation%20du%20mot%20de%20passe
+          - textbox "Mot de passe" [ref=e66]:
+            - /placeholder: ••••••••
+            - text: adminpass
+        - button "Se connecter" [ref=e67]:
+          - text: Se connecter
+          - img
+      - generic [ref=e68]:
+        - separator [ref=e69]
+        - generic [ref=e70]: ou
+        - separator [ref=e71]
+      - link "Continuer en tant qu'invité" [ref=e72] [cursor=pointer]:
+        - /url: /explorer
+      - paragraph [ref=e73]:
+        - text: Pas encore de compte ?
+        - link "Créer un compte" [ref=e74] [cursor=pointer]:
+          - /url: /signup
+  - button "Ouvrir l'assistant IA" [ref=e5]:
+    - img [ref=e7]
+  - button "Open Next.js Dev Tools" [ref=e76] [cursor=pointer]:
+    - generic [ref=e79]:
+      - text: Rendering
+      - generic [ref=e80]:
+        - generic [ref=e81]: .
+        - generic [ref=e82]: .
+        - generic [ref=e83]: .
+  - alert [ref=e75]: OpenScience Hub — Répertoire institutionnel de science ouverte

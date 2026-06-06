@@ -5,15 +5,30 @@ import { Mail, MapPin, ShieldCheck } from "lucide-react";
 const columns = [
   {
     title: "Plateforme",
-    links: ["Explorer les travaux", "Déposer un document", "Communautés", "Statistiques"],
+    links: [
+      { label: "Explorer les travaux", href: "/explorer" },
+      { label: "Déposer un document", href: "/deposant/deposer" },
+      { label: "Communautés", href: "/communautes" },
+      { label: "Statistiques", href: "/admin/statistiques" },
+    ],
   },
   {
     title: "Ressources",
-    links: ["Guide de dépôt", "Métadonnées & IA", "Politique d'accès", "API & exports"],
+    links: [
+      { label: "Guide de dépôt", href: "/faq" },
+      { label: "Métadonnées et Assistant IA", href: "/assistant" },
+      { label: "Politique d'accès", href: "/faq" },
+      { label: "API et exports", href: "/admin/preuves" },
+    ],
   },
   {
     title: "Institution",
-    links: ["À propos", "Science ouverte", "Gouvernance", "Contact"],
+    links: [
+      { label: "À propos", href: "/" },
+      { label: "Science ouverte", href: "/communautes" },
+      { label: "Gouvernance", href: "/admin/dashboard" },
+      { label: "Contact", href: "mailto:contact@openscience-hub.cm" },
+    ],
   },
 ];
 
@@ -64,12 +79,12 @@ export function SiteFooter() {
               </h3>
               <ul className="mt-4 space-y-3 text-sm">
                 {col.links.map((link) => (
-                  <li key={link}>
+                  <li key={link.label}>
                     <Link
-                      href="#"
+                      href={link.href}
                       className="text-muted-foreground transition-colors hover:text-primary"
                     >
-                      {link}
+                      {link.label}
                     </Link>
                   </li>
                 ))}

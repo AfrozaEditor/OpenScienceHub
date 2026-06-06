@@ -72,7 +72,7 @@
 
 ## Statuts de dossier (`WorkStatus`)
 
-`DRAFT` (Brouillon) · `SUBMITTED` (Soumis) · `UNDER_REVIEW` (En instruction) · `CORRECTION_REQUESTED` (Correction demandée) · `RESUBMITTED` (Re-soumis) · `VALIDATED` (Validé) · `ARCHIVED` (Archivé) · `REJECTED` (Rejeté).
+`BROUILLON` · `SOUMIS` · `EN_INSTRUCTION` · `EN_EXPERTISE` · `CORRECTION_DEMANDEE` · `RE_SOUMIS` · `VALIDE` · `VALIDE_APRES_SOUTENANCE` · `ARCHIVABLE` · `ARCHIVE` · `REJETE`. Le flux article conserve aussi des statuts éditoriaux comme `UNDER_REVIEW`, `RESUBMITTED`, `ACCEPTED` et `PUBLISHED`.
 
 ## Branding
 

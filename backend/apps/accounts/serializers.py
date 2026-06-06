@@ -119,8 +119,9 @@ class AdminUserSerializer(UserSerializer):
         actor, capabilities = self._actor_capabilities()
         role_code = attrs.get("role_code")
         if self.instance is None and not role_code:
-            role_code = RoleCode.DEPOSANT
-            attrs["role_code"] = role_code
+            raise serializers.ValidationError(
+                {"role_code": "Le rôle initial doit être renseigné explicitement."}
+            )
 
         target_institution = attrs.get(
             "institution",

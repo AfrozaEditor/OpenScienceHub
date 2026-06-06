@@ -447,11 +447,11 @@ export default function SignupPage() {
                     />
                     <span className="text-xs leading-relaxed text-muted-foreground">
                       J&apos;accepte les{" "}
-                      <Link href="#" className="font-medium text-primary hover:underline">
+                      <Link href="/faq" className="font-medium text-primary hover:underline">
                         conditions d&apos;utilisation
                       </Link>{" "}
                       et la{" "}
-                      <Link href="#" className="font-medium text-primary hover:underline">
+                      <Link href="/faq" className="font-medium text-primary hover:underline">
                         charte de science ouverte
                       </Link>
                       .

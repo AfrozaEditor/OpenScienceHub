@@ -25,6 +25,34 @@ function formatDate(value?: string | null) {
   return Number.isNaN(date.getTime()) ? value : dateTime.format(date);
 }
 
+function proofStatusLabel(value?: string | null) {
+  switch (value) {
+    case "ACTIVE":
+      return "Active";
+    case "REVOKED":
+      return "Révoquée";
+    case "PENDING":
+      return "En attente";
+    case "ERROR":
+      return "Erreur";
+    default:
+      return value || "—";
+  }
+}
+
+function verificationHref(proof: AdminProof) {
+  if (proof.proof_code) return `/verify/${encodeURIComponent(proof.proof_code)}`;
+  if (!proof.verification_url) return "";
+  try {
+    const url = new URL(proof.verification_url);
+    const match = url.pathname.match(/\/verify\/([^/]+)$/);
+    if (match?.[1]) return `/verify/${encodeURIComponent(match[1])}`;
+  } catch {
+    if (proof.verification_url.startsWith("/verify/")) return proof.verification_url;
+  }
+  return proof.verification_url;
+}
+
 export default function AdminProofsPage() {
   const dashboard = useApiResource(() => getAdminDashboard(), [], null);
   const proofs = useApiResource(() => getAdminProofs({ limit: 100 }), [], null);
@@ -39,12 +67,12 @@ export default function AdminProofsPage() {
   return (
     <>
       <AdminPageHeader
-        title="Preuves & vérifications"
+        title="Preuves et vérifications"
         description="Suivi des preuves d'authenticité liées aux archives finales."
       >
         <Badge variant="outline">
           <ShieldCheck className="size-3 text-success" />
-          e-IDStack de IDS
+          Registre de confiance
         </Badge>
       </AdminPageHeader>
       {(dashboard.error || proofs.error) && (
@@ -103,14 +131,16 @@ function Kpi({
 
 function ProofRow({ proof }: { proof: AdminProof }) {
   const hashOk = proof.hashes_match !== false;
+  const active = proof.status === "ACTIVE";
+  const href = verificationHref(proof);
   return (
     <Card className="gap-0">
       <CardContent className="grid gap-4 py-4 lg:grid-cols-[1.4fr_1fr_auto] lg:items-center">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={proof.status === "ACTIVE" ? "default" : "secondary"}>{proof.status || "—"}</Badge>
+            <Badge variant={active ? "default" : "secondary"}>{proofStatusLabel(proof.status)}</Badge>
             <Badge variant={hashOk ? "outline" : "destructive"}>
-              {hashOk ? "Hash cohérent" : "INVALID_HASH"}
+              {hashOk ? "Empreinte cohérente" : "Empreinte incohérente"}
             </Badge>
             {proof.is_mock ? <Badge variant="secondary">À réémettre</Badge> : null}
           </div>
@@ -123,15 +153,15 @@ function ProofRow({ proof }: { proof: AdminProof }) {
         </div>
         <div className="grid gap-1 text-sm text-muted-foreground">
           <Meta label="Preuve" value={proof.proof_code} />
-          <Meta label="Credential" value={proof.credential_id || "—"} />
-          <Meta label="Issuer DID" value={proof.issuer_did || "—"} />
+          <Meta label="Identifiant" value={proof.credential_id || "—"} />
+          <Meta label="Émetteur" value={proof.issuer_did || "—"} />
           <Meta label="Hash" value={shortHash(proof.document_hash)} />
           <Meta label="Émise" value={formatDate(proof.issued_at)} />
         </div>
         <div className="flex justify-start lg:justify-end">
-          {proof.verification_url ? (
+          {href ? (
             <Button variant="outline" size="sm" asChild>
-              <a href={proof.verification_url} target="_blank" rel="noreferrer">
+              <a href={href} target="_blank" rel="noreferrer">
                 Vérifier
                 <ExternalLink className="size-4" />
               </a>

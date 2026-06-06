@@ -1,0 +1,99 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - link "OpenScience Hub OpenScience Hub" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - img "OpenScience Hub" [ref=e6]
+        - generic [ref=e7]: OpenScience Hub
+      - generic [ref=e8]:
+        - heading "Rejoignez le répertoire intelligent de la science ouverte universitaire." [level=1] [ref=e9]
+        - paragraph [ref=e10]: Créez votre compte pour déposer, valoriser et diffuser vos travaux de recherche en accès libre.
+        - list [ref=e11]:
+          - listitem [ref=e12]:
+            - img [ref=e14]
+            - generic [ref=e17]: Extraction automatique des métadonnées par IA
+          - listitem [ref=e18]:
+            - img [ref=e20]
+            - generic [ref=e24]: Archivage institutionnel pérenne et structuré
+          - listitem [ref=e25]:
+            - img [ref=e27]
+            - generic [ref=e30]: Validation académique et science ouverte
+        - paragraph [ref=e32]: Les universités disponibles sont chargées depuis l'API institutionnelle.
+      - paragraph [ref=e33]: © 2026 OpenScience Hub
+    - generic [ref=e35]:
+      - generic [ref=e36]:
+        - img
+        - text: Accès institutionnel
+      - heading "Créer un compte" [level=2] [ref=e37]
+      - paragraph [ref=e38]: Rejoignez OpenScience Hub pour déposer et gérer vos travaux scientifiques.
+      - generic [ref=e39]:
+        - generic [ref=e40]:
+          - generic [ref=e41]:
+            - generic [ref=e42]: Prénom
+            - textbox "Prénom" [ref=e43]:
+              - /placeholder: Arnaud
+          - generic [ref=e44]:
+            - generic [ref=e45]: Nom
+            - textbox "Nom" [ref=e46]:
+              - /placeholder: Nguelé Fotso
+        - generic [ref=e47]:
+          - generic [ref=e48]: Adresse e-mail institutionnelle
+          - textbox "Adresse e-mail institutionnelle" [ref=e49]:
+            - /placeholder: prenom.nom@univ-yaounde1.cm
+        - generic [ref=e50]:
+          - generic [ref=e51]:
+            - generic [ref=e52]: Statut
+            - generic [ref=e53]:
+              - combobox "Statut" [ref=e54]:
+                - option "Étudiant(e)" [selected]
+                - option "Enseignant(e)-chercheur(se)"
+                - option "Personnel administratif"
+                - option "Bibliothécaire / Documentaliste"
+              - img
+          - generic [ref=e55]:
+            - generic [ref=e56]: Université
+            - generic [ref=e57]:
+              - combobox "Université" [disabled]:
+                - option "Chargement des universités..." [disabled] [selected]
+              - img
+        - generic [ref=e58]:
+          - generic [ref=e59]: Mot de passe
+          - generic [ref=e60]:
+            - textbox "Mot de passe" [ref=e61]:
+              - /placeholder: ••••••••
+            - button "Afficher le mot de passe" [ref=e62]:
+              - img [ref=e63]
+        - generic [ref=e66]:
+          - generic [ref=e67]: Confirmer le mot de passe
+          - generic [ref=e68]:
+            - textbox "Confirmer le mot de passe" [ref=e69]:
+              - /placeholder: ••••••••
+            - button "Afficher le mot de passe" [ref=e70]:
+              - img [ref=e71]
+        - generic [ref=e75] [cursor=pointer]:
+          - checkbox "J'accepte les conditions d'utilisation et la charte de science ouverte." [ref=e76]
+          - generic [ref=e77]:
+            - text: J'accepte les
+            - link "conditions d'utilisation" [ref=e78]:
+              - /url: /faq
+            - text: et la
+            - link "charte de science ouverte" [ref=e79]:
+              - /url: /faq
+            - text: .
+        - button "Créer mon compte" [disabled]:
+          - text: Créer mon compte
+          - img
+      - generic [ref=e80]:
+        - separator [ref=e81]
+        - generic [ref=e82]: ou
+        - separator [ref=e83]
+      - link "Continuer en tant qu'invité" [ref=e84] [cursor=pointer]:
+        - /url: /explorer
+      - paragraph [ref=e85]:
+        - text: Vous avez déjà un compte ?
+        - link "Se connecter" [ref=e86] [cursor=pointer]:
+          - /url: /login
+  - button "Ouvrir l'assistant IA" [ref=e88]:
+    - img [ref=e90]
+  - button "Open Next.js Dev Tools" [ref=e104] [cursor=pointer]:
+    - img [ref=e105]

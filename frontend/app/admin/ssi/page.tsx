@@ -19,6 +19,19 @@ import { messageForApiError } from "@/lib/api/errors";
 import { useApiResource } from "@/lib/api/hooks";
 import { getSsiConnection, testSsiConnection } from "@/lib/api/resources";
 
+function connectionStatusLabel(value: unknown) {
+  const status = String(value || "");
+  const labels: Record<string, string> = {
+    NOT_CONFIGURED: "Non configuré",
+    CONNECTED: "Connecté",
+    READY: "Prêt",
+    ACTIVE: "Actif",
+    ERROR: "Erreur",
+    DISCONNECTED: "Déconnecté",
+  };
+  return labels[status] || status || "Non configuré";
+}
+
 export default function AdminSsiPage() {
   const connection = useApiResource(() => getSsiConnection(), [], null);
   const [endpoint, setEndpoint] = React.useState("");
@@ -42,8 +55,8 @@ export default function AdminSsiPage() {
   return (
     <>
       <AdminPageHeader
-        title="SSI / e-IDStack"
-        description="Connexion au socle de confiance et émission de preuves d'intégrité."
+        title="Identité numérique et preuves"
+        description="Paramétrez la connexion institutionnelle qui émet les preuves vérifiables après archivage."
       >
         <Badge variant={connection.data ? "success" : connection.error ? "destructive" : "warning"}>
           <PlugZap className="size-3" />
@@ -64,12 +77,12 @@ export default function AdminSsiPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <KeyRound className="size-4 text-primary" />
-              Connexion e-IDStack
+              Connexion au registre de confiance
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="ssi-endpoint">Point d'accès (endpoint)</Label>
+              <Label htmlFor="ssi-endpoint">Adresse du service de confiance</Label>
               <Input
                 id="ssi-endpoint"
                 value={endpoint}
@@ -78,7 +91,7 @@ export default function AdminSsiPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ssi-client">Statut / mode</Label>
+              <Label htmlFor="ssi-client">État de la connexion</Label>
               <Input
                 id="ssi-client"
                 value={clientId}
@@ -89,14 +102,14 @@ export default function AdminSsiPage() {
             <div className="space-y-1.5">
               <Input id="ssi-secret" readOnly value="Masqué côté serveur" className="font-mono text-xs" />
               <p className="text-xs text-muted-foreground">
-                Les secrets e-IDStack restent côté serveur et ne sont jamais affichés ici.
+                Les clés institutionnelles restent côté serveur et ne sont jamais affichées ici.
               </p>
             </div>
             <dl className="grid grid-cols-1 gap-2 rounded-lg border border-border bg-muted/30 p-3 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-xs text-muted-foreground">Statut connexion</dt>
                 <dd className="font-medium text-foreground">
-                  {String((connection.data as Record<string, unknown> | null)?.connection_status || "Non configuré")}
+                  {connectionStatusLabel((connection.data as Record<string, unknown> | null)?.connection_status)}
                 </dd>
               </div>
               <div>
@@ -112,7 +125,7 @@ export default function AdminSsiPage() {
               onClick={async () => {
                 try {
                   await testSsiConnection();
-                  setFeedback("Connexion réussie — e-IDStack répond.");
+                  setFeedback("Connexion réussie — le service de confiance répond.");
                 } catch (err) {
                   setFeedback(messageForApiError(err));
                 }
@@ -130,15 +143,15 @@ export default function AdminSsiPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <FileBadge2 className="size-4 text-ai" />
-                Émission de preuves
+              Preuves après archivage
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <AdminToggle
                 checked={autoEmit}
                 onChange={setAutoEmit}
-                label="Émission automatique à la validation"
-                description="Génère une preuve d'intégrité dès qu'un document est validé."
+                label="Émission automatique après archivage"
+                description="Génère une preuve vérifiable uniquement quand la version finale est archivée."
               />
               <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-sm">
                 <span className="text-muted-foreground">Dernière synchronisation</span>
@@ -151,18 +164,18 @@ export default function AdminSsiPage() {
                 disabled
               >
                 <FileBadge2 className="size-4" />
-                Émission uniquement après archivage
+                Émission réservée aux documents archivés
               </Button>
             </CardContent>
           </Card>
 
           <Card className="py-0">
             <CardHeader className="px-5 pt-5">
-              <CardTitle className="text-base">Émissions récentes</CardTitle>
+              <CardTitle className="text-base">Preuves récentes</CardTitle>
             </CardHeader>
             <CardContent className="px-0 pb-2">
               <p className="border-t border-border px-5 py-4 text-sm text-muted-foreground">
-                Consultez les preuves réelles dans “Preuves & vérifications”.
+                Consultez les preuves réelles dans “Preuves et vérifications”.
               </p>
             </CardContent>
           </Card>

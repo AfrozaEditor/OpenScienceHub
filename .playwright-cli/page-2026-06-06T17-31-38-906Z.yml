@@ -1,0 +1,281 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e547]:
+    - banner [ref=e548]:
+      - generic [ref=e549]:
+        - link "OpenScience Hub OpenScience Hub Répertoire Institutionnel Intelligent" [ref=e550] [cursor=pointer]:
+          - /url: /
+          - img "OpenScience Hub" [ref=e551]
+          - generic [ref=e552]:
+            - generic [ref=e553]: OpenScience Hub
+            - generic [ref=e554]: Répertoire Institutionnel Intelligent
+        - button "Menu" [ref=e555]:
+          - img [ref=e556]
+    - main [ref=e557]:
+      - navigation [ref=e558]:
+        - link "Accueil" [ref=e559] [cursor=pointer]:
+          - /url: /
+        - img [ref=e560]
+        - link "Explorer" [ref=e562] [cursor=pointer]:
+          - /url: /explorer
+        - img [ref=e563]
+        - generic [ref=e565]: Mémoire
+      - generic [ref=e566]:
+        - generic [ref=e567]:
+          - img
+          - text: Mémoire
+        - generic [ref=e568]:
+          - img
+          - text: Validé
+        - generic [ref=e569]:
+          - img
+          - text: Public
+      - heading "Integration complete IDS IA Docker" [level=1] [ref=e570]
+      - paragraph [ref=e571]: Par Auteur non renseigné · Institution · 2025
+      - generic [ref=e572]:
+        - link "Télécharger le PDF" [ref=e573] [cursor=pointer]:
+          - /url: /media/works/9acc8de7-b060-4c84-846a-05aa85f7363e/v1_memoire-full-stack.pdf
+          - img
+          - text: Télécharger le PDF
+        - button "Copier la citation" [ref=e574]:
+          - img
+          - text: Copier la citation
+        - button "Exporter BibTeX" [ref=e575]:
+          - img
+          - text: Exporter BibTeX
+        - button "Partager" [ref=e576]:
+          - img
+          - text: Partager
+      - generic [ref=e577]:
+        - generic [ref=e578]:
+          - generic [ref=e579]:
+            - heading "Résumé" [level=2] [ref=e580]:
+              - img [ref=e581]
+              - text: Résumé
+            - paragraph [ref=e583]: Test full stack live.
+            - generic [ref=e584]:
+              - generic [ref=e585]: IDS
+              - generic [ref=e586]: SSI
+              - generic [ref=e587]: IA
+              - generic [ref=e588]: Docker
+          - generic [ref=e589]:
+            - generic [ref=e590]:
+              - generic [ref=e591]:
+                - img [ref=e593]
+                - generic [ref=e596]:
+                  - heading "Métadonnées extraites par IA" [level=3] [ref=e597]
+                  - paragraph [ref=e598]: Détectées automatiquement à partir du PDF
+              - generic [ref=e599]: Confiance 0%
+            - generic [ref=e601]:
+              - generic [ref=e602]:
+                - term [ref=e603]: Titre détecté
+                - definition [ref=e604]: Integration complete IDS IA Docker
+              - generic [ref=e605]:
+                - term [ref=e606]: Auteurs
+                - definition [ref=e607]: Auteur non renseigné
+              - generic [ref=e608]:
+                - term [ref=e609]: Année
+                - definition [ref=e610]: "2025"
+              - generic [ref=e611]:
+                - term [ref=e612]: Langue
+                - definition [ref=e613]: Français
+              - generic [ref=e614]:
+                - term [ref=e615]: Type de document
+                - definition [ref=e616]: Mémoire
+              - generic [ref=e617]:
+                - term [ref=e618]: Domaine scientifique
+                - definition [ref=e619]: Informatique
+            - generic [ref=e621]:
+              - generic [ref=e622]:
+                - img
+                - text: PDF analysé
+              - generic [ref=e623]:
+                - img
+                - text: Métadonnées détectées
+              - generic [ref=e624]:
+                - img
+                - text: Résumé extrait
+              - generic [ref=e625]:
+                - img
+                - text: Mots-clés suggérés
+          - generic [ref=e626]:
+            - heading "Aperçu du document" [level=2] [ref=e627]:
+              - img [ref=e628]
+              - text: Aperçu du document
+            - generic [ref=e631]:
+              - generic [ref=e632]:
+                - generic [ref=e633]: memoire-full-stack.pdf
+                - generic [ref=e634]: Version archivée
+              - iframe [ref=e635]:
+                
+              - link "Ouvrir le document complet" [ref=e637] [cursor=pointer]:
+                - /url: /media/works/9acc8de7-b060-4c84-846a-05aa85f7363e/v1_memoire-full-stack.pdf
+                - img
+                - text: Ouvrir le document complet
+          - generic [ref=e638]:
+            - heading "Comment citer ce document" [level=2] [ref=e639]:
+              - img [ref=e640]
+              - text: Comment citer ce document
+            - generic [ref=e644]:
+              - tablist [ref=e646]:
+                - tab "APA" [selected] [ref=e647]
+                - tab "ISO 690" [ref=e648]
+                - tab "BibTeX" [ref=e649]
+              - tabpanel [ref=e650]:
+                - generic [ref=e651]:
+                  - generic [ref=e652]: Auteur non renseigné (2025). Integration complete IDS IA Docker. Mémoire, Universite Full Stack 1780763042, Institution.
+                  - button "Copier" [ref=e653]:
+                    - img
+                    - text: Copier
+          - generic [ref=e654]:
+            - heading "Historique de versions" [level=2] [ref=e655]:
+              - img [ref=e656]
+              - text: Historique de versions
+            - generic [ref=e661]:
+              - generic [ref=e662]:
+                - paragraph [ref=e663]:
+                  - text: Version 1.0
+                  - generic [ref=e664]: Actuelle
+                - paragraph [ref=e665]: Déposée le 06/06/2026
+              - generic [ref=e666]: 0 téléchargements
+          - generic [ref=e667]:
+            - generic [ref=e668]:
+              - img [ref=e669]
+              - generic [ref=e671]:
+                - paragraph [ref=e672]: Une erreur dans les métadonnées ?
+                - paragraph [ref=e673]: Aidez-nous à améliorer la qualité du catalogue.
+            - button "Signaler une erreur" [ref=e674]
+        - complementary [ref=e675]:
+          - generic [ref=e676]:
+            - generic [ref=e678]: Informations
+            - generic [ref=e679]:
+              - generic [ref=e680]:
+                - generic [ref=e681]:
+                  - term [ref=e682]: Auteur(s)
+                  - definition [ref=e683]: Auteur non renseigné
+                - separator [ref=e684]
+                - generic [ref=e685]:
+                  - term [ref=e686]: Encadreur(s)
+                  - definition [ref=e687]: Non renseigné
+                - separator [ref=e688]
+                - generic [ref=e689]:
+                  - term [ref=e690]: Institution
+                  - definition [ref=e691]: Universite Full Stack 1780763042
+                - separator [ref=e692]
+                - generic [ref=e693]:
+                  - term [ref=e694]: Faculté
+                  - definition [ref=e695]: Institution
+                - separator [ref=e696]
+                - generic [ref=e697]:
+                  - term [ref=e698]: Département
+                  - definition [ref=e699]: Informatique
+                - separator [ref=e700]
+                - generic [ref=e701]:
+                  - term [ref=e702]: Domaine
+                  - definition [ref=e703]: Informatique
+                - separator [ref=e704]
+                - generic [ref=e705]:
+                  - term [ref=e706]: Année
+                  - definition [ref=e707]: "2025"
+                - separator [ref=e708]
+                - generic [ref=e709]:
+                  - term [ref=e710]: Langue
+                  - definition [ref=e711]: Français
+                - separator [ref=e712]
+                - generic [ref=e713]:
+                  - term [ref=e714]: Niveau
+                  - definition [ref=e715]: MEMOIRE
+                - separator [ref=e716]
+                - generic [ref=e717]:
+                  - term [ref=e718]: Pages
+                  - definition [ref=e719]: 0 pages
+                - separator [ref=e720]
+                - generic [ref=e721]:
+                  - term [ref=e722]: Licence
+                  - definition [ref=e723]: Accès ouvert
+              - separator [ref=e724]
+              - generic [ref=e725]:
+                - generic [ref=e726]:
+                  - paragraph [ref=e727]: "0"
+                  - paragraph [ref=e728]: Vues
+                - generic [ref=e729]:
+                  - paragraph [ref=e730]: "0"
+                  - paragraph [ref=e731]: Téléch.
+                - generic [ref=e732]:
+                  - paragraph [ref=e733]: "0"
+                  - paragraph [ref=e734]: Citations
+          - link "Retour aux résultats" [ref=e735] [cursor=pointer]:
+            - /url: /explorer
+            - img
+            - text: Retour aux résultats
+    - contentinfo [ref=e736]:
+      - generic [ref=e737]:
+        - generic [ref=e738]:
+          - generic [ref=e739]:
+            - generic [ref=e740]:
+              - img "OpenScience Hub" [ref=e741]
+              - generic [ref=e742]:
+                - generic [ref=e743]: OpenScience Hub
+                - generic [ref=e744]: Répertoire Institutionnel Intelligent
+            - paragraph [ref=e745]: Centralisez, valorisez et retrouvez toute la production scientifique universitaire grâce à une recherche intelligente et une extraction automatique des métadonnées par IA.
+            - generic [ref=e746]:
+              - generic [ref=e747]:
+                - img [ref=e748]
+                - text: Institutions partenaires configurées dans OpenScience Hub
+              - generic [ref=e751]:
+                - img [ref=e752]
+                - text: contact@openscience-hub.cm
+          - generic [ref=e755]:
+            - heading "Plateforme" [level=3] [ref=e756]
+            - list [ref=e757]:
+              - listitem [ref=e758]:
+                - link "Explorer les travaux" [ref=e759] [cursor=pointer]:
+                  - /url: /explorer
+              - listitem [ref=e760]:
+                - link "Déposer un document" [ref=e761] [cursor=pointer]:
+                  - /url: /deposant/deposer
+              - listitem [ref=e762]:
+                - link "Communautés" [ref=e763] [cursor=pointer]:
+                  - /url: /communautes
+              - listitem [ref=e764]:
+                - link "Statistiques" [ref=e765] [cursor=pointer]:
+                  - /url: /admin/statistiques
+          - generic [ref=e766]:
+            - heading "Ressources" [level=3] [ref=e767]
+            - list [ref=e768]:
+              - listitem [ref=e769]:
+                - link "Guide de dépôt" [ref=e770] [cursor=pointer]:
+                  - /url: /faq
+              - listitem [ref=e771]:
+                - link "Métadonnées et Assistant IA" [ref=e772] [cursor=pointer]:
+                  - /url: /assistant
+              - listitem [ref=e773]:
+                - link "Politique d'accès" [ref=e774] [cursor=pointer]:
+                  - /url: /faq
+              - listitem [ref=e775]:
+                - link "API et exports" [ref=e776] [cursor=pointer]:
+                  - /url: /admin/preuves
+          - generic [ref=e777]:
+            - heading "Institution" [level=3] [ref=e778]
+            - list [ref=e779]:
+              - listitem [ref=e780]:
+                - link "À propos" [ref=e781] [cursor=pointer]:
+                  - /url: /
+              - listitem [ref=e782]:
+                - link "Science ouverte" [ref=e783] [cursor=pointer]:
+                  - /url: /communautes
+              - listitem [ref=e784]:
+                - link "Gouvernance" [ref=e785] [cursor=pointer]:
+                  - /url: /admin/dashboard
+              - listitem [ref=e786]:
+                - link "Contact" [ref=e787] [cursor=pointer]:
+                  - /url: mailto:contact@openscience-hub.cm
+        - generic [ref=e788]:
+          - generic [ref=e789]: © 2026 OpenScience Hub — Science ouverte universitaire.
+          - generic [ref=e790]:
+            - img [ref=e791]
+            - text: Archivage institutionnel certifié
+  - button "Ouvrir l'assistant IA" [ref=e83]:
+    - img [ref=e85]
+  - button "Open Next.js Dev Tools" [ref=e99] [cursor=pointer]:
+    - img [ref=e100]
+  - alert [ref=e542]

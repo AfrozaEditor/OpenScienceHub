@@ -42,7 +42,8 @@ services:
       NEXT_PUBLIC_API_BASE_URL: /api/v1
       BACKEND_INTERNAL_API_BASE_URL: http://backend:8000/api/v1
       BACKEND_INTERNAL_MEDIA_BASE_URL: http://backend:8000/media
-      NEXT_PUBLIC_FRONTEND_VERIFY_BASE_URL: http://localhost:3000/verify
+      NEXT_PUBLIC_FRONTEND_VERIFY_BASE_URL: ${NEXT_PUBLIC_FRONTEND_VERIFY_BASE_URL:-http://${LAN_HOST_IP:-localhost}:3000/verify}
+      LAN_HOST_IP: ${LAN_HOST_IP:-localhost}
 
 volumes:
   osh_backend_media:

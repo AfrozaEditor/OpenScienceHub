@@ -50,9 +50,9 @@ const aiUseCases = [
 const sequences = [
   "Déposant crée un dossier via POST /works",
   "Upload PDF via POST /works/{id}/documents",
-  "Backend appelle simba_ia pour extraction et Assistant IA",
+  "Backend appelle le service IA pour extraction et Assistant IA",
   "Validateur contrôle métadonnées, avis, corrections et décision",
-  "Archivage final déclenche e-IDStack de IDS et QR public",
+  "Archivage final déclenche la preuve vérifiable et le QR public",
   "Un téléphone scanne /verify/{proofCode}, sans donnée sensible dans le QR",
 ];
 
@@ -77,7 +77,8 @@ export default function AssistantPage() {
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Cette interface met en lumière l'IA du produit : recherche sourcée,
               extraction de métadonnées, résumé, similarité et vérification QR. Le
-              frontend ne contacte jamais directement `simba_ia` ni e-IDStack.
+              frontend passe toujours par l'API OpenScience Hub, sans exposer les
+              services techniques internes.
             </p>
             <Button asChild className="mt-5 w-full">
               <Link href="/explorer">

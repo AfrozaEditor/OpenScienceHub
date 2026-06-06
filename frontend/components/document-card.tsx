@@ -25,6 +25,7 @@ export function DocumentCard({
   className?: string;
 }) {
   const href = `/documents/${doc.slug}`;
+  const canDownload = doc.access !== "Restreint" && Boolean(doc.downloadUrl);
 
   return (
     <Card className={cn("group gap-0 transition-all hover:border-primary/40 hover:shadow-md", className)}>
@@ -93,10 +94,24 @@ export function DocumentCard({
                 Citer
               </Link>
             </Button>
-            <Button variant="outline" size="sm" disabled={doc.access === "Restreint"}>
-              <Download className="size-3.5" />
-              Télécharger
-            </Button>
+            {canDownload ? (
+              <Button variant="outline" size="sm" asChild>
+                <a href={doc.downloadUrl} download={doc.fileName || `${doc.slug}.pdf`}>
+                  <Download className="size-3.5" />
+                  Télécharger
+                </a>
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled
+                title={doc.access === "Restreint" ? "Accès restreint" : "Fichier indisponible"}
+              >
+                <Download className="size-3.5" />
+                Télécharger
+              </Button>
+            )}
             <Button size="sm" asChild>
               <Link href={href}>
                 Voir détails

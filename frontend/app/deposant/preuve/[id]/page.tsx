@@ -42,6 +42,12 @@ function fmtDateTime(value: string) {
   return Number.isNaN(d.getTime()) ? value : dateTimeFmt.format(d);
 }
 
+function proofSchemaLabel(value?: string | null) {
+  if (!value) return "Preuve d'archive scientifique";
+  if (value === "ScientificWorkArchiveCredential") return "Preuve d'archive scientifique";
+  return value;
+}
+
 /** Matrice pseudo-QR déterministe dérivée de l'empreinte du document. */
 function buildQr(seed: string, size = QR_SIZE): boolean[][] {
   let h = 2166136261;
@@ -103,10 +109,10 @@ export default function PreuvePage() {
         documentHash: liveProof.data.document_hash || "—",
         algorithm: "SHA-256",
         issuedAt: liveProof.data.issued_at || "",
-        schema: liveProof.data.schema || "ScientificWorkArchiveCredential",
+        schema: proofSchemaLabel(liveProof.data.schema),
         credentialId: liveProof.data.credential_id || liveProof.data.proof_code || params.id,
         issuerDid: liveProof.data.issuer_did || "Non renseigné",
-        registry: liveProof.data.is_mock ? "Preuve à réémettre" : "e-IDStack de IDS",
+        registry: liveProof.data.is_mock ? "Preuve à réémettre" : "Registre de confiance",
         verificationUrl: liveProof.data.proof_code
           ? `/verify/${encodeURIComponent(liveProof.data.proof_code)}`
           : liveProof.data.verification_url || "",
@@ -177,8 +183,8 @@ export default function PreuvePage() {
     { label: "Référence", value: proof.reference, mono: true },
     { label: "Algorithme d'empreinte", value: proof.algorithm },
     { label: "Identifiant du justificatif", value: proof.credentialId, mono: true },
-    { label: "DID émetteur", value: proof.issuerDid, mono: true },
-    { label: "Schéma", value: proof.schema, mono: true },
+    { label: "Émetteur de confiance", value: proof.issuerDid, mono: true },
+    { label: "Type de preuve", value: proof.schema },
     { label: "Registre", value: proof.registry },
     { label: "Lien public", value: absoluteVerificationUrl(proof.verificationUrl) || "—", mono: true },
     { label: "Émise le", value: proof.issuedAt ? fmtDateTime(proof.issuedAt) : "—" },
@@ -350,16 +356,23 @@ export default function PreuvePage() {
                 <CardTitle className="text-base">Actions</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-2">
-                <Button>
+                <Button onClick={() => window.print()}>
                   <Download className="size-4" />
                   Télécharger l&apos;attestation
                 </Button>
-                <Button variant="outline" asChild>
-                  <Link href={proof.verificationUrl || "#"}>
+                {proof.verificationUrl ? (
+                  <Button variant="outline" asChild>
+                    <Link href={proof.verificationUrl}>
+                      <ExternalLink className="size-4" />
+                      Vérifier publiquement
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button variant="outline" disabled>
                     <ExternalLink className="size-4" />
                     Vérifier publiquement
-                  </Link>
-                </Button>
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => copy(absoluteVerificationUrl(proof.verificationUrl), "link")}

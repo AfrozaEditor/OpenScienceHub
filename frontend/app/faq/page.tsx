@@ -126,7 +126,7 @@ const faqs: FaqItem[] = [
     category: "Preuves & sécurité",
     question: "Qu'est-ce qu'une preuve d'authenticité ?",
     answer:
-      "Chaque document validé reçoit une empreinte cryptographique SHA-256 et une attestation vérifiable (Verifiable Credential). Cette preuve garantit l'intégrité du fichier et l'origine du dépôt, et reste vérifiable de façon indépendante.",
+      "Chaque document validé reçoit une empreinte cryptographique SHA-256 et une attestation vérifiable. Cette preuve garantit l'intégrité du fichier et l'origine du dépôt, et reste vérifiable de façon indépendante.",
     cta: { label: "Voir un exemple de preuve", href: "/deposant/preuve/1" },
   },
   {

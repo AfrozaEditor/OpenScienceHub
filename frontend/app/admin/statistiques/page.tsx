@@ -68,6 +68,27 @@ function objectEntries(value: unknown): Array<{ label: string; count: number }> 
     .sort((a, b) => b.count - a.count);
 }
 
+function statusLabel(value: string) {
+  const labels: Record<string, string> = {
+    BROUILLON: "Brouillon",
+    SOUMIS: "Soumis",
+    EN_INSTRUCTION: "En instruction",
+    EN_EXPERTISE: "En expertise",
+    CORRECTION_DEMANDEE: "Correction demandée",
+    RE_SOUMIS: "Re-soumis",
+    VALIDE: "Validé",
+    VALIDE_APRES_SOUTENANCE: "Validé après soutenance",
+    ARCHIVABLE: "Prêt à archiver",
+    ARCHIVE: "Archivé",
+    REJETE: "Rejeté",
+    UNDER_REVIEW: "En évaluation",
+    RESUBMITTED: "Re-soumis",
+    ACCEPTED: "Accepté",
+    PUBLISHED: "Publié",
+  };
+  return labels[value] || value;
+}
+
 function kpiValue(source: Record<string, unknown> | undefined, key: string) {
   const value = source?.[key];
   return typeof value === "number" ? value : 0;
@@ -88,12 +109,37 @@ export default function AdminStatsPage() {
 
   const byYear = objectEntries(liveStats.data?.by_year);
   const byType = objectEntries(liveStats.data?.by_type);
-  const byStatus = objectEntries(liveStats.data?.by_status);
+  const byStatus = objectEntries(liveStats.data?.by_status).map((item) => ({
+    ...item,
+    label: statusLabel(item.label),
+  }));
   const byInstitution = objectEntries(liveStats.data?.by_institution);
   const yearMax = Math.max(1, ...byYear.map((d) => d.count));
   const typeMax = Math.max(1, ...byType.map((d) => d.count));
   const statusMax = Math.max(1, ...byStatus.map((d) => d.count));
   const institutionMax = Math.max(1, ...byInstitution.map((d) => d.count));
+
+  function exportCsv() {
+    const sections = [
+      ["Année académique", byYear],
+      ["Type de document", byType],
+      ["Statut", byStatus],
+      ["Institution", byInstitution],
+    ] as const;
+    const rows = ["Section;Libellé;Nombre"];
+    sections.forEach(([section, values]) => {
+      values.forEach((item) => {
+        rows.push(`${section};"${item.label.replaceAll('"', '""')}";${item.count}`);
+      });
+    });
+    const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `openscience-statistiques-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <>
@@ -254,15 +300,14 @@ export default function AdminStatsPage() {
 
       <div className="mt-6 flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
         <Badge variant="outline">Exports</Badge>
-        L'export CSV/PDF n'est pas encore disponible. Les graphiques reflètent uniquement les
-        données présentes dans OpenScience Hub.
-        <Button variant="outline" size="sm" disabled className="ml-auto">
+        Exportez les répartitions affichées ou imprimez la page pour un rapport PDF.
+        <Button variant="outline" size="sm" className="ml-auto" onClick={exportCsv}>
           <FileSpreadsheet className="size-4" />
           Export CSV
         </Button>
-        <Button variant="outline" size="sm" disabled>
+        <Button variant="outline" size="sm" onClick={() => window.print()}>
           <FileText className="size-4" />
-          Export PDF
+          Imprimer / PDF
         </Button>
       </div>
     </>

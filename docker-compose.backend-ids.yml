@@ -90,7 +90,7 @@ services:
       EIDSTACK_CREDENTIAL_DEFINITION_ID: ""
       EIDSTACK_CONNECTION_ID: ""
       SSI_MODE: live
-      PUBLIC_VERIFY_BASE_URL: http://localhost:8000/api/v1/verify
+      PUBLIC_VERIFY_BASE_URL: http://localhost:3000/verify
       DJANGO_SUPERUSER_EMAIL: admin@openscience.local
       DJANGO_SUPERUSER_PASSWORD: adminpass
     ports:

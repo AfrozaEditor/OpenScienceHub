@@ -28,6 +28,9 @@ export interface ScientificDocument {
   submittedAt: string;
   aiExtracted: boolean;
   aiConfidence: number;
+  downloadUrl?: string;
+  fileName?: string;
+  documentHash?: string;
 }
 
 export interface FacetOption {

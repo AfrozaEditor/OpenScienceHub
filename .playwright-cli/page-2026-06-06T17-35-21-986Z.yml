@@ -1,0 +1,277 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e74]:
+    - complementary [ref=e75]:
+      - generic [ref=e76]:
+        - link "OpenScience Hub OpenScience Hub Administration" [ref=e77] [cursor=pointer]:
+          - /url: /admin/dashboard
+          - img "OpenScience Hub" [ref=e78]
+          - generic [ref=e79]:
+            - generic [ref=e80]: OpenScience Hub
+            - generic [ref=e81]:
+              - img [ref=e82]
+              - text: Administration
+        - navigation [ref=e85]:
+          - generic [ref=e86]:
+            - paragraph [ref=e87]: Pilotage
+            - list [ref=e88]:
+              - listitem [ref=e89]:
+                - link "Tableau de bord" [ref=e90] [cursor=pointer]:
+                  - /url: /admin/dashboard
+                  - img [ref=e91]
+                  - text: Tableau de bord
+              - listitem [ref=e96]:
+                - link "Statistiques" [ref=e97] [cursor=pointer]:
+                  - /url: /admin/statistiques
+                  - img [ref=e98]
+                  - text: Statistiques
+              - listitem [ref=e100]:
+                - link "Audit système" [ref=e101] [cursor=pointer]:
+                  - /url: /admin/audit
+                  - img [ref=e102]
+                  - text: Audit système
+          - generic [ref=e105]:
+            - paragraph [ref=e106]: Accès & rôles
+            - list [ref=e107]:
+              - listitem [ref=e108]:
+                - link "Utilisateurs" [ref=e109] [cursor=pointer]:
+                  - /url: /admin/utilisateurs
+                  - img [ref=e110]
+                  - text: Utilisateurs
+              - listitem [ref=e115]:
+                - link "Rôles & permissions" [ref=e116] [cursor=pointer]:
+                  - /url: /admin/roles
+                  - img [ref=e117]
+                  - text: Rôles & permissions
+          - generic [ref=e120]:
+            - paragraph [ref=e121]: Référentiels
+            - list [ref=e122]:
+              - listitem [ref=e123]:
+                - link "Institutions" [ref=e124] [cursor=pointer]:
+                  - /url: /admin/institutions
+                  - img [ref=e125]
+                  - text: Institutions
+              - listitem [ref=e129]:
+                - link "Structures" [ref=e130] [cursor=pointer]:
+                  - /url: /admin/structures
+                  - img [ref=e131]
+                  - text: Structures
+              - listitem [ref=e136]:
+                - link "Types de documents" [ref=e137] [cursor=pointer]:
+                  - /url: /admin/types-documents
+                  - img [ref=e138]
+                  - text: Types de documents
+          - generic [ref=e151]:
+            - paragraph [ref=e152]: Processus & IA
+            - list [ref=e153]:
+              - listitem [ref=e154]:
+                - link "Workflows" [ref=e155] [cursor=pointer]:
+                  - /url: /admin/workflows
+                  - img [ref=e156]
+                  - text: Workflows
+              - listitem [ref=e160]:
+                - link "Paramètres IA" [ref=e161] [cursor=pointer]:
+                  - /url: /admin/ia
+                  - img [ref=e162]
+                  - text: Paramètres IA
+              - listitem [ref=e165]:
+                - link "Preuves et identité numérique" [ref=e166] [cursor=pointer]:
+                  - /url: /admin/ssi
+                  - img [ref=e167]
+                  - text: Preuves et identité numérique
+              - listitem [ref=e170]:
+                - link "Preuves et vérifications" [ref=e171] [cursor=pointer]:
+                  - /url: /admin/preuves
+                  - img [ref=e172]
+                  - text: Preuves et vérifications
+        - link "Retour au site public" [ref=e178] [cursor=pointer]:
+          - /url: /
+          - img [ref=e179]
+          - text: Retour au site public
+    - generic [ref=e181]:
+      - banner [ref=e182]:
+        - generic [ref=e184]:
+          - paragraph [ref=e185]: Tableau de bord
+          - paragraph [ref=e186]: Administration plateforme
+        - generic [ref=e187]:
+          - link "Site public" [ref=e188] [cursor=pointer]:
+            - /url: /
+            - img [ref=e189]
+            - text: Site public
+          - generic [ref=e193]:
+            - generic [ref=e194]: AO
+            - generic [ref=e195]:
+              - generic [ref=e196]: Administrateur OpenScience Hub
+              - generic [ref=e197]: Administration plateforme
+            - button "Se déconnecter" [ref=e198]:
+              - img [ref=e199]
+      - main [ref=e202]:
+        - generic [ref=e203]:
+          - generic [ref=e204]:
+            - generic [ref=e205]:
+              - heading "Tableau de bord" [level=1] [ref=e206]
+              - paragraph [ref=e207]: Vue d'ensemble de l'activité, de la validation et de la santé des services.
+            - generic [ref=e208]:
+              - generic [ref=e209]: Administration plateforme
+              - link "Statistiques détaillées" [ref=e210] [cursor=pointer]:
+                - /url: /admin/statistiques
+                - text: Statistiques détaillées
+                - img
+          - generic [ref=e211]:
+            - generic [ref=e213]:
+              - generic [ref=e214]:
+                - paragraph [ref=e215]: Documents déposés
+                - paragraph [ref=e216]: "12"
+                - paragraph [ref=e217]:
+                  - generic [ref=e218]: dossiers dans le périmètre
+              - img [ref=e220]
+            - generic [ref=e224]:
+              - generic [ref=e225]:
+                - paragraph [ref=e226]: Documents validés
+                - paragraph [ref=e227]: "1"
+                - paragraph [ref=e228]:
+                  - generic [ref=e229]: statuts validés ou publiables
+              - img [ref=e231]
+            - generic [ref=e235]:
+              - generic [ref=e236]:
+                - paragraph [ref=e237]: En attente
+                - paragraph [ref=e238]: "3"
+                - paragraph [ref=e239]:
+                  - generic [ref=e240]: soumis ou en instruction
+              - img [ref=e242]
+            - generic [ref=e246]:
+              - generic [ref=e247]:
+                - paragraph [ref=e248]: Documents archivés
+                - paragraph [ref=e249]: "6"
+                - paragraph [ref=e250]:
+                  - generic [ref=e251]: archives finalisées
+              - img [ref=e253]
+            - generic [ref=e257]:
+              - generic [ref=e258]:
+                - paragraph [ref=e259]: Preuves vérifiables
+                - paragraph [ref=e260]: "6"
+                - paragraph [ref=e261]:
+                  - generic [ref=e262]: preuves actives après archivage
+              - img [ref=e264]
+            - generic [ref=e268]:
+              - generic [ref=e269]:
+                - paragraph [ref=e270]: Requêtes Assistant IA
+                - paragraph [ref=e271]: "0"
+                - paragraph [ref=e272]:
+                  - generic [ref=e273]: questions journalisées
+              - img [ref=e275]
+            - generic [ref=e279]:
+              - generic [ref=e280]:
+                - paragraph [ref=e281]: Utilisateurs actifs
+                - paragraph [ref=e282]: "12"
+                - paragraph [ref=e283]:
+                  - generic [ref=e284]: comptes actifs
+              - img [ref=e286]
+            - generic [ref=e292]:
+              - generic [ref=e293]:
+                - paragraph [ref=e294]: Facultés
+                - paragraph [ref=e295]: "8"
+                - paragraph [ref=e296]:
+                  - generic [ref=e297]: 8 départements
+              - img [ref=e299]
+            - generic [ref=e310]:
+              - generic [ref=e311]:
+                - paragraph [ref=e312]: Documents rejetés
+                - paragraph [ref=e313]: "0"
+                - paragraph [ref=e314]:
+                  - generic [ref=e315]: décisions de rejet
+              - img [ref=e317]
+          - generic [ref=e321]:
+            - generic [ref=e322]:
+              - generic [ref=e323]:
+                - generic [ref=e324]:
+                  - img [ref=e325]
+                  - text: État des services
+                - generic [ref=e327]: 5/5 opérationnels
+              - generic [ref=e329]:
+                - generic [ref=e330]:
+                  - generic [ref=e331]:
+                    - paragraph [ref=e335]: api
+                    - paragraph [ref=e336]: API principale
+                  - paragraph [ref=e338]: Opérationnel
+                - generic [ref=e339]:
+                  - generic [ref=e340]:
+                    - paragraph [ref=e344]: database
+                    - paragraph [ref=e345]: PostgreSQL
+                  - paragraph [ref=e347]: Opérationnel
+                - generic [ref=e348]:
+                  - generic [ref=e349]:
+                    - paragraph [ref=e353]: search
+                    - paragraph [ref=e354]: Index de recherche
+                  - paragraph [ref=e356]: Opérationnel
+                - generic [ref=e357]:
+                  - generic [ref=e358]:
+                    - paragraph [ref=e362]: ai_simba
+                    - paragraph [ref=e363]: Mode live
+                  - paragraph [ref=e365]: Opérationnel
+                - generic [ref=e366]:
+                  - generic [ref=e367]:
+                    - paragraph [ref=e371]: eidstack
+                    - paragraph [ref=e372]: Mode live
+                  - paragraph [ref=e374]: Opérationnel
+            - generic [ref=e375]:
+              - generic [ref=e376]:
+                - generic [ref=e377]:
+                  - img [ref=e378]
+                  - text: Activité récente
+                - link "Tout voir" [ref=e381] [cursor=pointer]:
+                  - /url: /admin/audit
+              - list [ref=e383]:
+                - listitem [ref=e384]:
+                  - generic [ref=e386]:
+                    - paragraph [ref=e387]: PROOF_ISSUED
+                    - paragraph [ref=e388]: OSH-VC-2026-B3B34961 · Réémission
+                    - paragraph [ref=e389]: ssi · 06/06/2026 17:24
+                - listitem [ref=e390]:
+                  - generic [ref=e392]:
+                    - paragraph [ref=e393]: PROOF_REVOKED
+                    - paragraph [ref=e394]: OSH-VC-2026-E385D5D8 · full stack test
+                    - paragraph [ref=e395]: ssi · 06/06/2026 17:24
+                - listitem [ref=e396]:
+                  - generic [ref=e398]:
+                    - paragraph [ref=e399]: PROOF_ISSUED
+                    - paragraph [ref=e400]: OSH-VC-2026-E385D5D8 · Émission après archivage
+                    - paragraph [ref=e401]: ssi · 06/06/2026 17:24
+                - listitem [ref=e402]:
+                  - generic [ref=e404]:
+                    - paragraph [ref=e405]: DOCUMENT_ARCHIVED
+                    - paragraph [ref=e406]: Archivage OSH-UFS304-DS30-2025-0002
+                    - paragraph [ref=e407]: archive · 06/06/2026 17:24
+                - listitem [ref=e408]:
+                  - generic [ref=e410]:
+                    - paragraph [ref=e411]: WORKFLOW_CHANGED
+                    - paragraph [ref=e412]: OSH-UFS304-DS30-2025-0002 · DECISION · Prêt pour archivage full stack
+                    - paragraph [ref=e413]: workflow · 06/06/2026 17:24
+                - listitem [ref=e414]:
+                  - generic [ref=e416]:
+                    - paragraph [ref=e417]: WORKFLOW_CHANGED
+                    - paragraph [ref=e418]: OSH-UFS304-DS30-2025-0002 · DECISION · Prêt pour archivage full stack
+                    - paragraph [ref=e419]: workflow · 06/06/2026 17:24
+          - generic [ref=e420]:
+            - link "Utilisateurs" [ref=e421] [cursor=pointer]:
+              - /url: /admin/utilisateurs
+              - generic [ref=e422]:
+                - img [ref=e424]
+                - generic [ref=e429]: Utilisateurs
+              - img [ref=e430]
+            - link "Rôles & permissions" [ref=e433] [cursor=pointer]:
+              - /url: /admin/roles
+              - generic [ref=e434]:
+                - img [ref=e436]
+                - generic [ref=e439]: Rôles & permissions
+              - img [ref=e440]
+            - link "Audit système" [ref=e443] [cursor=pointer]:
+              - /url: /admin/audit
+              - generic [ref=e444]:
+                - img [ref=e446]
+                - generic [ref=e449]: Audit système
+              - img [ref=e450]
+  - button "Ouvrir l'assistant IA" [ref=e53]:
+    - img [ref=e55]
+  - button "Open Next.js Dev Tools" [ref=e69] [cursor=pointer]:
+    - img [ref=e70]
+  - alert [ref=e73]: Administration — OpenScience Hub

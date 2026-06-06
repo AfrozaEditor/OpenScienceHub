@@ -165,6 +165,10 @@ export type CatalogItem = {
   is_download_allowed?: boolean;
   archived_at?: string;
   is_verifiable?: boolean;
+  document_url?: string;
+  file_name?: string;
+  page_count?: number | null;
+  document_hash?: string;
 };
 
 export type Proof = {

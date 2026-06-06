@@ -14,6 +14,46 @@ import { EmptyState } from "@/components/empty-state";
 import { useApiResource } from "@/lib/api/hooks";
 import { verifyProof } from "@/lib/api/resources";
 
+function verificationResultLabel(value?: string | null) {
+  switch (value) {
+    case "VALID":
+      return "Document authentique";
+    case "REVOKED":
+      return "Preuve révoquée";
+    case "INVALID_HASH":
+      return "Empreinte incohérente";
+    case "NOT_FOUND":
+      return "Preuve introuvable";
+    case "EXPIRED":
+      return "Preuve expirée";
+    case "TECHNICAL_ERROR":
+      return "Vérification indisponible";
+    default:
+      return value || "Résultat inconnu";
+  }
+}
+
+function proofStatusLabel(value?: string | null) {
+  switch (value) {
+    case "ACTIVE":
+      return "Active";
+    case "REVOKED":
+      return "Révoquée";
+    case "PENDING":
+      return "En attente";
+    case "ERROR":
+      return "Erreur";
+    default:
+      return value || "";
+  }
+}
+
+function proofSchemaLabel(value?: string | null) {
+  if (!value) return "";
+  if (value === "ScientificWorkArchiveCredential") return "Preuve d'archive scientifique";
+  return value;
+}
+
 export default function VerifyProofPage() {
   const params = useParams<{ proofCode: string }>();
   const proofCode = decodeURIComponent(params.proofCode || "");
@@ -79,8 +119,8 @@ export default function VerifyProofPage() {
                     : "Preuve non valide"}
               </h1>
               <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                OpenScience Hub vérifie côté serveur le hash du document, le statut de la
-                preuve SSI et la cohérence de l'archivage.
+                OpenScience Hub vérifie côté serveur l'empreinte du document, le statut de la
+                preuve et la cohérence de l'archivage.
               </p>
             </div>
 
@@ -93,10 +133,14 @@ export default function VerifyProofPage() {
             <CardContent className="space-y-5">
               <div className="flex flex-wrap gap-2">
                 <Badge variant={valid ? "success" : revoked ? "warning" : "destructive"}>
-                  {result.result}
+                  {verificationResultLabel(result.result)}
                 </Badge>
-                {result.proof_status && <Badge variant="secondary">{result.proof_status}</Badge>}
-                {result.hashes_match === false && <Badge variant="destructive">INVALID_HASH</Badge>}
+                {result.proof_status && (
+                  <Badge variant="secondary">{proofStatusLabel(result.proof_status)}</Badge>
+                )}
+                {result.hashes_match === false && (
+                  <Badge variant="destructive">Empreinte incohérente</Badge>
+                )}
                 {result.is_mock && <Badge variant="secondary">À réémettre</Badge>}
               </div>
 
@@ -109,9 +153,9 @@ export default function VerifyProofPage() {
                   ["Type", result.work_type],
                   ["Archivé le", result.archived_at],
                   ["Empreinte SHA-256", result.document_hash],
-                  ["Credential", result.credential_id],
-                  ["Issuer DID", result.issuer_did],
-                  ["Schéma", result.schema],
+                  ["Identifiant de preuve", result.credential_id],
+                  ["Émetteur de confiance", result.issuer_did],
+                  ["Type de preuve", proofSchemaLabel(result.schema)],
                 ]
                   .filter(([, value]) => value)
                   .map(([label, value]) => (

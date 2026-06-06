@@ -31,7 +31,7 @@ GET  /accounts/me     -> profil + rôles + permissions
 GET    /works                          # mes dossiers (filtres)
 POST   /works                          # créer
 GET    /works/{id}                     # détail
-PATCH  /works/{id}                     # modifier (DRAFT/CORRECTION_REQUESTED)
+PATCH  /works/{id}                     # modifier (BROUILLON/CORRECTION_DEMANDEE)
 POST   /works/{id}/contributors
 POST   /works/{id}/documents           # upload PDF (multipart) -> hash
 POST   /works/{id}/extract-metadata    # déclenche extraction IA (backend->simba_ia)

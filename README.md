@@ -122,27 +122,28 @@ hostname -I | awk '{print $1}'
 Le workflow central est :
 
 ```text
-DRAFT
-→ SUBMITTED
-→ UNDER_REVIEW
-→ CORRECTION_REQUESTED
-→ RESUBMITTED
-→ VALIDATED
-→ ARCHIVED
+BROUILLON
+→ SOUMIS
+→ EN_INSTRUCTION / EN_EXPERTISE
+→ CORRECTION_DEMANDEE
+→ RE_SOUMIS
+→ VALIDE_APRES_SOUTENANCE / ARCHIVABLE
+→ ARCHIVE
 ```
 
 Correspondance métier :
 
 | Statut | Sens |
 |---|---|
-| `DRAFT` | Brouillon du déposant |
-| `SUBMITTED` | Dossier soumis, visible dans l'inbox validation |
-| `UNDER_REVIEW` | Dossier en instruction |
-| `CORRECTION_REQUESTED` | Correction demandée au déposant |
-| `RESUBMITTED` | Correction renvoyée par le déposant |
-| `VALIDATED` | Validation académique terminée |
-| `ARCHIVED` | Version finale verrouillée, publiée et prouvée |
-| `REJECTED` | Dossier rejeté |
+| `BROUILLON` | Brouillon du déposant |
+| `SOUMIS` | Dossier soumis, visible dans l'inbox validation |
+| `EN_INSTRUCTION` / `EN_EXPERTISE` | Dossier en instruction ou expertise |
+| `CORRECTION_DEMANDEE` | Correction demandée au déposant |
+| `RE_SOUMIS` | Correction renvoyée par le déposant |
+| `VALIDE` / `VALIDE_APRES_SOUTENANCE` | Validation académique terminée |
+| `ARCHIVABLE` | Version finale prête pour archivage |
+| `ARCHIVE` | Version finale verrouillée, publiée et prouvée |
+| `REJETE` | Dossier rejeté |
 
 Après archivage :
 

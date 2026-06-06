@@ -117,7 +117,7 @@ class MyAssignmentsView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return self.request.user.validation_assignments.select_related("work", "assignee").order_by("-assigned_at")
+        return self.request.user.assignments.select_related("work", "assignee").order_by("-assigned_at")
 
 
 class ReviewListCreateView(views.APIView):
@@ -165,6 +165,7 @@ class CorrectionDetailView(views.APIView):
     def patch(self, request, pk):
         correction = get_object_or_404(CorrectionRequest, pk=pk)
         new_status = request.data.get("status")
+        _ensure_work_access(request.user, correction.work)
         if new_status in dict(CorrectionStatus.choices):
             # Si la correction est traitée par le déposant, le dossier repasse en RE_SOUMIS.
             if new_status == CorrectionStatus.ANSWERED:

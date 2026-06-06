@@ -164,6 +164,10 @@ CORS_ALLOWED_ORIGIN_REGEXES = (
     else []
 )
 X_FRAME_OPTIONS = env("DJANGO_X_FRAME_OPTIONS", default="SAMEORIGIN")
+SECURE_CROSS_ORIGIN_OPENER_POLICY = env(
+    "DJANGO_CROSS_ORIGIN_OPENER_POLICY",
+    default=None,
+)
 
 # --- Integrations externes (clients) -------------------------------------
 SIMBA_IA_URL = env("SIMBA_IA_URL", default="http://localhost:8001")

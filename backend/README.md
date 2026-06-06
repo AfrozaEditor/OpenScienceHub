@@ -5,7 +5,7 @@ API du hub intelligent des travaux scientifiques universitaires. Voir la doc de 
 ## Stack
 Python 3.11+ · Django 5 · Django REST Framework · PostgreSQL · JWT · drf-spectacular · Docker.
 
-> Validé de bout en bout : `manage.py check` (0 problème), migrations appliquées sur PostgreSQL, et **33/33 tests E2E** (`scripts/e2e_check.py`) couvrant tout le parcours + l'orchestration des services : dépôt → upload (hash) → **extraction IA (simba_ia)** → validation → décision → archivage → **indexation (simba_ia)** + **émission preuve (e-IDStack)** + QR → vérification publique → catalogue/facettes → Assistant IA / résumé / similaires → inbox validation → corrections (PATCH) → dashboard/stats/audit admin → **révocation/réémission/test-connexion e-IDStack** → document-types.
+> Validé de bout en bout : `manage.py check` (0 problème), migrations appliquées sur PostgreSQL, suite backend critique **53/53 tests**, et smoke test live `scripts/full_stack_live_check.py` couvrant dépôt → upload (hash) → **extraction IA (simba_ia)** → validation humaine → version finale → archivage → **indexation (simba_ia)** + **émission preuve (e-IDStack de IDS)** + QR → vérification publique → Assistant IA / résumé / similaires → révocation/réémission.
 
 ## Architecture orientée services
 

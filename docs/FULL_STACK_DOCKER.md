@@ -52,17 +52,20 @@ python scripts/full_stack_live_check.py
 Si l’API IDS est exposée sur un autre port hôte :
 
 ```bash
-IDS_URL=http://localhost:4001 python scripts/full_stack_live_check.py
+IDS_URL=http://localhost:<port> python scripts/full_stack_live_check.py
 ```
 
 Le test couvre :
 
 - health backend, IA, IDS
-- bootstrap DID/schema/credential definition
+- connexion backend → e-IDStack de IDS
 - upload PDF
 - extraction IA live
+- soumission, décision, version finale, statut archivable
 - archivage
 - émission preuve IDS live
+- vérification publique VALID
+- révocation puis réémission
 - vérification publique
 - révocation
 - réémission

@@ -20,6 +20,20 @@ function coerceType(value?: string): ScientificDocument["type"] {
   return "Mémoire";
 }
 
+function normalizeDocumentUrl(value?: string) {
+  if (!value) return "";
+  if (value.startsWith("/")) return value;
+  try {
+    const url = new URL(value);
+    if (url.hostname === "backend" || url.port === "8000") {
+      return `${url.pathname}${url.search}${url.hash}`;
+    }
+  } catch {
+    return value;
+  }
+  return value;
+}
+
 export function catalogToDocument(item: CatalogItem): ScientificDocument {
   return {
     id: item.work_id || item.public_slug,
@@ -40,21 +54,22 @@ export function catalogToDocument(item: CatalogItem): ScientificDocument {
     language: "Français",
     license: item.access_level === "OPEN_ACCESS" ? "Accès ouvert" : "Accès restreint",
     level: item.type || "Document scientifique",
-    pages: 0,
+    pages: item.page_count || 0,
     views: 0,
     downloads: 0,
     citations: 0,
     submittedAt: item.archived_at || new Date().toISOString(),
     aiExtracted: true,
     aiConfidence: 0,
+    downloadUrl: normalizeDocumentUrl(item.document_url),
+    fileName: item.file_name || `${item.public_slug || item.work_id}.pdf`,
+    documentHash: item.document_hash || "",
   };
 }
 
 export function workToDossier(work: Work): Dossier {
   const statusMap: Record<string, DossierStatus> = {
-    DRAFT: "Brouillon",
     BROUILLON: "Brouillon",
-    SUBMITTED: "En attente",
     SOUMIS: "En attente",
     EN_PRE_INSTRUCTION: "En attente",
     EN_INSTRUCTION: "En attente",
@@ -75,9 +90,7 @@ export function workToDossier(work: Work): Dossier {
     ACCEPTED: "Validé",
     PUBLISHED: "Validé",
     ARCHIVABLE: "Validé",
-    ARCHIVED: "Validé",
     ARCHIVE: "Validé",
-    REJECTED: "Rejeté",
     REJETE: "Rejeté",
   };
   return {
@@ -111,7 +124,7 @@ export function workToScientificDocument(work: Work): ScientificDocument {
     slug: work.id,
     title: work.title,
     type: coerceType(work.type),
-    status: ["VALIDE", "VALIDE_APRES_SOUTENANCE", "ACCEPTED", "PUBLISHED", "ARCHIVABLE", "ARCHIVE", "VALIDATED", "ARCHIVED"].includes(work.status)
+    status: ["VALIDE", "VALIDE_APRES_SOUTENANCE", "ACCEPTED", "PUBLISHED", "ARCHIVABLE", "ARCHIVE"].includes(work.status)
       ? "Validé"
       : "En attente",
     access: work.visibility === "RESTRICTED" ? "Restreint" : "Public",

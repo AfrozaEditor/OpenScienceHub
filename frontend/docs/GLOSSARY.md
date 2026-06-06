@@ -36,7 +36,7 @@
 | **État vide** | Aucun contenu : message + action principale. |
 | **État chargement** | Skeletons / progress bar (upload, analyse IA). |
 | **État erreur** | Message clair + action `Réessayer`. |
-| **Statut de dossier** | DRAFT, SUBMITTED, UNDER_REVIEW, CORRECTION_REQUESTED, RESUBMITTED, VALIDATED, ARCHIVED, REJECTED. |
+| **Statut de dossier** | BROUILLON, SOUMIS, EN_INSTRUCTION, EN_EXPERTISE, CORRECTION_DEMANDEE, RE_SOUMIS, VALIDE, VALIDE_APRES_SOUTENANCE, ARCHIVABLE, ARCHIVE, REJETE. |
 | **Résultat de vérification** | VALID / INVALID_HASH / NOT_FOUND / REVOKED / EXPIRED / TECHNICAL_ERROR. |
 
 ## Data / intégration

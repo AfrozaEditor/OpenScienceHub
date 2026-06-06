@@ -18,6 +18,9 @@ class CatalogItemSerializer(serializers.ModelSerializer):
     academic_year = serializers.CharField(source="work.academic_year", read_only=True)
     scientific_domain = serializers.CharField(source="work.scientific_domain", read_only=True)
     is_verifiable = serializers.SerializerMethodField()
+    document_url = serializers.SerializerMethodField()
+    file_name = serializers.CharField(source="document_version.file_name", read_only=True)
+    page_count = serializers.IntegerField(source="document_version.page_count", read_only=True)
 
     class Meta:
         model = ArchiveRecord
@@ -25,7 +28,15 @@ class CatalogItemSerializer(serializers.ModelSerializer):
             "public_slug", "work_id", "title", "type", "abstract", "keywords",
             "institution", "academic_year", "scientific_domain",
             "access_level", "is_download_allowed", "archived_at", "is_verifiable",
+            "document_url", "file_name", "page_count", "document_hash",
         ]
 
     def get_is_verifiable(self, obj) -> bool:
         return hasattr(obj, "verification_proof")
+
+    def get_document_url(self, obj) -> str:
+        if not obj.is_download_allowed or not obj.document_version.file:
+            return ""
+        request = self.context.get("request")
+        url = obj.document_version.file.url
+        return request.build_absolute_uri(url) if request else url

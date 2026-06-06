@@ -57,7 +57,7 @@ class ScientificWorkViewSet(viewsets.ModelViewSet):
             for assignment in assignments
             if assignment.scope_type == ScopeType.SCIENTIFIC_WORK and assignment.scope_id
         ]
-        assigned_work_ids = user.validation_assignments.values_list("work_id", flat=True)
+        assigned_work_ids = user.assignments.values_list("work_id", flat=True)
         scoped = scoped | qs.filter(institution_id__in=institution_ids)
         scoped = scoped | qs.filter(department_id__in=department_ids)
         scoped = scoped | qs.filter(id__in=work_ids)

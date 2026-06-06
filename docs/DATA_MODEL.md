@@ -206,8 +206,12 @@ Contraintes : une seule version `is_final=True` par `work` (`UniqueConstraint` c
 
 ```text
 WorkType            : MEMOIRE, THESE, ARTICLE  (roadmap: COMMUNICATION, RAPPORT_RECHERCHE)
-WorkStatus          : DRAFT, SUBMITTED, UNDER_REVIEW, CORRECTION_REQUESTED, RESUBMITTED,
-                      VALIDATED, ARCHIVED, REJECTED
+WorkStatus          : BROUILLON, SOUMIS, EN_INSTRUCTION, EN_PRE_INSTRUCTION, EN_EXPERTISE,
+                      CORRECTION_DEMANDEE, RE_SOUMIS, AVIS_EN_ATTENTE, DECISION_REQUISE,
+                      AUTORISE_SOUTENANCE, SOUTENANCE_AUTORISEE, SOUTENU,
+                      CORRECTION_POST_SOUTENANCE, VALIDE, VALIDE_APRES_SOUTENANCE,
+                      DEPOT_FINAL_ACCEPTE, SCREENING, UNDER_REVIEW, REVISION_REQUESTED,
+                      RESUBMITTED, ACCEPTED, PUBLISHED, ARCHIVABLE, ARCHIVE, REJETE
 Visibility          : PRIVATE, INSTITUTION_ONLY, PUBLIC, RESTRICTED
 Language            : FR, EN, OTHER
 ContributorType     : AUTHOR, SUPERVISOR, CO_SUPERVISOR, REVIEWER, RAPPORTEUR, JURY_MEMBER
@@ -257,7 +261,7 @@ AuditSeverity       : INFO, IMPORTANT, SENSITIVE, CRITICAL
 1. `ScientificWork` ≥ 1 `WorkContributor` de type `AUTHOR`.
 2. `ScientificWork` ≥ 1 `DocumentVersion`.
 3. Au plus une `DocumentVersion` avec `is_final=True` par dossier.
-4. `ArchiveRecord` créé seulement si `status ∈ {VALIDATED}` (ou prêt à archiver) et référence une version finale.
+4. `ArchiveRecord` créé seulement si le dossier est prêt à archiver (`ARCHIVABLE` / `DEPOT_FINAL_ACCEPTE`) et référence une version finale.
 5. `VerificationProof` obligatoire après archivage.
 6. `VerificationProof.document_hash == DocumentVersion.sha256_hash (finale) == claims du CredentialSubject`.
 7. Une réponse Assistant IA importante doit avoir ≥ 1 `AIAnswerCitation` quand un contexte existe.

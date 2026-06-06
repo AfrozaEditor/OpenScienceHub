@@ -7,6 +7,7 @@ from apps.accounts.models import Role, RoleCode, ScopeType, UserRoleAssignment
 from apps.accounts.services import ensure_system_roles
 from apps.documents.models import DocumentVersion, VersionStatus
 from apps.institutions.models import Faculty, Institution
+from apps.validation.models import AssignmentType, CorrectionRequest, CorrectionStatus, ValidationAssignment
 from apps.works.models import ScientificWork, WorkStatus, WorkType
 
 
@@ -107,3 +108,34 @@ class ValidationAndDocumentEndpointAccessTests(TestCase):
             with self.subTest(method=method, url=url):
                 response = getattr(self.client, method)(url, payload or {}, format="json")
                 self.assertEqual(response.status_code, 403)
+
+    def test_correction_detail_rejects_direct_patch_outside_work_scope(self):
+        correction = CorrectionRequest.objects.create(
+            work=self.work,
+            requested_by=self.validator,
+            message="Corriger les métadonnées",
+        )
+        self.client.force_authenticate(self.outsider)
+
+        response = self.client.patch(
+            f"/api/v1/corrections/{correction.id}",
+            {"status": CorrectionStatus.ANSWERED},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 403)
+        correction.refresh_from_db()
+        self.assertEqual(correction.status, CorrectionStatus.OPEN)
+
+    def test_my_assignments_uses_user_assignment_relation(self):
+        assignment = ValidationAssignment.objects.create(
+            work=self.work,
+            assignee=self.validator,
+            assignment_type=AssignmentType.SUPERVISOR_REVIEW,
+        )
+        self.client.force_authenticate(self.validator)
+
+        response = self.client.get("/api/v1/validation/my-assignments")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["results"][0]["id"], str(assignment.id))

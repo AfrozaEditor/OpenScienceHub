@@ -54,8 +54,8 @@ export const adminNav: AdminNavGroup[] = [
     items: [
       { label: "Workflows", href: "/admin/workflows", icon: Workflow },
       { label: "Paramètres IA", href: "/admin/ia", icon: Sparkles },
-      { label: "SSI / e-IDStack", href: "/admin/ssi", icon: KeyRound },
-      { label: "Preuves & vérifications", href: "/admin/preuves", icon: FileBadge2 },
+      { label: "Preuves et identité numérique", href: "/admin/ssi", icon: KeyRound },
+      { label: "Preuves et vérifications", href: "/admin/preuves", icon: FileBadge2 },
     ],
   },
 ];

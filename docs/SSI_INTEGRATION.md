@@ -69,7 +69,7 @@ Réponse :
     { "name": "institution", "value": "Université de Yaoundé I" },
     { "name": "workType", "value": "MEMOIRE" },
     { "name": "documentHash", "value": "9f2a8c7b..." },
-    { "name": "academicStatus", "value": "VALIDATED" },
+    { "name": "academicStatus", "value": "ARCHIVE" },
     { "name": "issuedAt", "value": "2026-06-02" }
   ],
   "comment": "ScientificWorkArchiveCredential"
@@ -90,7 +90,7 @@ author          (auteur principal)
 institution
 department
 workType        (MEMOIRE | THESE | ARTICLE)
-academicStatus  (VALIDATED / soutenu / accepté ...)
+academicStatus  (ARCHIVE / soutenu / accepté ...)
 documentHash    (SHA-256 de la DocumentVersion finale)
 issuedAt
 issuerDid
