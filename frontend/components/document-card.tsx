@@ -125,6 +125,72 @@ export function DocumentCard({
   );
 }
 
+export function DocumentCardMini({
+  doc,
+  className,
+}: {
+  doc: ScientificDocument;
+  className?: string;
+}) {
+  const href = `/documents/${doc.slug}`;
+
+  return (
+    <Card
+      className={cn(
+        "group gap-0 py-0 transition-all hover:border-primary/40 hover:shadow-md",
+        className
+      )}
+    >
+      <CardContent className="flex h-full flex-col gap-2.5 p-5">
+        <div className="flex items-center gap-2">
+          <DocumentTypeBadge type={doc.type} />
+          <StatusBadge status={doc.status} />
+          <span className="ml-auto text-xs font-medium text-muted-foreground">
+            {doc.year}
+          </span>
+        </div>
+
+        <Link href={href} className="block">
+          <h3 className="line-clamp-2 font-heading text-base font-semibold leading-snug text-foreground transition-colors group-hover:text-primary">
+            {doc.title}
+          </h3>
+        </Link>
+
+        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Users className="size-3.5 shrink-0" />
+          <span className="line-clamp-1 text-foreground">
+            {doc.authors.join(", ")}
+          </span>
+        </span>
+
+        <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+          {doc.abstract}
+        </p>
+
+        <div className="mt-auto flex items-center justify-between gap-3 border-t border-border pt-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              <Eye className="size-3.5" />
+              {formatNumber(doc.views)}
+            </span>
+            <span className="flex items-center gap-1">
+              <Download className="size-3.5" />
+              {formatNumber(doc.downloads)}
+            </span>
+          </span>
+          <Link
+            href={href}
+            className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+          >
+            Voir détails
+            <ArrowUpRight className="size-3.5" />
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function DocumentCardCompact({ doc }: { doc: ScientificDocument }) {
   return (
     <Link

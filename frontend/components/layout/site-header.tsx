@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { ArrowRight, Bot, Menu, Upload, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { PortalSwitcher } from "@/components/layout/portal-switcher";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
