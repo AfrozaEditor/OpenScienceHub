@@ -2,274 +2,283 @@
 
 import * as React from "react";
 import {
-  ArrowDown,
-  ChevronDown,
-  Cog,
-  Flag,
-  GitBranch,
-  Play,
-  Plus,
+  BookOpen,
+  Check,
+  FileText,
+  GraduationCap,
+  Loader2,
+  Sparkles,
   Trash2,
+  Workflow,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
-import { AdminToggle } from "@/components/admin/admin-toggle";
-import {
-  workflows as initialWorkflows,
-  type Workflow,
-  type WorkflowStep,
-  type WorkflowStepType,
-} from "@/lib/admin-data";
+import { messageForApiError } from "@/lib/api/errors";
+import { useApiResource } from "@/lib/api/hooks";
+import { applyWorkflowTemplate, deleteWorkflow, listWorkflows, updateWorkflow } from "@/lib/api/resources";
 
-const ROLE_OPTIONS = [
-  "Déposant",
-  "Système",
-  "Gestionnaire",
-  "Validateur",
-  "Administrateur",
-];
-
-const stepMeta: Record<
-  WorkflowStepType,
-  { label: string; icon: React.ComponentType<{ className?: string }>; color: string }
-> = {
-  start: { label: "Début", icon: Play, color: "text-success bg-success/12" },
-  task: { label: "Tâche", icon: Cog, color: "text-primary bg-primary/10" },
-  decision: { label: "Décision", icon: GitBranch, color: "text-[#b45309] bg-warning/15" },
-  end: { label: "Fin", icon: Flag, color: "text-brand bg-brand/10" },
+type WorkflowRow = {
+  id: string;
+  name: string;
+  document_type: string;
+  description: string;
+  is_active: boolean;
+  version: number;
+  steps: Array<{
+    id?: string;
+    name: string;
+    description?: string;
+    responsible_role?: string;
+    order: number;
+  }>;
 };
 
-const STEP_TYPES: WorkflowStepType[] = ["start", "task", "decision", "end"];
+const TEMPLATE_BUTTONS = [
+  { key: "MEMOIRE", label: "Utiliser modèle Mémoire", icon: GraduationCap },
+  { key: "THESE", label: "Utiliser modèle Thèse", icon: BookOpen },
+  { key: "ARTICLE", label: "Utiliser modèle Article", icon: FileText },
+] as const;
+
+function listFrom<T>(data: { results: T[] } | T[] | null) {
+  if (!data) return [];
+  return Array.isArray(data) ? data : data.results;
+}
+
+function mapWorkflow(row: Record<string, unknown>): WorkflowRow {
+  const steps = Array.isArray(row.steps) ? row.steps : [];
+  return {
+    id: String(row.id),
+    name: String(row.name || row.code || "Workflow"),
+    document_type: String(row.document_type || "—"),
+    description: String(row.description || ""),
+    is_active: Boolean(row.is_active),
+    version: Number(row.version || 1),
+    steps: steps
+      .map((step) => {
+        const s = step as Record<string, unknown>;
+        return {
+          id: s.id ? String(s.id) : undefined,
+          name: String(s.name || ""),
+          description: String(s.description || ""),
+          responsible_role: String(s.responsible_role || ""),
+          order: Number(s.order || 0),
+        };
+      })
+      .sort((a, b) => a.order - b.order),
+  };
+}
+
+function isAiStep(step: WorkflowRow["steps"][number]) {
+  if (step.responsible_role === "SYSTEM") return true;
+  const text = `${step.name} ${step.description}`.toLowerCase();
+  return text.includes("ia") || text.includes("extraction") || text.includes("index");
+}
 
 export default function AdminWorkflowsPage() {
-  const [workflows, setWorkflows] = React.useState<Workflow[]>(initialWorkflows);
-  const [selectedId, setSelectedId] = React.useState(initialWorkflows[0]?.id);
+  const live = useApiResource(() => listWorkflows(), [], null);
+  const [rows, setRows] = React.useState<WorkflowRow[]>([]);
+  const [busy, setBusy] = React.useState<string | null>(null);
+  const [feedback, setFeedback] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
 
-  const selected = workflows.find((w) => w.id === selectedId);
+  React.useEffect(() => {
+    if (!live.data) return;
+    setRows(listFrom<Record<string, unknown>>(live.data).map(mapWorkflow));
+  }, [live.data]);
 
-  function patchSteps(updater: (steps: WorkflowStep[]) => WorkflowStep[]) {
-    setWorkflows((prev) =>
-      prev.map((w) =>
-        w.id === selectedId ? { ...w, steps: updater(w.steps) } : w
-      )
-    );
+  React.useEffect(() => {
+    if (!feedback) return;
+    const timer = setTimeout(() => setFeedback(null), 3500);
+    return () => clearTimeout(timer);
+  }, [feedback]);
+
+  async function reload() {
+    await live.reload();
   }
 
-  function updateStep(id: string, patch: Partial<WorkflowStep>) {
-    patchSteps((steps) => steps.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+  async function handleApplyTemplate(template: string) {
+    setBusy(`template-${template}`);
+    setError(null);
+    try {
+      await applyWorkflowTemplate(template);
+      setFeedback(`Modèle ${template.toLowerCase()} appliqué.`);
+      await reload();
+    } catch (err) {
+      setError(messageForApiError(err));
+    } finally {
+      setBusy(null);
+    }
   }
 
-  function addStep() {
-    patchSteps((steps) => [
-      ...steps,
-      {
-        id: `st-${Date.now()}`,
-        name: "Nouvelle étape",
-        role: "Gestionnaire",
-        sla: "—",
-        type: "task",
-      },
-    ]);
+  async function handleToggleActive(workflow: WorkflowRow) {
+    setBusy(`toggle-${workflow.id}`);
+    setError(null);
+    try {
+      await updateWorkflow(workflow.id, { is_active: !workflow.is_active });
+      setFeedback(workflow.is_active ? "Workflow désactivé." : "Workflow activé.");
+      await reload();
+    } catch (err) {
+      setError(messageForApiError(err));
+    } finally {
+      setBusy(null);
+    }
   }
 
-  function removeStep(id: string) {
-    patchSteps((steps) => steps.filter((s) => s.id !== id));
-  }
-
-  function moveStep(index: number, dir: -1 | 1) {
-    patchSteps((steps) => {
-      const next = [...steps];
-      const target = index + dir;
-      if (target < 0 || target >= next.length) return steps;
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
-    });
-  }
-
-  function toggleActive(id: string) {
-    setWorkflows((prev) =>
-      prev.map((w) => (w.id === id ? { ...w, active: !w.active } : w))
-    );
+  async function handleDelete(workflow: WorkflowRow) {
+    if (!window.confirm(`Supprimer le workflow « ${workflow.name} » ?`)) return;
+    setBusy(`delete-${workflow.id}`);
+    setError(null);
+    try {
+      await deleteWorkflow(workflow.id);
+      setFeedback("Workflow supprimé.");
+      await reload();
+    } catch (err) {
+      setError(messageForApiError(err));
+    } finally {
+      setBusy(null);
+    }
   }
 
   return (
     <>
       <AdminPageHeader
         title="Workflows"
-        description="Concevez les étapes et transitions des processus de validation."
+        description="Processus configurés pour le traitement académique des travaux."
       >
-        <Button onClick={addStep} disabled={!selected}>
-          <Plus className="size-4" />
-          Ajouter une étape
-        </Button>
+        <Badge variant="outline">
+          <Workflow className="size-3" />
+          {live.loading ? "Chargement..." : `${rows.length} workflow(s)`}
+        </Badge>
       </AdminPageHeader>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_1.6fr]">
-        {/* Liste des workflows */}
-        <div className="space-y-3">
-          {workflows.map((w) => {
-            const active = w.id === selectedId;
-            return (
-              <Card
-                key={w.id}
-                className={`cursor-pointer gap-0 py-4 transition-colors ${active ? "border-primary ring-1 ring-primary/30" : "hover:border-primary/40"}`}
-                onClick={() => setSelectedId(w.id)}
-              >
-                <CardContent className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {w.name}
-                    </p>
-                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                      {w.description}
-                    </p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <Badge variant="outline">{w.steps.length} étapes</Badge>
-                      <Badge variant={w.active ? "success" : "secondary"}>
-                        {w.active ? "Actif" : "Inactif"}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div onClick={(e) => e.stopPropagation()}>
-                    <AdminToggle
-                      checked={w.active}
-                      onChange={() => toggleActive(w.id)}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+      {feedback && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-success/30 bg-success/10 px-4 py-2.5 text-sm text-foreground">
+          <Check className="size-4 text-success" />
+          {feedback}
         </div>
+      )}
 
-        {/* Builder */}
-        <Card>
-          <CardContent className="py-6">
-            {!selected ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                Sélectionnez un workflow.
-              </p>
-            ) : (
-              <>
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="font-heading text-lg font-semibold text-foreground">
-                      {selected.name}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      {selected.steps.length} étapes · transitions séquentielles
-                    </p>
-                  </div>
-                  <Badge variant={selected.active ? "success" : "secondary"}>
-                    {selected.active ? "Actif" : "Inactif"}
-                  </Badge>
+      {error && (
+        <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-base">Créer depuis un modèle</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-3">
+          {TEMPLATE_BUTTONS.map(({ key, label, icon: Icon }) => (
+            <Button
+              key={key}
+              variant="outline"
+              disabled={Boolean(busy)}
+              onClick={() => handleApplyTemplate(key)}
+            >
+              {busy === `template-${key}` ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Icon className="size-4" />
+              )}
+              {label}
+            </Button>
+          ))}
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4">
+        {rows.length === 0 ? (
+          <Card>
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+              Aucun workflow configuré pour le moment.
+              <br />
+              Utilisez un modèle mémoire, thèse ou article pour démarrer.
+            </CardContent>
+          </Card>
+        ) : (
+          rows.map((workflow) => (
+            <Card key={workflow.id}>
+              <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+                <div>
+                  <CardTitle className="text-base">{workflow.name}</CardTitle>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Type : {workflow.document_type} · Version {workflow.version}
+                  </p>
+                  {workflow.description && (
+                    <p className="mt-2 text-sm text-muted-foreground">{workflow.description}</p>
+                  )}
                 </div>
-
-                <div className="mt-5 space-y-0">
-                  {selected.steps.map((step, index) => {
-                    const meta = stepMeta[step.type];
-                    return (
-                      <div key={step.id}>
-                        <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-3">
-                          <span
-                            className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${meta.color}`}
-                          >
-                            <meta.icon className="size-4" />
-                          </span>
-                          <div className="grid flex-1 gap-2 sm:grid-cols-[1.4fr_1fr_0.8fr]">
-                            <Input
-                              value={step.name}
-                              onChange={(e) => updateStep(step.id, { name: e.target.value })}
-                              aria-label="Nom de l'étape"
-                            />
-                            <Select
-                              value={step.role}
-                              onChange={(e) => updateStep(step.id, { role: e.target.value })}
-                              aria-label="Rôle responsable"
-                            >
-                              {ROLE_OPTIONS.map((r) => (
-                                <option key={r} value={r}>
-                                  {r}
-                                </option>
-                              ))}
-                            </Select>
-                            <div className="flex gap-2">
-                              <Input
-                                value={step.sla}
-                                onChange={(e) => updateStep(step.id, { sla: e.target.value })}
-                                aria-label="Délai (SLA)"
-                                className="w-full"
-                              />
-                            </div>
-                            <Select
-                              value={step.type}
-                              onChange={(e) =>
-                                updateStep(step.id, {
-                                  type: e.target.value as WorkflowStepType,
-                                })
-                              }
-                              aria-label="Type d'étape"
-                              className="sm:col-span-3"
-                            >
-                              {STEP_TYPES.map((t) => (
-                                <option key={t} value={t}>
-                                  {stepMeta[t].label}
-                                </option>
-                              ))}
-                            </Select>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={() => moveStep(index, -1)}
-                              disabled={index === 0}
-                              title="Monter"
-                            >
-                              <ChevronDown className="size-4 rotate-180" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={() => moveStep(index, 1)}
-                              disabled={index === selected.steps.length - 1}
-                              title="Descendre"
-                            >
-                              <ChevronDown className="size-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={() => removeStep(step.id)}
-                              title="Supprimer"
-                            >
-                              <Trash2 className="size-4 text-destructive" />
-                            </Button>
-                          </div>
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  <Badge variant={workflow.is_active ? "default" : "outline"}>
+                    {workflow.is_active ? "Actif" : "Inactif"}
+                  </Badge>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={Boolean(busy)}
+                    onClick={() => handleToggleActive(workflow)}
+                  >
+                    {busy === `toggle-${workflow.id}` && (
+                      <Loader2 className="size-4 animate-spin" />
+                    )}
+                    {workflow.is_active ? "Désactiver" : "Activer"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={Boolean(busy)}
+                    onClick={() => handleDelete(workflow)}
+                  >
+                    {busy === `delete-${workflow.id}` ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="size-4" />
+                    )}
+                    Supprimer
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-3 text-sm font-medium text-foreground">
+                  Étapes du parcours ({workflow.steps.length})
+                </p>
+                <ol className="space-y-2">
+                  {workflow.steps.map((step) => (
+                    <li
+                      key={`${workflow.id}-${step.order}-${step.name}`}
+                      className="flex items-start gap-3 rounded-lg border border-border px-3 py-2"
+                    >
+                      <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold">
+                        {step.order}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-medium text-foreground">{step.name}</span>
+                          {isAiStep(step) && (
+                            <Badge variant="outline" className="gap-1 text-ai">
+                              <Sparkles className="size-3" />
+                              Étape IA
+                            </Badge>
+                          )}
+                          {step.responsible_role && (
+                            <Badge variant="outline">{step.responsible_role}</Badge>
+                          )}
                         </div>
-                        {index < selected.steps.length - 1 && (
-                          <div className="flex justify-center py-1.5">
-                            <ArrowDown className="size-4 text-muted-foreground/50" />
-                          </div>
+                        {step.description && (
+                          <p className="mt-1 text-xs text-muted-foreground">{step.description}</p>
                         )}
                       </div>
-                    );
-                  })}
-                </div>
-
-                <Button variant="outline" className="mt-4 w-full" onClick={addStep}>
-                  <Plus className="size-4" />
-                  Ajouter une étape
-                </Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
+                    </li>
+                  ))}
+                </ol>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </>
   );

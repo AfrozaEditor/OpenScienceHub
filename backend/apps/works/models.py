@@ -13,14 +13,31 @@ class WorkType(models.TextChoices):
 
 
 class WorkStatus(models.TextChoices):
-    DRAFT = "DRAFT", "Brouillon"
-    SUBMITTED = "SUBMITTED", "Soumis"
-    UNDER_REVIEW = "UNDER_REVIEW", "En instruction"
-    CORRECTION_REQUESTED = "CORRECTION_REQUESTED", "Correction demandée"
-    RESUBMITTED = "RESUBMITTED", "Re-soumis"
-    VALIDATED = "VALIDATED", "Validé"
-    ARCHIVED = "ARCHIVED", "Archivé"
-    REJECTED = "REJECTED", "Rejeté"
+    BROUILLON = "BROUILLON", "Brouillon"
+    SOUMIS = "SOUMIS", "Soumis"
+    EN_INSTRUCTION = "EN_INSTRUCTION", "En instruction"
+    EN_PRE_INSTRUCTION = "EN_PRE_INSTRUCTION", "En pré-instruction"
+    EN_EXPERTISE = "EN_EXPERTISE", "En expertise"
+    CORRECTION_DEMANDEE = "CORRECTION_DEMANDEE", "Correction demandée"
+    RE_SOUMIS = "RE_SOUMIS", "Re-soumis"
+    AVIS_EN_ATTENTE = "AVIS_EN_ATTENTE", "Avis en attente"
+    DECISION_REQUISE = "DECISION_REQUISE", "Décision requise"
+    AUTORISE_SOUTENANCE = "AUTORISE_SOUTENANCE", "Autorisé soutenance"
+    SOUTENANCE_AUTORISEE = "SOUTENANCE_AUTORISEE", "Soutenance autorisée"
+    SOUTENU = "SOUTENU", "Soutenu"
+    CORRECTION_POST_SOUTENANCE = "CORRECTION_POST_SOUTENANCE", "Correction post-soutenance"
+    VALIDE = "VALIDE", "Validé"
+    VALIDE_APRES_SOUTENANCE = "VALIDE_APRES_SOUTENANCE", "Validé après soutenance"
+    DEPOT_FINAL_ACCEPTE = "DEPOT_FINAL_ACCEPTE", "Dépôt final accepté"
+    SCREENING = "SCREENING", "Screening éditorial"
+    UNDER_REVIEW = "UNDER_REVIEW", "Peer review"
+    REVISION_REQUESTED = "REVISION_REQUESTED", "Révision demandée"
+    RESUBMITTED = "RESUBMITTED", "Article re-soumis"
+    ACCEPTED = "ACCEPTED", "Accepté"
+    PUBLISHED = "PUBLISHED", "Publié"
+    ARCHIVABLE = "ARCHIVABLE", "Archivable"
+    ARCHIVE = "ARCHIVE", "Archivé"
+    REJETE = "REJETE", "Rejeté"
 
 
 class Visibility(models.TextChoices):
@@ -53,7 +70,7 @@ class ScientificWork(TimeStampedModel):
     language = models.CharField(max_length=10, choices=Language.choices, default=Language.FR)
     academic_year = models.CharField(max_length=20, blank=True)
     keywords = ArrayField(models.CharField(max_length=80), default=list, blank=True)
-    status = models.CharField(max_length=30, choices=WorkStatus.choices, default=WorkStatus.DRAFT)
+    status = models.CharField(max_length=40, choices=WorkStatus.choices, default=WorkStatus.BROUILLON)
     visibility = models.CharField(max_length=20, choices=Visibility.choices, default=Visibility.PRIVATE)
 
     institution = models.ForeignKey("institutions.Institution", on_delete=models.PROTECT, related_name="works")

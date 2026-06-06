@@ -11,7 +11,7 @@ class DocumentVersionSerializer(serializers.ModelSerializer):
         fields = [
             "id", "work", "version_number", "version_type", "file", "file_name",
             "mime_type", "page_count", "sha256_hash", "change_note", "is_final",
-            "uploaded_by", "created_at",
+            "status", "uploaded_by", "created_at",
         ]
         read_only_fields = ["work", "version_number", "sha256_hash", "uploaded_by", "is_final"]
 

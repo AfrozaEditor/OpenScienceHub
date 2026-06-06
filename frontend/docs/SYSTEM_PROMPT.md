@@ -66,7 +66,7 @@ Ne change pas de stack sans accord.
 
 1. Lis [PRD.md](PRD.md), [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md), [PAGES.md](PAGES.md), [API_INTEGRATION.md](API_INTEGRATION.md).
 2. Implémente par écran (route → layout → composants → hooks data → états).
-3. Priorité au **scope MVP** ([ROADMAP.md](ROADMAP.md) Phase 1) ; mocker l'API si le backend n'est pas prêt (MSW), derrière les mêmes types.
+3. Priorité au **scope MVP** ([ROADMAP.md](ROADMAP.md) Phase 1) ; consommer l'API backend réelle via `lib/api/*` et afficher les états métier (`FAILED`, `SSI_PENDING`, `NO_CONTEXT_FOUND`) sans fixtures runtime.
 4. Vérifie lint/types/tests après chaque écran.
 5. Respecte le parcours de démo (dépôt → IA → validation → archivage → recherche → Assistant IA → vérification).
 

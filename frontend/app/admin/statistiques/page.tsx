@@ -4,7 +4,6 @@ import * as React from "react";
 import {
   BadgeCheck,
   Boxes,
-  Download,
   FileSpreadsheet,
   FileText,
   TrendingUp,
@@ -16,14 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatsCard } from "@/components/stats-card";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
-import {
-  adminStats,
-  documentsByDomain,
-  documentsByYear,
-  facets,
-  platformStats,
-} from "@/lib/mock-data";
-import { roles } from "@/lib/admin-data";
+import { useApiResource } from "@/lib/api/hooks";
+import { getAdminDashboard, getAdminStats } from "@/lib/api/resources";
 
 const fr = new Intl.NumberFormat("fr-FR");
 
@@ -58,95 +51,142 @@ function HBar({
       <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
         <div
           className={`h-full rounded-full ${color}`}
-          style={{ width: `${Math.max((value / max) * 100, 2)}%` }}
+          style={{ width: `${Math.max((value / max) * 100, value > 0 ? 2 : 0)}%` }}
         />
       </div>
     </div>
   );
 }
 
+function objectEntries(value: unknown): Array<{ label: string; count: number }> {
+  if (!value || typeof value !== "object") return [];
+  return Object.entries(value as Record<string, unknown>)
+    .map(([label, count]) => ({
+      label: label || "—",
+      count: typeof count === "number" ? count : Number(count) || 0,
+    }))
+    .sort((a, b) => b.count - a.count);
+}
+
+function statusLabel(value: string) {
+  const labels: Record<string, string> = {
+    BROUILLON: "Brouillon",
+    SOUMIS: "Soumis",
+    EN_INSTRUCTION: "En instruction",
+    EN_EXPERTISE: "En expertise",
+    CORRECTION_DEMANDEE: "Correction demandée",
+    RE_SOUMIS: "Re-soumis",
+    VALIDE: "Validé",
+    VALIDE_APRES_SOUTENANCE: "Validé après soutenance",
+    ARCHIVABLE: "Prêt à archiver",
+    ARCHIVE: "Archivé",
+    REJETE: "Rejeté",
+    UNDER_REVIEW: "En évaluation",
+    RESUBMITTED: "Re-soumis",
+    ACCEPTED: "Accepté",
+    PUBLISHED: "Publié",
+  };
+  return labels[value] || value;
+}
+
+function kpiValue(source: Record<string, unknown> | undefined, key: string) {
+  const value = source?.[key];
+  return typeof value === "number" ? value : 0;
+}
+
+function EmptyChart({ message }: { message: string }) {
+  return (
+    <div className="flex h-52 items-center justify-center rounded-lg border border-dashed border-border px-4 text-center text-sm text-muted-foreground">
+      {message}
+    </div>
+  );
+}
+
 export default function AdminStatsPage() {
-  const [feedback, setFeedback] = React.useState<string | null>(null);
+  const liveStats = useApiResource(() => getAdminStats(), [], null);
+  const dashboard = useApiResource(() => getAdminDashboard(), [], null);
+  const kpis = dashboard.data?.kpis as Record<string, unknown> | undefined;
 
-  React.useEffect(() => {
-    if (!feedback) return;
-    const t = setTimeout(() => setFeedback(null), 3500);
-    return () => clearTimeout(t);
-  }, [feedback]);
+  const byYear = objectEntries(liveStats.data?.by_year);
+  const byType = objectEntries(liveStats.data?.by_type);
+  const byStatus = objectEntries(liveStats.data?.by_status).map((item) => ({
+    ...item,
+    label: statusLabel(item.label),
+  }));
+  const byInstitution = objectEntries(liveStats.data?.by_institution);
+  const yearMax = Math.max(1, ...byYear.map((d) => d.count));
+  const typeMax = Math.max(1, ...byType.map((d) => d.count));
+  const statusMax = Math.max(1, ...byStatus.map((d) => d.count));
+  const institutionMax = Math.max(1, ...byInstitution.map((d) => d.count));
 
-  const yearMax = Math.max(...documentsByYear.map((d) => d.count));
-  const domainMax = Math.max(...documentsByDomain.map((d) => d.count));
-  const usersByRole = roles
-    .map((r) => ({ label: r.name, value: r.users }))
-    .sort((a, b) => b.value - a.value);
-  const roleMax = Math.max(...usersByRole.map((u) => u.value));
-  const topFaculties = facets.faculties.slice(0, 5);
-  const facultyMax = Math.max(...topFaculties.map((f) => f.count));
-
-  function exportAs(kind: "CSV" | "PDF") {
-    setFeedback(`Export ${kind} généré (démonstration).`);
+  function exportCsv() {
+    const sections = [
+      ["Année académique", byYear],
+      ["Type de document", byType],
+      ["Statut", byStatus],
+      ["Institution", byInstitution],
+    ] as const;
+    const rows = ["Section;Libellé;Nombre"];
+    sections.forEach(([section, values]) => {
+      values.forEach((item) => {
+        rows.push(`${section};"${item.label.replaceAll('"', '""')}";${item.count}`);
+      });
+    });
+    const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `openscience-statistiques-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
     <>
       <AdminPageHeader
         title="Statistiques"
-        description="Indicateurs clés, tendances et exports pour le pilotage institutionnel."
+        description="Indicateurs et répartitions calculés à partir des données enregistrées."
       >
-        <Button variant="outline" onClick={() => exportAs("CSV")}>
-          <FileSpreadsheet className="size-4" />
-          Export CSV
-        </Button>
-        <Button variant="outline" onClick={() => exportAs("PDF")}>
-          <FileText className="size-4" />
-          Export PDF
-        </Button>
+        <Badge variant="outline">Données live</Badge>
       </AdminPageHeader>
 
-      {feedback && (
-        <div className="mb-5 flex items-center gap-2 rounded-lg border border-success/30 bg-success/10 px-4 py-2.5 text-sm text-foreground">
-          <BadgeCheck className="size-4 text-success" />
-          {feedback}
+      {(liveStats.error || dashboard.error) && (
+        <div className="mb-5 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
+          {liveStats.error || dashboard.error}
         </div>
       )}
 
-      {/* KPIs */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
-          label="Documents archivés"
-          value={fr.format(platformStats.documents)}
+          label="Documents déposés"
+          value={fr.format(kpiValue(kpis, "total_works"))}
           icon={FileText}
           accent="primary"
-          trend={{ value: "+18%" }}
-          hint="cette année"
+          hint="dossiers dans le périmètre"
         />
         <StatsCard
-          label="Documents validés"
-          value={fr.format(adminStats.validated)}
+          label="Documents archivés"
+          value={fr.format(kpiValue(kpis, "archived_works"))}
           icon={BadgeCheck}
           accent="success"
-          trend={{ value: "+8%" }}
-          hint="ce mois"
+          hint="archives finalisées"
         />
         <StatsCard
-          label="Téléchargements"
-          value={fr.format(platformStats.downloads)}
-          icon={Download}
-          accent="ai"
-          trend={{ value: "+23%" }}
-          hint="cumul"
+          label="En attente"
+          value={fr.format(kpiValue(kpis, "pending_works"))}
+          icon={TrendingUp}
+          accent="warning"
+          hint="soumis ou en instruction"
         />
         <StatsCard
-          label="Auteurs"
-          value={fr.format(platformStats.authors)}
+          label="Utilisateurs actifs"
+          value={fr.format(kpiValue(kpis, "active_users_count"))}
           icon={Users}
           accent="brand"
-          trend={{ value: "+5%" }}
-          hint="actifs"
+          hint="comptes actifs"
         />
       </div>
 
-      {/* Charts */}
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -156,25 +196,26 @@ export default function AdminStatsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex h-52 items-end gap-2 sm:gap-3">
-              {documentsByYear.map((d) => (
-                <div
-                  key={d.year}
-                  className="group flex flex-1 flex-col items-center gap-2"
-                >
-                  <span className="text-xs font-medium text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
-                    {fr.format(d.count)}
-                  </span>
-                  <div className="flex w-full flex-1 items-end">
-                    <div
-                      className="w-full rounded-t-md bg-primary/85 transition-colors group-hover:bg-primary"
-                      style={{ height: `${(d.count / yearMax) * 100}%` }}
-                    />
+            {byYear.length === 0 ? (
+              <EmptyChart message="Aucun dépôt enregistré avec une année académique." />
+            ) : (
+              <div className="flex h-52 items-end gap-2 sm:gap-3">
+                {byYear.map((d) => (
+                  <div key={d.label} className="group flex flex-1 flex-col items-center gap-2">
+                    <span className="text-xs font-medium text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
+                      {fr.format(d.count)}
+                    </span>
+                    <div className="flex w-full flex-1 items-end">
+                      <div
+                        className="w-full rounded-t-md bg-primary/85 transition-colors group-hover:bg-primary"
+                        style={{ height: `${(d.count / yearMax) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground">{d.label}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">{d.year}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -182,21 +223,25 @@ export default function AdminStatsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Boxes className="size-4 text-ai" />
-              Répartition par domaine
+              Répartition par type
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col gap-3.5 py-1">
-              {documentsByDomain.map((d, i) => (
-                <HBar
-                  key={d.domain}
-                  label={d.domain}
-                  value={d.count}
-                  max={domainMax}
-                  color={barColors[i % barColors.length]}
-                />
-              ))}
-            </div>
+            {byType.length === 0 ? (
+              <EmptyChart message="Aucun dossier enregistré pour l'instant." />
+            ) : (
+              <div className="flex flex-col gap-3.5 py-1">
+                {byType.map((d, i) => (
+                  <HBar
+                    key={d.label}
+                    label={d.label}
+                    value={d.count}
+                    max={typeMax}
+                    color={barColors[i % barColors.length]}
+                  />
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -204,21 +249,25 @@ export default function AdminStatsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Users className="size-4 text-primary" />
-              Utilisateurs par rôle
+              Répartition par statut
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col gap-3.5 py-1">
-              {usersByRole.map((u, i) => (
-                <HBar
-                  key={u.label}
-                  label={u.label}
-                  value={u.value}
-                  max={roleMax}
-                  color={barColors[i % barColors.length]}
-                />
-              ))}
-            </div>
+            {byStatus.length === 0 ? (
+              <EmptyChart message="Aucun statut à afficher." />
+            ) : (
+              <div className="flex flex-col gap-3.5 py-1">
+                {byStatus.map((u, i) => (
+                  <HBar
+                    key={u.label}
+                    label={u.label}
+                    value={u.count}
+                    max={statusMax}
+                    color={barColors[i % barColors.length]}
+                  />
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -226,29 +275,40 @@ export default function AdminStatsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Boxes className="size-4 text-success" />
-              Top facultés (corpus)
+              Archives par institution
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col gap-3.5 py-1">
-              {topFaculties.map((f, i) => (
-                <HBar
-                  key={f.label}
-                  label={f.label}
-                  value={f.count}
-                  max={facultyMax}
-                  color={barColors[i % barColors.length]}
-                />
-              ))}
-            </div>
+            {byInstitution.length === 0 ? (
+              <EmptyChart message="Aucune archive enregistrée." />
+            ) : (
+              <div className="flex flex-col gap-3.5 py-1">
+                {byInstitution.map((f, i) => (
+                  <HBar
+                    key={f.label}
+                    label={f.label}
+                    value={f.count}
+                    max={institutionMax}
+                    color={barColors[i % barColors.length]}
+                  />
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
         <Badge variant="outline">Exports</Badge>
-        Données exportables aux formats CSV (tableur) et PDF (rapport mis en
-        page). Les graphiques reflètent les jeux de données de démonstration.
+        Exportez les répartitions affichées ou imprimez la page pour un rapport PDF.
+        <Button variant="outline" size="sm" className="ml-auto" onClick={exportCsv}>
+          <FileSpreadsheet className="size-4" />
+          Export CSV
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => window.print()}>
+          <FileText className="size-4" />
+          Imprimer / PDF
+        </Button>
       </div>
     </>
   );

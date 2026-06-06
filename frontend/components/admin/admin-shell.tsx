@@ -4,12 +4,12 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, Menu, ShieldCheck, X } from "lucide-react";
+import { ArrowLeft, ExternalLink, LogOut, Menu, ShieldCheck, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { INSTITUTION } from "@/lib/mock-data";
-import { adminAccount, adminNav } from "@/lib/admin-data";
-import { PortalSwitcher } from "@/components/layout/portal-switcher";
+import { adminNav } from "@/lib/admin-nav";
+import { useAuth } from "@/components/auth-provider";
+import { MissionSwitcher } from "@/components/mission-switcher";
 
 function useActive() {
   const pathname = usePathname();
@@ -97,6 +97,18 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
+  const { user, logout } = useAuth();
+  const displayName = user?.full_name || user?.email || "Administrateur";
+  const scopeLabel = user?.capabilities?.is_platform_admin
+    ? "Administration plateforme"
+    : "Administration institutionnelle";
+  const initials =
+    displayName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") || "AD";
 
   React.useEffect(() => {
     setOpen(false);
@@ -157,25 +169,40 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 {currentLabel}
               </p>
               <p className="truncate text-xs text-muted-foreground">
-                {INSTITUTION}
+                {scopeLabel}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <PortalSwitcher />
+            <MissionSwitcher current="admin" />
+            <Link
+              href="/"
+              className="hidden items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex"
+            >
+              <ExternalLink className="size-3.5" />
+              Site public
+            </Link>
             <div className="flex items-center gap-2.5 rounded-full border border-border bg-card py-1 pl-1 pr-3">
               <span className="flex size-8 items-center justify-center rounded-full bg-brand text-xs font-semibold text-brand-foreground">
-                {adminAccount.initials}
+                {initials}
               </span>
               <span className="hidden leading-tight sm:flex sm:flex-col">
                 <span className="text-xs font-semibold text-foreground">
-                  {adminAccount.name}
+                  {displayName}
                 </span>
                 <span className="text-[11px] text-muted-foreground">
-                  {adminAccount.role}
+                  {scopeLabel}
                 </span>
               </span>
+              <button
+                type="button"
+                onClick={logout}
+                aria-label="Se déconnecter"
+                className="ml-1 grid size-7 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <LogOut className="size-3.5" />
+              </button>
             </div>
           </div>
         </header>

@@ -4,16 +4,15 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, Menu, ShieldCheck, X } from "lucide-react";
+import { ArrowLeft, ExternalLink, LogOut, Menu, ShieldCheck, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { INSTITUTION } from "@/lib/mock-data";
 import {
   openDossiersCount,
-  validationAccount,
   validationNav,
 } from "@/lib/validation-data";
-import { PortalSwitcher } from "@/components/layout/portal-switcher";
+import { useAuth } from "@/components/auth-provider";
+import { MissionSwitcher } from "@/components/mission-switcher";
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -111,6 +110,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 export function ValidationShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
+  const { user, logout } = useAuth();
+  const displayName = user?.full_name || user?.email || "Validateur";
+  const initials =
+    displayName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") || "VA";
 
   React.useEffect(() => {
     setOpen(false);
@@ -169,25 +177,40 @@ export function ValidationShell({ children }: { children: React.ReactNode }) {
                 {currentLabel}
               </p>
               <p className="truncate text-xs text-muted-foreground">
-                {INSTITUTION}
+                File de mission selon vos rôles et périmètres
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <PortalSwitcher />
+            <MissionSwitcher current="validation" />
+            <Link
+              href="/"
+              className="hidden items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex"
+            >
+              <ExternalLink className="size-3.5" />
+              Site public
+            </Link>
             <div className="flex items-center gap-2.5 rounded-full border border-border bg-card py-1 pl-1 pr-3">
               <span className="flex size-8 items-center justify-center rounded-full bg-ai text-xs font-semibold text-ai-foreground">
-                {validationAccount.initials}
+                {initials}
               </span>
               <span className="hidden leading-tight sm:flex sm:flex-col">
                 <span className="text-xs font-semibold text-foreground">
-                  {validationAccount.name}
+                  {displayName}
                 </span>
                 <span className="text-[11px] text-muted-foreground">
-                  {validationAccount.role}
+                  Validation académique
                 </span>
               </span>
+              <button
+                type="button"
+                onClick={logout}
+                aria-label="Se déconnecter"
+                className="ml-1 grid size-7 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <LogOut className="size-3.5" />
+              </button>
             </div>
           </div>
         </header>

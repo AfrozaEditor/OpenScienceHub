@@ -10,8 +10,6 @@ import {
   BadgeCheck,
   Check,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   Circle,
   Clock,
   Download,
@@ -26,8 +24,6 @@ import {
   UserCheck,
   UserPlus,
   Wrench,
-  ZoomIn,
-  ZoomOut,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +34,6 @@ import { Select } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { PortalModal } from "@/components/validation/portal-modal";
-import { ValidationPageHeader } from "@/components/validation/validation-page-header";
 import {
   archiveChecklist,
   buildAiAnalysis,
@@ -46,12 +41,8 @@ import {
   buildWorkflowEvents,
   decisionChecklist,
   fieldOptions,
-  getDossier,
-  getDossierWork,
-  seedCorrections,
-  seedReviews,
-  validationAccount,
   type Correction,
+  type Dossier,
   type DossierState,
   type EventType,
   type FieldStatus,
@@ -60,6 +51,11 @@ import {
   type Review,
   type WorkflowEvent,
 } from "@/lib/validation-data";
+import { useAuth } from "@/components/auth-provider";
+import { messageForApiError } from "@/lib/api/errors";
+import { useApiResource } from "@/lib/api/hooks";
+import { workToScientificDocument } from "@/lib/api/mappers";
+import { addCorrection as apiAddCorrection, addReview as apiAddReview, archiveWork, assignWork, decideWork, getWork, getWorkProof, listCorrections, listDocuments, listReviews, validateWorkMetadata } from "@/lib/api/resources";
 
 /* ------------------------------ variant maps ----------------------------- */
 
@@ -121,20 +117,46 @@ const eventDot: Record<EventType, string> = {
   archive: "bg-success",
 };
 
-function randomHash() {
-  return Array.from({ length: 16 }, () =>
-    Math.floor(Math.random() * 16).toString(16)
-  ).join("");
-}
-
 /* -------------------------------------------------------------------------- */
 
 function DetailInner() {
   const params = useParams();
   const search = useSearchParams();
   const id = String(params.id ?? "");
-  const dossier = getDossier(id);
-  const doc = dossier ? getDossierWork(dossier) : undefined;
+  const { user } = useAuth();
+  const liveWork = useApiResource(() => getWork(id), [id], null);
+  const liveDocuments = useApiResource(() => listDocuments(id), [id], []);
+  const liveReviews = useApiResource(() => listReviews(id), [id], []);
+  const liveCorrections = useApiResource(() => listCorrections(id), [id], []);
+  const liveDoc = liveWork.data ? workToScientificDocument(liveWork.data) : undefined;
+  const liveDossier = React.useMemo<Dossier | undefined>(() => {
+    if (!liveWork.data) return undefined;
+    const submitted = liveWork.data.submitted_at ? new Date(liveWork.data.submitted_at) : null;
+    const ageDays = submitted
+      ? Math.max(0, Math.floor((Date.now() - submitted.getTime()) / 86_400_000))
+      : 0;
+    const state: DossierState =
+      liveWork.data.status === "REJETE"
+        ? "Rejeté"
+        : ["VALIDE", "VALIDE_APRES_SOUTENANCE", "ACCEPTED", "PUBLISHED", "ARCHIVABLE", "ARCHIVE"].includes(liveWork.data.status)
+          ? "Validé"
+          : ["CORRECTION_DEMANDEE", "REVISION_REQUESTED", "CORRECTION_POST_SOUTENANCE"].includes(liveWork.data.status)
+            ? "En correction"
+            : "À traiter";
+    return {
+      id: liveWork.data.id,
+      workSlug: liveWork.data.id,
+      priority: ageDays > 3 ? "Haute" : "Normale",
+      state,
+      assignee: null,
+      slaDays: 7,
+      ageDays,
+      versionHash: liveWork.data.reference_code || liveWork.data.id.slice(0, 12),
+    };
+  }, [liveWork.data]);
+  const dossier = liveDossier;
+  const doc = liveDoc;
+  const reviewerName = user?.full_name || user?.email || "Validateur";
 
   const initialTab =
     TAB_KEYS.includes(search.get("tab") ?? "") ? (search.get("tab") as string) : "document";
@@ -142,12 +164,8 @@ function DetailInner() {
   const [tab, setTab] = React.useState(initialTab);
   const [state, setState] = React.useState<DossierState>(dossier?.state ?? "À traiter");
   const [assignee, setAssignee] = React.useState<string | null>(dossier?.assignee ?? null);
-  const [reviews, setReviews] = React.useState<Review[]>(() =>
-    dossier ? seedReviews(dossier) : []
-  );
-  const [corrections, setCorrections] = React.useState<Correction[]>(() =>
-    dossier ? seedCorrections(dossier) : []
-  );
+  const [reviews, setReviews] = React.useState<Review[]>([]);
+  const [corrections, setCorrections] = React.useState<Correction[]>([]);
   const [events, setEvents] = React.useState<WorkflowEvent[]>(() =>
     dossier && doc ? buildWorkflowEvents(dossier, doc) : []
   );
@@ -176,6 +194,28 @@ function DetailInner() {
     publication: true,
   });
   const [proof, setProof] = React.useState<{ hash: string; at: string } | null>(null);
+  const documentVersions = React.useMemo(
+    () => (Array.isArray(liveDocuments.data) ? liveDocuments.data : []),
+    [liveDocuments.data],
+  );
+  const examinedVersion = React.useMemo(() => {
+    const sorted = [...documentVersions].sort((a, b) => b.version_number - a.version_number);
+    return (
+      sorted.find((version) => version.is_final) ||
+      sorted.find((version) => version.status === "ARCHIVED" || version.status === "FINAL") ||
+      sorted[0] ||
+      null
+    );
+  }, [documentVersions]);
+  const examinedHash = examinedVersion?.sha256_hash || dossier?.versionHash || "";
+  const examinedPageCount = examinedVersion?.page_count ?? doc?.pages ?? 0;
+  const examinedFileName = examinedVersion?.file_name || (doc ? `${doc.title}.pdf` : "document.pdf");
+  const examinedFileUrl = React.useMemo(() => {
+    const file = examinedVersion?.file;
+    if (!file) return "";
+    if (file.startsWith("http://") || file.startsWith("https://")) return file;
+    return file.startsWith("/") ? file : `/${file}`;
+  }, [examinedVersion?.file]);
 
   const [flash, setFlash] = React.useState<string | null>(null);
   const flashTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -187,6 +227,62 @@ function DetailInner() {
   React.useEffect(() => () => {
     if (flashTimer.current) clearTimeout(flashTimer.current);
   }, []);
+
+  React.useEffect(() => {
+    if (!dossier) return;
+    setState(dossier.state);
+    setAssignee(dossier.assignee);
+  }, [dossier]);
+
+  React.useEffect(() => {
+    const rows = Array.isArray(liveReviews.data) ? liveReviews.data : [];
+    setReviews(
+      rows.map((row) => {
+        const recommendation = String(row.recommendation || "");
+        return {
+          id: String(row.id || crypto.randomUUID()),
+          reviewer: String(row.author || row.reviewer || "Validateur"),
+          date: String(row.created_at || "—"),
+          recommendation: recommendation.includes("REJECT")
+            ? "Rejeter"
+            : recommendation.includes("CORRECTION") || recommendation.includes("REVISION")
+              ? "Accepter avec corrections"
+              : "Accepter",
+          comment: String(row.comment || row.public_comment || ""),
+        };
+      }),
+    );
+  }, [liveReviews.data]);
+
+  React.useEffect(() => {
+    const rows = Array.isArray(liveCorrections.data) ? liveCorrections.data : [];
+    setCorrections(
+      rows.map((row) => {
+        const message = String(row.message || "");
+        const [field, ...rest] = message.split(":");
+        return {
+          id: String(row.id || crypto.randomUUID()),
+          field: rest.length ? field : String(row.type || "Correction"),
+          request: rest.length ? rest.join(":").trim() : message,
+          status: row.status === "VALIDATED" || row.status === "ANSWERED" ? "Résolue" : "Ouverte",
+        };
+      }),
+    );
+  }, [liveCorrections.data]);
+
+  React.useEffect(() => {
+    if (dossier && doc) setEvents(buildWorkflowEvents(dossier, doc));
+  }, [dossier, doc]);
+
+  if (!dossier && liveWork.loading) {
+    return (
+      <Card className="mx-auto max-w-md text-center">
+        <CardContent className="py-10">
+          <p className="text-sm text-muted-foreground">Chargement du dossier...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!dossier || !doc) {
     return (
@@ -211,7 +307,8 @@ function DetailInner() {
 
   const metaRows = buildMetadataRows(doc);
   const ai = buildAiAnalysis(doc);
-  const mine = assignee === validationAccount.name;
+  const docFileSize = "fileSize" in doc ? String(doc.fileSize) : "3,2 Mo";
+  const mine = assignee === reviewerName;
   const stageIndex =
     state === "À traiter"
       ? 0
@@ -225,29 +322,66 @@ function DetailInner() {
   function pushEvent(label: string, type: EventType) {
     setEvents((prev) => [
       ...prev,
-      { date: "À l'instant", label, actor: validationAccount.name, type },
+      { date: "À l'instant", label, actor: reviewerName, type },
     ]);
   }
 
-  function assignToMe() {
-    setAssignee(validationAccount.name);
+  async function assignToMe() {
+    if (liveWork.data && user?.id) {
+      try {
+        await assignWork(liveWork.data.id, {
+          assignment_type: "PEER_REVIEW",
+          assignee: user.id,
+          status: "IN_PROGRESS",
+        });
+      } catch (err) {
+        notify(messageForApiError(err));
+        return;
+      }
+    }
+    setAssignee(reviewerName);
     setState((s) => (s === "À traiter" ? "En cours" : s));
-    pushEvent(`Dossier affecté à ${validationAccount.name}`, "assign");
+    pushEvent(`Dossier affecté à ${reviewerName}`, "assign");
     notify("Dossier assigné. Vous en êtes le validateur.");
   }
 
-  function validateMetadata() {
+  async function validateMetadata() {
+    if (liveWork.data) {
+      try {
+        await validateWorkMetadata(liveWork.data.id);
+      } catch (err) {
+        notify(messageForApiError(err));
+        return;
+      }
+    }
     setMetaValidated(true);
     pushEvent("Métadonnées validées par l'institution", "review");
     notify("Métadonnées validées et figées.");
   }
 
-  function submitReview(e: React.FormEvent) {
+  async function submitReview(e: React.FormEvent) {
     e.preventDefault();
     if (!revComment.trim()) return;
+    if (liveWork.data) {
+      try {
+        await apiAddReview(liveWork.data.id, {
+          comment: revComment.trim(),
+          recommendation:
+            revRecommendation === "Rejeter"
+              ? "REJECT"
+              : revRecommendation === "Accepter avec corrections"
+                ? "MINOR_CORRECTION"
+                : "ACCEPT",
+          conformity_score: 90,
+        });
+      } catch (err) {
+        notify(messageForApiError(err));
+        return;
+      }
+    }
     const review: Review = {
       id: `rev-${Date.now()}`,
-      reviewer: validationAccount.name,
+      reviewer: reviewerName,
       date: "À l'instant",
       recommendation: revRecommendation,
       comment: revComment.trim(),
@@ -258,9 +392,21 @@ function DetailInner() {
     notify("Avis enregistré.");
   }
 
-  function addCorrection(e: React.FormEvent) {
+  async function addCorrection(e: React.FormEvent) {
     e.preventDefault();
     if (!corrRequest.trim()) return;
+    if (liveWork.data) {
+      try {
+        await apiAddCorrection(liveWork.data.id, {
+          type: "METADATA",
+          message: `${corrField}: ${corrRequest.trim()}`,
+          priority: "NORMAL",
+        });
+      } catch (err) {
+        notify(messageForApiError(err));
+        return;
+      }
+    }
     const correction: Correction = {
       id: `cor-${Date.now()}`,
       field: corrField,
@@ -284,9 +430,20 @@ function DetailInner() {
     );
   }
 
-  function confirmDecision() {
+  async function confirmDecision() {
     if (!decisionChoice || !decisionChecks.every(Boolean)) return;
     const next: DossierState = decisionChoice === "Valider" ? "Validé" : "Rejeté";
+    if (liveWork.data) {
+      try {
+        await decideWork(liveWork.data.id, {
+          decision_type: decisionChoice === "Valider" ? "VALIDATE_AFTER_DEFENSE" : "REJECT",
+          comment: decisionComment,
+        });
+      } catch (err) {
+        notify(messageForApiError(err));
+        return;
+      }
+    }
     setState(next);
     pushEvent(
       `Décision : ${next === "Validé" ? "validé" : "rejeté"}`,
@@ -297,10 +454,26 @@ function DetailInner() {
     if (next === "Validé") setTab("archivage");
   }
 
-  function confirmArchive() {
+  async function confirmArchive() {
     if (!archiveChecks.every(Boolean)) return;
-    const p = { hash: randomHash(), at: new Date().toLocaleString("fr-FR") };
-    setProof(p);
+    let issuedProof: { document_hash?: string; issued_at?: string; proof_code?: string } | null = null;
+    if (liveWork.data) {
+      try {
+        await archiveWork(liveWork.data.id);
+        issuedProof = await getWorkProof(liveWork.data.id);
+      } catch (err) {
+        notify(messageForApiError(err));
+        return;
+      }
+    }
+    if (issuedProof) {
+      setProof({
+        hash: issuedProof.document_hash || issuedProof.proof_code || "—",
+        at: issuedProof.issued_at
+          ? new Date(issuedProof.issued_at).toLocaleString("fr-FR")
+          : "—",
+      });
+    }
     pushEvent("Preuve d'intégrité émise et document publié", "archive");
     setArchiveOpen(false);
     notify("Preuve générée. Document archivé et publié.");
@@ -447,34 +620,34 @@ function DetailInner() {
           <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
             <Card className="overflow-hidden py-0">
               <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-2.5 text-sm">
-                <span className="flex items-center gap-2 font-medium text-foreground">
+                <span className="min-w-0 flex items-center gap-2 font-medium text-foreground">
                   <FileText className="size-4 text-primary" />
-                  {doc.title.slice(0, 40)}… .pdf
+                  <span className="truncate">{examinedFileName}</span>
                 </span>
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <Button variant="ghost" size="icon-sm" aria-label="Page précédente">
-                    <ChevronLeft className="size-4" />
+                {examinedFileUrl ? (
+                  <Button variant="ghost" size="sm" asChild>
+                    <a href={examinedFileUrl} download={examinedFileName}>
+                      <Download className="size-4" />
+                      Télécharger
+                    </a>
                   </Button>
-                  <span className="text-xs">1 / {doc.pages}</span>
-                  <Button variant="ghost" size="icon-sm" aria-label="Page suivante">
-                    <ChevronRight className="size-4" />
-                  </Button>
-                  <span className="mx-1 h-4 w-px bg-border" />
-                  <Button variant="ghost" size="icon-sm" aria-label="Zoom arrière">
-                    <ZoomOut className="size-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon-sm" aria-label="Zoom avant">
-                    <ZoomIn className="size-4" />
-                  </Button>
-                </div>
+                ) : null}
               </div>
-              <div className="flex aspect-[1/1.3] items-center justify-center bg-[repeating-linear-gradient(45deg,var(--muted),var(--muted)_12px,transparent_12px,transparent_24px)]">
-                <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                  <FileText className="size-10" />
-                  <p className="text-sm">Aperçu du document (PDF)</p>
-                  <p className="text-xs">Rendu non disponible en démonstration</p>
+              {examinedFileUrl ? (
+                <iframe
+                  src={examinedFileUrl}
+                  title={`Aperçu PDF - ${examinedFileName}`}
+                  className="h-[min(72vh,860px)] min-h-[520px] w-full border-0 bg-muted"
+                />
+              ) : (
+                <div className="flex aspect-[1/1.3] items-center justify-center bg-muted/30">
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <FileText className="size-10" />
+                    <p className="text-sm">Aucun PDF disponible pour ce dossier</p>
+                    <p className="text-xs">Chargez une version documentaire avant la validation.</p>
+                  </div>
                 </div>
-              </div>
+              )}
             </Card>
 
             <div className="space-y-4">
@@ -486,23 +659,25 @@ function DetailInner() {
                   <div>
                     <p className="text-xs text-muted-foreground">Empreinte (SHA-256, tronquée)</p>
                     <p className="mt-1 break-all font-mono text-xs text-foreground">
-                      {dossier.versionHash}…
+                      {examinedHash ? `${examinedHash.slice(0, 24)}…` : "Non calculée"}
                     </p>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Pages</span>
-                    <span className="font-medium text-foreground">{doc.pages}</span>
+                    <span className="font-medium text-foreground">{examinedPageCount || "—"}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Taille</span>
-                    <span className="font-medium text-foreground">
-                      {(doc.pages * 0.045 + 0.4).toFixed(1).replace(".", ",")} Mo
-                    </span>
+                    <span className="font-medium text-foreground">{docFileSize}</span>
                   </div>
-                  <Button variant="outline" size="sm" className="w-full">
-                    <Download className="size-4" />
-                    Télécharger le PDF
-                  </Button>
+                  {examinedFileUrl ? (
+                    <Button variant="outline" size="sm" className="w-full" asChild>
+                      <a href={examinedFileUrl} download={examinedFileName}>
+                        <Download className="size-4" />
+                        Télécharger le PDF
+                      </a>
+                    </Button>
+                  ) : null}
                 </CardContent>
               </Card>
             </div>

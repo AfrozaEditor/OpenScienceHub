@@ -1,5 +1,7 @@
 from rest_framework import permissions, viewsets
 
+from apps.accounts.services import get_user_capabilities
+
 from .models import AcademicProgram, Department, Faculty, Institution
 from .serializers import (
     AcademicProgramSerializer,
@@ -10,12 +12,16 @@ from .serializers import (
 
 
 class ReadOnlyOrAdmin(permissions.BasePermission):
-    """Lecture publique, écriture réservée au staff."""
+    """Lecture publique, écriture réservée aux administrateurs plateforme."""
 
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
             return True
-        return bool(request.user and request.user.is_staff)
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and get_user_capabilities(request.user)["is_platform_admin"]
+        )
 
 
 class InstitutionViewSet(viewsets.ModelViewSet):

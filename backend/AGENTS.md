@@ -32,7 +32,7 @@ backend/
 - Modèles : `UUID` PK, `created_at`/`updated_at`, enums via `models.TextChoices` (voir `../docs/DATA_MODEL.md`).
 - Logique métier dans des **services** (`works/services.py`, `validation/services.py`, `ssi/services.py`), pas dans les vues.
 - DRF : `ViewSet` + `Serializer` + `permissions` explicites ; pagination par défaut ; endpoints conformes à `../docs/API_SPEC.md`.
-- Clients externes : `ai/simba_client.py` et `ssi/eidstack_client.py` (timeouts, retries, mode `mock`, `SSI_PENDING`).
+- Clients externes : `apps/ai/client.py` et `apps/ssi/client.py` (timeouts, retries, mode `live` obligatoire, `SSI_PENDING`).
 - Migrations toujours fournies. Tests `pytest`/`pytest-django` pour chaque règle métier critique.
 - Qualité : `ruff` + `black`. Pas de commentaires qui paraphrasent le code.
 
@@ -68,7 +68,7 @@ SIMBA_IA_URL=http://localhost:8001
 EIDSTACK_BASE_URL=http://localhost:3000
 EIDSTACK_API_KEY=...            # jamais renvoyé par l'API
 EIDSTACK_ENVIRONMENT=TEST
-SSI_MODE=mock                   # mock | live
+SSI_MODE=live
 ```
 
 ## Garde-fous (rappel)
@@ -78,4 +78,4 @@ SSI_MODE=mock                   # mock | live
 - Secrets via env ; jamais exposés par l'API.
 - RBAC par périmètre ; pas de fuite de documents privés.
 - Actions sensibles auditées.
-- Suivre le scope **Phase 1** de `../docs/ROADMAP.md` ; mocker proprement ce qui n'est pas prêt (même interface que la version réelle).
+- Suivre le scope **Phase 1** de `../docs/ROADMAP.md` ; si un service externe n'est pas prêt, retourner un état explicite et auditable, jamais un résultat simulé.

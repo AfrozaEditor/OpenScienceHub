@@ -12,7 +12,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(
     DJANGO_DEBUG=(bool, False),
     DJANGO_ALLOWED_HOSTS=(list, ["localhost", "127.0.0.1"]),
-    CORS_ALLOWED_ORIGINS=(list, ["http://localhost:5173"]),
+    CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3000"]),
+    CORS_ALLOWED_ORIGIN_REGEXES=(str, ""),
 )
 
 # Charge .env si present (dev local). En Docker, les variables sont injectees.
@@ -156,11 +157,22 @@ SPECTACULAR_SETTINGS = {
 
 # --- CORS -----------------------------------------------------------------
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
+_cors_allowed_origin_regexes = env("CORS_ALLOWED_ORIGIN_REGEXES").strip()
+CORS_ALLOWED_ORIGIN_REGEXES = (
+    [pattern.strip() for pattern in _cors_allowed_origin_regexes.split(";;") if pattern.strip()]
+    if _cors_allowed_origin_regexes
+    else []
+)
+X_FRAME_OPTIONS = env("DJANGO_X_FRAME_OPTIONS", default="SAMEORIGIN")
+SECURE_CROSS_ORIGIN_OPENER_POLICY = env(
+    "DJANGO_CROSS_ORIGIN_OPENER_POLICY",
+    default=None,
+)
 
 # --- Integrations externes (clients) -------------------------------------
 SIMBA_IA_URL = env("SIMBA_IA_URL", default="http://localhost:8001")
 SIMBA_API_KEY = env("SIMBA_API_KEY", default="")
-SIMBA_MODE = env("SIMBA_MODE", default="mock")
+SIMBA_MODE = env("SIMBA_MODE", default="live")
 
 EIDSTACK_BASE_URL = env("EIDSTACK_BASE_URL", default="http://localhost:3000")
 EIDSTACK_API_KEY = env("EIDSTACK_API_KEY", default="")
@@ -172,7 +184,7 @@ EIDSTACK_WALLET_KEY = env("EIDSTACK_WALLET_KEY", default="openscience-hub-wallet
 EIDSTACK_AGENT_ENDPOINT = env("EIDSTACK_AGENT_ENDPOINT", default="http://localhost:3021")
 EIDSTACK_AGENT_LABEL = env("EIDSTACK_AGENT_LABEL", default="OpenScienceHub IDS Local")
 EIDSTACK_AGENT_SEED = env("EIDSTACK_AGENT_SEED", default="00000000000000000000000000000001")
-SSI_MODE = env("SSI_MODE", default="mock")
+SSI_MODE = env("SSI_MODE", default="live")
 
-PUBLIC_VERIFY_BASE_URL = env("PUBLIC_VERIFY_BASE_URL", default="http://localhost:5173/verify")
+PUBLIC_VERIFY_BASE_URL = env("PUBLIC_VERIFY_BASE_URL", default="http://localhost:3000/verify")
 BACKEND_PUBLIC_BASE_URL = env("BACKEND_PUBLIC_BASE_URL", default="http://127.0.0.1:8000")

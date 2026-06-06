@@ -50,9 +50,9 @@
 | GET | `/works` | user | Mes dossiers (déposant) / périmètre (validateur) |
 | POST | `/works` | déposant | Créer un dossier (type, infos académiques) |
 | GET | `/works/{id}` | user | Détail (selon permissions) |
-| PATCH | `/works/{id}` | déposant | Modifier (si DRAFT / CORRECTION_REQUESTED) |
+| PATCH | `/works/{id}` | déposant | Modifier (si `BROUILLON` / `CORRECTION_DEMANDEE`) |
 | POST | `/works/{id}/contributors` | déposant | Ajouter un contributeur |
-| POST | `/works/{id}/submit` | déposant | Soumettre officiellement → `SUBMITTED` |
+| POST | `/works/{id}/submit` | déposant | Soumettre officiellement → `SOUMIS` |
 | GET | `/works/{id}/history` | user | Événements (`WorkflowEvent`) |
 | GET | `/works/{id}/timeline` | user | Timeline de statut |
 
@@ -99,7 +99,7 @@ Checklist avant décision finale : métadonnées validées, version active défi
 | POST | `/works/{id}/archive` | archiviste/admin | Verrouiller version finale + créer `ArchiveRecord` + déclencher preuve + publier |
 | GET | `/archive/{id}` | user | Détail archive |
 
-Effets : `status → ARCHIVED`, génération preuve (SSI), QR, fiche publique, indexation.
+Effets : `status → ARCHIVE`, génération preuve (SSI), QR, fiche publique, indexation.
 
 ## 8. Recherche & catalogue public (`/catalog`) `[public]`
 
@@ -124,7 +124,7 @@ Facettes : `type, institution, faculty, department, program, scientificDomain, a
 | PUT | `/admin/ssi/connection` | admin SSI | Mettre à jour config (audité) |
 | POST | `/admin/ssi/test-connection` | admin SSI | Tester la connexion |
 
-Voir [SSI_INTEGRATION.md](SSI_INTEGRATION.md) pour le mapping des claims et le mode `mock`.
+Voir [SSI_INTEGRATION.md](SSI_INTEGRATION.md) pour le mapping des claims, le flux e-IDStack de IDS et les états `SSI_PENDING` / `TECHNICAL_ERROR`.
 
 ## 10. Administration & audit (`/admin`)
 

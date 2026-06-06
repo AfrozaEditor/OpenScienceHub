@@ -17,11 +17,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DossierStatusBadge } from "@/components/dossier-status-badge";
 import { EmptyState } from "@/components/empty-state";
-import {
-  depositorStats,
-  myDossiers,
-  type DossierStatus,
-} from "@/lib/mock-data";
+import type { DossierStatus } from "@/lib/domain-types";
+import { useApiResource } from "@/lib/api/hooks";
+import { workToDossier } from "@/lib/api/mappers";
+import { listWorks } from "@/lib/api/resources";
 
 const dateFmt = new Intl.DateTimeFormat("fr-FR", {
   day: "numeric",
@@ -37,19 +36,30 @@ function fmtDate(value: string) {
 
 type Filter = "Tous" | DossierStatus;
 
-const filters: { value: Filter; count: number }[] = [
-  { value: "Tous", count: depositorStats.total },
-  { value: "Validé", count: depositorStats.validated },
-  { value: "En attente", count: depositorStats.pending },
-  { value: "Brouillon", count: depositorStats.draft },
-  { value: "Rejeté", count: depositorStats.rejected },
-];
-
 export default function MesDossiersPage() {
   const [filter, setFilter] = React.useState<Filter>("Tous");
   const [query, setQuery] = React.useState("");
+  const works = useApiResource(() => listWorks({ ordering: "-updated_at" }), [], null);
+  const liveDossiers = React.useMemo(
+    () => works.data?.results?.map(workToDossier) || [],
+    [works.data],
+  );
+  const source = liveDossiers;
+  const liveFilters = React.useMemo(
+    () => [
+      { value: "Tous" as Filter, count: source.length },
+      { value: "Validé" as Filter, count: source.filter((d) => d.status === "Validé").length },
+      {
+        value: "En attente" as Filter,
+        count: source.filter((d) => d.status === "En attente").length,
+      },
+      { value: "Brouillon" as Filter, count: source.filter((d) => d.status === "Brouillon").length },
+      { value: "Rejeté" as Filter, count: source.filter((d) => d.status === "Rejeté").length },
+    ],
+    [source],
+  );
 
-  const filtered = myDossiers.filter((d) => {
+  const filtered = source.filter((d) => {
     const okStatus = filter === "Tous" || d.status === filter;
     const q = query.trim().toLowerCase();
     const okQuery =
@@ -83,7 +93,7 @@ export default function MesDossiersPage() {
       {/* Controls */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex w-full gap-1 overflow-x-auto rounded-lg bg-muted p-1 lg:w-fit">
-          {filters.map((f) => (
+          {liveFilters.map((f) => (
             <button
               key={f.value}
               type="button"
@@ -198,7 +208,7 @@ export default function MesDossiersPage() {
         {filtered.length > 1 ? "s" : ""}
         {filter !== "Tous" ? ` · filtre : ${filter}` : ""}
         <Badge variant="secondary" className="ml-2 font-normal">
-          {depositorStats.total} au total
+          {source.length} au total
         </Badge>
       </p>
     </div>

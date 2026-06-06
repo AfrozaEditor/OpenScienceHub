@@ -4,7 +4,8 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowRight, Menu, Upload, X } from "lucide-react";
+import { ArrowRight, Bot, Menu, Upload, X } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { PortalSwitcher } from "@/components/layout/portal-switcher";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { Button } from "@/components/ui/button";
 const navItems = [
   { label: "Accueil", href: "/" },
   { label: "Explorer", href: "/explorer" },
+  { label: "Assistant IA", href: "/assistant" },
   { label: "Communautés", href: "/communautes" },
   { label: "FAQ", href: "/faq" },
 ];
@@ -63,7 +65,12 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-        <PortalSwitcher />
+          <Button variant="outline" size="lg" asChild>
+            <Link href="/assistant">
+              <Bot className="size-4" />
+              Assistant IA
+            </Link>
+          </Button>
           <Button variant="ghost" size="lg" asChild>
             <Link href="/login">Connexion</Link>
           </Button>
@@ -105,6 +112,12 @@ export function SiteHeader() {
               </Link>
             ))}
             <div className="mt-3 flex flex-col gap-2 border-t border-border pt-4">
+              <Button variant="outline" size="lg" asChild>
+                <Link href="/assistant" onClick={() => setOpen(false)}>
+                  <Bot className="size-4" />
+                  Assistant IA
+                </Link>
+              </Button>
               <Button variant="outline" size="lg" asChild>
                 <Link href="/login" onClick={() => setOpen(false)}>
                   Connexion

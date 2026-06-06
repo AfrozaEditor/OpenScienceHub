@@ -3,12 +3,9 @@
 import * as React from "react";
 import {
   BadgeCheck,
-  Eye,
-  EyeOff,
   FileBadge2,
   KeyRound,
   PlugZap,
-  RefreshCw,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -18,21 +15,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminToggle } from "@/components/admin/admin-toggle";
-import { ssiConfig, type SsiEmission } from "@/lib/admin-data";
+import { messageForApiError } from "@/lib/api/errors";
+import { useApiResource } from "@/lib/api/hooks";
+import { getSsiConnection, testSsiConnection } from "@/lib/api/resources";
 
-type BadgeVariant = "success" | "warning" | "destructive";
-const emissionVariant: Record<SsiEmission["status"], BadgeVariant> = {
-  Émise: "success",
-  "En cours": "warning",
-  Échec: "destructive",
-};
+function connectionStatusLabel(value: unknown) {
+  const status = String(value || "");
+  const labels: Record<string, string> = {
+    NOT_CONFIGURED: "Non configuré",
+    CONNECTED: "Connecté",
+    READY: "Prêt",
+    ACTIVE: "Actif",
+    ERROR: "Erreur",
+    DISCONNECTED: "Déconnecté",
+  };
+  return labels[status] || status || "Non configuré";
+}
 
 export default function AdminSsiPage() {
-  const [endpoint, setEndpoint] = React.useState(ssiConfig.endpoint);
-  const [clientId, setClientId] = React.useState(ssiConfig.clientId);
-  const [secret, setSecret] = React.useState(ssiConfig.secret);
-  const [reveal, setReveal] = React.useState(false);
-  const [autoEmit, setAutoEmit] = React.useState(ssiConfig.autoEmit);
+  const connection = useApiResource(() => getSsiConnection(), [], null);
+  const [endpoint, setEndpoint] = React.useState("");
+  const [clientId, setClientId] = React.useState("");
+  const [autoEmit, setAutoEmit] = React.useState(true);
   const [feedback, setFeedback] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -41,24 +45,22 @@ export default function AdminSsiPage() {
     return () => clearTimeout(t);
   }, [feedback]);
 
-  function regenerate() {
-    const hex = Array.from({ length: 24 }, () =>
-      Math.floor(Math.random() * 16).toString(16)
-    ).join("");
-    setSecret(`sk_live_${hex}`);
-    setReveal(false);
-    setFeedback("Secret régénéré. Pensez à mettre à jour vos intégrations.");
-  }
+  React.useEffect(() => {
+    if (!connection.data) return;
+    const data = connection.data as Record<string, unknown>;
+    setEndpoint(String(data.base_url || data.endpoint || endpoint));
+    setClientId(String(data.mode || data.status || clientId));
+  }, [clientId, connection.data, endpoint]);
 
   return (
     <>
       <AdminPageHeader
-        title="SSI / e-IDStack"
-        description="Connexion au socle de confiance et émission de preuves d'intégrité."
+        title="Identité numérique et preuves"
+        description="Paramétrez la connexion institutionnelle qui émet les preuves vérifiables après archivage."
       >
-        <Badge variant={ssiConfig.connected ? "success" : "destructive"}>
+        <Badge variant={connection.data ? "success" : connection.error ? "destructive" : "warning"}>
           <PlugZap className="size-3" />
-          {ssiConfig.connected ? "Connecté" : "Déconnecté"}
+          {connection.loading ? "Test..." : connection.data ? "Connecté" : "Déconnecté"}
         </Badge>
       </AdminPageHeader>
 
@@ -75,12 +77,12 @@ export default function AdminSsiPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <KeyRound className="size-4 text-primary" />
-              Connexion e-IDStack
+              Connexion au registre de confiance
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="ssi-endpoint">Point d'accès (endpoint)</Label>
+              <Label htmlFor="ssi-endpoint">Adresse du service de confiance</Label>
               <Input
                 id="ssi-endpoint"
                 value={endpoint}
@@ -89,7 +91,7 @@ export default function AdminSsiPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ssi-client">Identifiant client</Label>
+              <Label htmlFor="ssi-client">État de la connexion</Label>
               <Input
                 id="ssi-client"
                 value={clientId}
@@ -98,50 +100,36 @@ export default function AdminSsiPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ssi-secret">Clé secrète</Label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Input
-                    id="ssi-secret"
-                    readOnly
-                    value={reveal ? secret : "•".repeat(Math.min(secret.length, 28))}
-                    className="pr-9 font-mono text-xs"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setReveal((v) => !v)}
-                    aria-label={reveal ? "Masquer" : "Révéler"}
-                    className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {reveal ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                  </button>
-                </div>
-                <Button type="button" variant="outline" onClick={regenerate}>
-                  <RefreshCw className="size-4" />
-                  Régénérer
-                </Button>
-              </div>
+              <Input id="ssi-secret" readOnly value="Masqué côté serveur" className="font-mono text-xs" />
               <p className="text-xs text-muted-foreground">
-                Le secret n'est jamais transmis en clair. Régénérer invalide
-                l'ancienne clé.
+                Les clés institutionnelles restent côté serveur et ne sont jamais affichées ici.
               </p>
             </div>
             <dl className="grid grid-cols-1 gap-2 rounded-lg border border-border bg-muted/30 p-3 text-sm sm:grid-cols-2">
               <div>
-                <dt className="text-xs text-muted-foreground">Algorithme</dt>
-                <dd className="font-medium text-foreground">{ssiConfig.algorithm}</dd>
+                <dt className="text-xs text-muted-foreground">Statut connexion</dt>
+                <dd className="font-medium text-foreground">
+                  {connectionStatusLabel((connection.data as Record<string, unknown> | null)?.connection_status)}
+                </dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Autorité d'horodatage</dt>
+                <dt className="text-xs text-muted-foreground">Identifiants configurés</dt>
                 <dd className="font-medium text-foreground">
-                  {ssiConfig.timestampAuthority}
+                  {(connection.data as Record<string, unknown> | null)?.has_credentials ? "Oui" : "Non"}
                 </dd>
               </div>
             </dl>
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => setFeedback("Connexion réussie — e-IDStack répond (200 OK).")}
+              onClick={async () => {
+                try {
+                  await testSsiConnection();
+                  setFeedback("Connexion réussie — le service de confiance répond.");
+                } catch (err) {
+                  setFeedback(messageForApiError(err));
+                }
+              }}
             >
               <PlugZap className="size-4" />
               Tester la connexion
@@ -155,49 +143,40 @@ export default function AdminSsiPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <FileBadge2 className="size-4 text-ai" />
-                Émission de preuves
+              Preuves après archivage
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <AdminToggle
                 checked={autoEmit}
                 onChange={setAutoEmit}
-                label="Émission automatique à la validation"
-                description="Génère une preuve d'intégrité dès qu'un document est validé."
+                label="Émission automatique après archivage"
+                description="Génère une preuve vérifiable uniquement quand la version finale est archivée."
               />
               <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-sm">
                 <span className="text-muted-foreground">Dernière synchronisation</span>
-                <span className="font-medium text-foreground">{ssiConfig.lastSync}</span>
+                <span className="font-medium text-foreground">
+                  {String((connection.data as Record<string, unknown> | null)?.last_sync_at || "—")}
+                </span>
               </div>
               <Button
                 className="w-full"
-                onClick={() => setFeedback("Preuve émise et horodatée avec succès.")}
+                disabled
               >
                 <FileBadge2 className="size-4" />
-                Émettre une preuve maintenant
+                Émission réservée aux documents archivés
               </Button>
             </CardContent>
           </Card>
 
           <Card className="py-0">
             <CardHeader className="px-5 pt-5">
-              <CardTitle className="text-base">Émissions récentes</CardTitle>
+              <CardTitle className="text-base">Preuves récentes</CardTitle>
             </CardHeader>
             <CardContent className="px-0 pb-2">
-              <ul>
-                {ssiConfig.emissions.map((em) => (
-                  <li
-                    key={em.id}
-                    className="flex items-center justify-between gap-3 border-t border-border px-5 py-2.5"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm text-foreground">{em.document}</p>
-                      <p className="text-xs text-muted-foreground">{em.date}</p>
-                    </div>
-                    <Badge variant={emissionVariant[em.status]}>{em.status}</Badge>
-                  </li>
-                ))}
-              </ul>
+              <p className="border-t border-border px-5 py-4 text-sm text-muted-foreground">
+                Consultez les preuves réelles dans “Preuves et vérifications”.
+              </p>
             </CardContent>
           </Card>
         </div>

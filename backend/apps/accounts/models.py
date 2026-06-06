@@ -33,14 +33,19 @@ class ScopeType(models.TextChoices):
 class RoleCode(models.TextChoices):
     DEPOSANT = "DEPOSANT", "Déposant"
     SUPERVISOR = "SUPERVISOR", "Encadreur"
+    THESIS_DIRECTOR = "THESIS_DIRECTOR", "Directeur de thèse"
     RAPPORTEUR = "RAPPORTEUR", "Rapporteur"
     REVIEWER = "REVIEWER", "Reviewer"
     DEPARTMENT_HEAD = "DEPARTMENT_HEAD", "Chef de département"
     SCIENTIFIC_COMMITTEE = "SCIENTIFIC_COMMITTEE", "Comité scientifique"
+    DOCTORAL_SCHOOL = "DOCTORAL_SCHOOL", "École doctorale"
     VALIDATOR = "VALIDATOR", "Validateur"
     ARCHIVIST = "ARCHIVIST", "Archiviste"
     INSTITUTION_ADMIN = "INSTITUTION_ADMIN", "Administrateur institutionnel"
     SUPER_ADMIN = "SUPER_ADMIN", "Super administrateur"
+    TECHNICAL_ADMIN = "TECHNICAL_ADMIN", "Responsable SI / technique"
+    AUDIT_MANAGER = "AUDIT_MANAGER", "Responsable audit / qualité"
+    SCIENTIFIC_EDITOR = "SCIENTIFIC_EDITOR", "Éditeur scientifique"
     PUBLIC = "PUBLIC", "Public"
 
 

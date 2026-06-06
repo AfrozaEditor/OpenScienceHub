@@ -122,27 +122,28 @@ hostname -I | awk '{print $1}'
 Le workflow central est :
 
 ```text
-DRAFT
-→ SUBMITTED
-→ UNDER_REVIEW
-→ CORRECTION_REQUESTED
-→ RESUBMITTED
-→ VALIDATED
-→ ARCHIVED
+BROUILLON
+→ SOUMIS
+→ EN_INSTRUCTION / EN_EXPERTISE
+→ CORRECTION_DEMANDEE
+→ RE_SOUMIS
+→ VALIDE_APRES_SOUTENANCE / ARCHIVABLE
+→ ARCHIVE
 ```
 
 Correspondance métier :
 
 | Statut | Sens |
 |---|---|
-| `DRAFT` | Brouillon du déposant |
-| `SUBMITTED` | Dossier soumis, visible dans l'inbox validation |
-| `UNDER_REVIEW` | Dossier en instruction |
-| `CORRECTION_REQUESTED` | Correction demandée au déposant |
-| `RESUBMITTED` | Correction renvoyée par le déposant |
-| `VALIDATED` | Validation académique terminée |
-| `ARCHIVED` | Version finale verrouillée, publiée et prouvée |
-| `REJECTED` | Dossier rejeté |
+| `BROUILLON` | Brouillon du déposant |
+| `SOUMIS` | Dossier soumis, visible dans l'inbox validation |
+| `EN_INSTRUCTION` / `EN_EXPERTISE` | Dossier en instruction ou expertise |
+| `CORRECTION_DEMANDEE` | Correction demandée au déposant |
+| `RE_SOUMIS` | Correction renvoyée par le déposant |
+| `VALIDE` / `VALIDE_APRES_SOUTENANCE` | Validation académique terminée |
+| `ARCHIVABLE` | Version finale prête pour archivage |
+| `ARCHIVE` | Version finale verrouillée, publiée et prouvée |
+| `REJETE` | Dossier rejeté |
 
 Après archivage :
 
@@ -454,7 +455,8 @@ PUBLIC_VERIFY_BASE_URL=http://$LAN_IP:3000/verify \
 cd frontend
 npm install
 
-NEXT_PUBLIC_API_BASE_URL=http://$LAN_IP:8000/api/v1 \
+NEXT_PUBLIC_API_BASE_URL=/api/v1 \
+BACKEND_INTERNAL_API_BASE_URL=http://localhost:8000/api/v1 \
 NEXT_PUBLIC_FRONTEND_VERIFY_BASE_URL=http://$LAN_IP:3000/verify \
 npm run dev -- --hostname 0.0.0.0 --port 3000
 ```
@@ -499,16 +501,27 @@ Si le port IDS `4000` est occupé :
 IDS_API_PORT=4001 docker compose up -d --build
 ```
 
-Mode dev sans rebuild à chaque modification :
+Mode dev avec volumes de code source :
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+```
+
+Ce mode monte `backend/`, `frontend/` et `simba_ia/` dans les conteneurs. Le frontend utilise
+`NEXT_PUBLIC_API_BASE_URL=/api/v1`; Next.js relaie ensuite les requêtes vers
+`BACKEND_INTERNAL_API_BASE_URL=http://backend:8000/api/v1`. Cela évite d'exposer une URL backend
+LAN codée en dur dans le navigateur.
+
+Après le premier build, relancer sans rebuild tant que les dépendances ne changent pas :
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 ```
 
 Rebuild seulement si changent :
 
 - `backend/requirements.txt` ;
-- `simba_ia/requirements.txt` ;
+- `simba_ia/requirements.txt` ou `simba_ia/requirements-dev.txt` ;
 - `frontend/package-lock.json` ;
 - `ids/eidStack-CMU/package-lock.json` ;
 - un `Dockerfile` ;
@@ -544,7 +557,8 @@ PUBLIC_VERIFY_BASE_URL=http://<LAN_IP>:3000/verify
 ### Frontend
 
 ```text
-NEXT_PUBLIC_API_BASE_URL=http://<LAN_IP>:8000/api/v1
+NEXT_PUBLIC_API_BASE_URL=/api/v1
+BACKEND_INTERNAL_API_BASE_URL=http://<LAN_IP>:8000/api/v1
 NEXT_PUBLIC_FRONTEND_VERIFY_BASE_URL=http://<LAN_IP>:3000/verify
 ```
 

@@ -9,16 +9,14 @@
 - Le backend **orchestre** ; e-IDStack **émet et vérifie** les Verifiable Credentials. Aucune cryptographie « maison » côté backend.
 - **Modèle SANS wallet** : **Issuer** = Institution · **Holder/dépositaire** = **la plateforme OpenScience Hub** (le credential est stocké en base, pas dans une appli mobile) · **Verifier** = Public/Recruteur/Jury via une **page web** (`/verify/{code}`).
 - Le wallet mobile `e-IDapp` n'est **pas** utilisé dans ce produit (option roadmap). Conséquence : on n'attend **aucune acceptation d'offre par un holder externe** ; la plateforme est à la fois émettrice (via le DID institutionnel d'e-IDStack) et conservatrice de la preuve.
-- Toute la logique d'appel est encapsulée dans `backend/apps/ssi/client.py` (timeouts, mode live/mock, gestion `SSI_PENDING`).
+- Toute la logique d'appel est encapsulée dans `backend/apps/ssi/client.py` (timeouts, mode live obligatoire, gestion `SSI_PENDING`).
 - Vocabulaire : on dit toujours **« e-IDStack de IDS »** (jamais « eidStack-CMU »/« CMU ») dans le produit et l'API publique.
 
 ## 2. Service e-IDStack (rappel technique)
 
 - Base : NestJS, Swagger exposé (`/api` selon config), `@credo-ts/*`, AnonCreds, Indy-VDR, Askar, `qrcode`, Prisma/PostgreSQL.
 - L'agent Credo doit être **initialisé** et disposer d'un **DID issuer** + d'un **schema** + d'une **credential definition** avant d'émettre.
-- e-IDStack supporte un modèle **Out-of-Band (OOB)** où un holder accepte une offre via son wallet. **Comme OpenScience Hub n'utilise pas de wallet**, on retient un des deux modes ci-dessous (sans holder externe) :
-  - **Mode `live` (custodian)** : la plateforme/l'agent institutionnel détient le credential émis ; aucune invitation à un wallet tiers n'est nécessaire. On stocke `credential_id`, statut et `raw_credential_json`.
-  - **Mode `mock` (MVP)** : la plateforme produit une **attestation signée par le DID institutionnel** (claims + hash) conservée en base, vérifiable côté serveur. Même interface, même page `/verify`.
+- e-IDStack supporte un modèle **Out-of-Band (OOB)** où un holder accepte une offre via son wallet. **Comme OpenScience Hub n'utilise pas de wallet**, le flux nominal est **`live` custodian** : la plateforme/l'agent institutionnel détient le credential émis ; aucune invitation à un wallet tiers n'est nécessaire. On stocke `credential_id`, statut et `raw_credential_json`.
 - Dans les deux cas, la **vérification reste web** (QR → `/verify/{code}`), sans wallet.
 
 ### 2.1 Endpoints e-IDStack utilisés par OpenScience Hub
@@ -71,7 +69,7 @@ Réponse :
     { "name": "institution", "value": "Université de Yaoundé I" },
     { "name": "workType", "value": "MEMOIRE" },
     { "name": "documentHash", "value": "9f2a8c7b..." },
-    { "name": "academicStatus", "value": "VALIDATED" },
+    { "name": "academicStatus", "value": "ARCHIVE" },
     { "name": "issuedAt", "value": "2026-06-02" }
   ],
   "comment": "ScientificWorkArchiveCredential"
@@ -92,7 +90,7 @@ author          (auteur principal)
 institution
 department
 workType        (MEMOIRE | THESE | ARTICLE)
-academicStatus  (VALIDATED / soutenu / accepté ...)
+academicStatus  (ARCHIVE / soutenu / accepté ...)
 documentHash    (SHA-256 de la DocumentVersion finale)
 issuedAt
 issuerDid
@@ -194,12 +192,11 @@ SSI_MODE=live
 
 Règles de sécurité : clés/API tokens jamais exposés ; toute modification de config SSI est **auditée** ; tests de connexion (`getAgent` / `getIssuerDid`) avant passage en `PRODUCTION`.
 
-## 8. Mode `mock` (tests hors-ligne uniquement)
+## 8. Politique sans mock runtime
 
-Si `SSI_MODE=mock` ou e-IDStack indisponible, le client renvoie des réponses simulées **derrière la même interface** :
-- `issue_proof_for_archive` crée un `VerifiableCredential` factice + `VerificationProof` réel (avec vrai hash).
-- `/verify/{code}` valide localement le hash et renvoie `VALID` (en marquant la preuve comme simulée).
-- Le compose principal utilise `SSI_MODE=live`. Le mock ne doit pas être utilisé pour une validation complète IDS.
+Le compose principal et les valeurs par défaut utilisent `SSI_MODE=live`. Si `SSI_MODE` n'est pas `live`, le client e-IDStack refuse l'opération avec une erreur explicite au lieu de générer un credential simulé.
+
+Si e-IDStack est indisponible, l'archivage reste possible selon la politique institutionnelle, mais la preuve passe en `SSI_PENDING` et doit être réémise depuis l'administration après rétablissement du service. `/verify/{code}` ne renvoie `VALID` que pour une preuve réelle active et cohérente avec la version finale archivée.
 
 ## 9. Checklist d'intégration
 

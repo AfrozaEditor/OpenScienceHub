@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -22,7 +24,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/empty-state";
-import { getDossier } from "@/lib/mock-data";
+import { useApiResource } from "@/lib/api/hooks";
+import { getWork, getWorkProof } from "@/lib/api/resources";
 
 const QR_SIZE = 25;
 
@@ -37,6 +40,12 @@ const dateTimeFmt = new Intl.DateTimeFormat("fr-FR", {
 function fmtDateTime(value: string) {
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? value : dateTimeFmt.format(d);
+}
+
+function proofSchemaLabel(value?: string | null) {
+  if (!value) return "Preuve d'archive scientifique";
+  if (value === "ScientificWorkArchiveCredential") return "Preuve d'archive scientifique";
+  return value;
 }
 
 /** Matrice pseudo-QR déterministe dérivée de l'empreinte du document. */
@@ -84,8 +93,32 @@ function buildQr(seed: string, size = QR_SIZE): boolean[][] {
 
 export default function PreuvePage() {
   const params = useParams<{ id: string }>();
-  const dossier = getDossier(params.id);
-  const proof = dossier?.proof;
+  const work = useApiResource(() => getWork(params.id), [params.id], null);
+  const liveProof = useApiResource(() => getWorkProof(params.id), [params.id], null);
+  const proof = liveProof.data?.proof_code
+    ? {
+        reference: liveProof.data.proof_code || liveProof.data.id || params.id,
+        status:
+          liveProof.data.hashes_match === false
+            ? "Hash incohérent"
+            : liveProof.data.status === "REVOKED"
+            ? "Révoquée"
+            : liveProof.data.status === "PENDING"
+              ? "En attente"
+              : "Active",
+        documentHash: liveProof.data.document_hash || "—",
+        algorithm: "SHA-256",
+        issuedAt: liveProof.data.issued_at || "",
+        schema: proofSchemaLabel(liveProof.data.schema),
+        credentialId: liveProof.data.credential_id || liveProof.data.proof_code || params.id,
+        issuerDid: liveProof.data.issuer_did || "Non renseigné",
+        registry: liveProof.data.is_mock ? "Preuve à réémettre" : "Registre de confiance",
+        verificationUrl: liveProof.data.proof_code
+          ? `/verify/${encodeURIComponent(liveProof.data.proof_code)}`
+          : liveProof.data.verification_url || "",
+      }
+    : null;
+  const qrCodeUrl = liveProof.data?.qr_code_url;
 
   const [copied, setCopied] = React.useState<string | null>(null);
 
@@ -94,7 +127,7 @@ export default function PreuvePage() {
     [proof]
   );
 
-  if (!dossier || !proof) {
+  if (!proof && !liveProof.loading) {
     return (
       <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
         <EmptyState
@@ -114,29 +147,47 @@ export default function PreuvePage() {
     );
   }
 
+  if (!proof) {
+    return (
+      <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+        <EmptyState
+          icon={ShieldCheck}
+          title="Chargement de la preuve"
+          description="Récupération de la preuve d'authenticité depuis le backend."
+        />
+      </div>
+    );
+  }
+
   function copy(text: string, key: string) {
     navigator.clipboard?.writeText(text);
     setCopied(key);
     setTimeout(() => setCopied((c) => (c === key ? null : c)), 1800);
   }
 
+  function absoluteVerificationUrl(verificationUrl: string) {
+    if (!verificationUrl) return "";
+    if (verificationUrl.startsWith("http")) return verificationUrl;
+    if (typeof window === "undefined") return verificationUrl;
+    return new URL(verificationUrl, window.location.origin).toString();
+  }
+
   const statusVariant =
-    proof.status === "Vérifiée"
+    proof.status === "Active"
       ? "success"
-      : proof.status === "Révoquée"
-        ? "destructive"
-        : "warning";
+      : proof.status === "En attente"
+        ? "warning"
+        : "destructive";
 
   const details: { label: string; value: string; mono?: boolean }[] = [
     { label: "Référence", value: proof.reference, mono: true },
     { label: "Algorithme d'empreinte", value: proof.algorithm },
     { label: "Identifiant du justificatif", value: proof.credentialId, mono: true },
-    { label: "DID émetteur", value: proof.issuerDid, mono: true },
-    { label: "DID détenteur", value: proof.holderDid, mono: true },
-    { label: "Schéma (AnonCreds)", value: proof.schema, mono: true },
+    { label: "Émetteur de confiance", value: proof.issuerDid, mono: true },
+    { label: "Type de preuve", value: proof.schema },
     { label: "Registre", value: proof.registry },
-    { label: "Ancrage registre", value: proof.anchor, mono: true },
-    { label: "Émise le", value: fmtDateTime(proof.issuedAt) },
+    { label: "Lien public", value: absoluteVerificationUrl(proof.verificationUrl) || "—", mono: true },
+    { label: "Émise le", value: proof.issuedAt ? fmtDateTime(proof.issuedAt) : "—" },
   ];
 
   const guarantees = [
@@ -149,7 +200,7 @@ export default function PreuvePage() {
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       <Button variant="ghost" size="sm" asChild className="mb-4 -ml-2">
-        <Link href={`/deposant/dossier/${dossier.id}`}>
+        <Link href={`/deposant/dossier/${params.id}`}>
           <ArrowLeft className="size-4" />
           Retour au dossier
         </Link>
@@ -170,7 +221,7 @@ export default function PreuvePage() {
                 {proof.reference}
               </h1>
               <p className="truncate text-sm text-muted-foreground">
-                {dossier.title}
+                {work.data?.title || "Dossier archivé"}
               </p>
             </div>
           </div>
@@ -262,22 +313,30 @@ export default function PreuvePage() {
             <Card className="gap-0 py-5">
               <CardContent className="flex flex-col items-center gap-3 text-center">
                 <div className="aspect-square w-full max-w-[190px] rounded-xl bg-white p-3 ring-1 ring-border">
-                  <div
-                    className="grid size-full"
-                    style={{
-                      gridTemplateColumns: `repeat(${QR_SIZE}, minmax(0,1fr))`,
-                      gridTemplateRows: `repeat(${QR_SIZE}, minmax(0,1fr))`,
-                    }}
-                  >
-                    {matrix.map((row, r) =>
-                      row.map((on, c) => (
-                        <div
-                          key={`${r}-${c}`}
-                          className={on ? "bg-brand" : "bg-transparent"}
-                        />
-                      ))
-                    )}
-                  </div>
+                  {qrCodeUrl ? (
+                    <img
+                      src={qrCodeUrl}
+                      alt={`QR code de vérification ${proof.reference}`}
+                      className="size-full rounded-lg object-contain"
+                    />
+                  ) : (
+                    <div
+                      className="grid size-full"
+                      style={{
+                        gridTemplateColumns: `repeat(${QR_SIZE}, minmax(0,1fr))`,
+                        gridTemplateRows: `repeat(${QR_SIZE}, minmax(0,1fr))`,
+                      }}
+                    >
+                      {matrix.map((row, r) =>
+                        row.map((on, c) => (
+                          <div
+                            key={`${r}-${c}`}
+                            className={on ? "bg-brand" : "bg-transparent"}
+                          />
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">
@@ -297,24 +356,26 @@ export default function PreuvePage() {
                 <CardTitle className="text-base">Actions</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-2">
-                <Button>
+                <Button onClick={() => window.print()}>
                   <Download className="size-4" />
                   Télécharger l&apos;attestation
                 </Button>
-                <Button variant="outline" asChild>
-                  <Link href="#">
+                {proof.verificationUrl ? (
+                  <Button variant="outline" asChild>
+                    <Link href={proof.verificationUrl}>
+                      <ExternalLink className="size-4" />
+                      Vérifier publiquement
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button variant="outline" disabled>
                     <ExternalLink className="size-4" />
-                    Vérifier sur le registre
-                  </Link>
-                </Button>
+                    Vérifier publiquement
+                  </Button>
+                )}
                 <Button
                   variant="outline"
-                  onClick={() =>
-                    copy(
-                      `https://openscience-hub.cm/verifier/${proof.reference}`,
-                      "link"
-                    )
-                  }
+                  onClick={() => copy(absoluteVerificationUrl(proof.verificationUrl), "link")}
                 >
                   {copied === "link" ? (
                     <Check className="size-4 text-success" />
@@ -324,7 +385,7 @@ export default function PreuvePage() {
                   Copier le lien de vérification
                 </Button>
                 <Button variant="ghost" asChild>
-                  <Link href={`/deposant/dossier/${dossier.id}`}>
+                  <Link href={`/deposant/dossier/${params.id}`}>
                     <FileText className="size-4" />
                     Voir le dossier
                   </Link>
@@ -334,7 +395,7 @@ export default function PreuvePage() {
 
             <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
               <CalendarClock className="size-4 shrink-0 text-muted-foreground" />
-              Émise le {fmtDateTime(proof.issuedAt)}
+              Émise le {proof.issuedAt ? fmtDateTime(proof.issuedAt) : "—"}
             </div>
           </div>
         </div>

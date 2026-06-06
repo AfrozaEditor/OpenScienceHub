@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -5,6 +8,7 @@ import {
   ChevronRight,
   Clock,
   Eye,
+  SearchX,
   FolderTree,
   ShieldCheck,
   Sparkles,
@@ -15,7 +19,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatsCard } from "@/components/stats-card";
 import { DossierStatusBadge } from "@/components/dossier-status-badge";
-import { depositor, depositorStats, myDossiers } from "@/lib/mock-data";
+import { EmptyState } from "@/components/empty-state";
+import { useApiResource } from "@/lib/api/hooks";
+import { workToDossier } from "@/lib/api/mappers";
+import { listWorks } from "@/lib/api/resources";
+import { useAuth } from "@/components/auth-provider";
 
 const nf = new Intl.NumberFormat("fr-FR");
 const dateFmt = new Intl.DateTimeFormat("fr-FR", {
@@ -31,21 +39,37 @@ function fmtDate(value: string) {
 }
 
 export default function DeposantDashboardPage() {
-  const recent = [...myDossiers]
+  const { user } = useAuth();
+  const works = useApiResource(() => listWorks({ ordering: "-updated_at" }), [], null);
+  const liveDossiers = React.useMemo(
+    () => works.data?.results?.map(workToDossier) || [],
+    [works.data],
+  );
+  const dossierSource = liveDossiers;
+  const liveStats = {
+    total: dossierSource.length,
+    validated: dossierSource.filter((d) => d.status === "Validé").length,
+    pending: dossierSource.filter((d) => d.status === "En attente").length,
+    draft: dossierSource.filter((d) => d.status === "Brouillon").length,
+    rejected: dossierSource.filter((d) => d.status === "Rejeté").length,
+    views: 0,
+    downloads: 0,
+  };
+  const recent = [...dossierSource]
     .sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt))
     .slice(0, 5);
 
-  const proofs = myDossiers.filter((d) => d.proof);
+  const proofs = dossierSource.filter((d) => d.proof);
 
   const breakdown = [
-    { label: "Validés", value: depositorStats.validated, bar: "bg-success" },
-    { label: "En attente", value: depositorStats.pending, bar: "bg-warning" },
+    { label: "Validés", value: liveStats.validated, bar: "bg-success" },
+    { label: "En attente", value: liveStats.pending, bar: "bg-warning" },
     {
       label: "Brouillons",
-      value: depositorStats.draft,
+      value: liveStats.draft,
       bar: "bg-muted-foreground/40",
     },
-    { label: "Rejetés", value: depositorStats.rejected, bar: "bg-destructive" },
+    { label: "Rejetés", value: liveStats.rejected, bar: "bg-destructive" },
   ];
 
   return (
@@ -66,7 +90,7 @@ export default function DeposantDashboardPage() {
               Espace déposant
             </span>
             <h1 className="mt-3 font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
-              Bonjour, {depositor.firstName}
+              Bonjour, {user?.full_name?.split(" ")[0] || "déposant"}
             </h1>
             <p className="mt-1.5 max-w-md text-sm text-white/70">
               Suivez vos dépôts, leur validation et leurs preuves
@@ -95,31 +119,31 @@ export default function DeposantDashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           label="Dépôts au total"
-          value={depositorStats.total}
+          value={liveStats.total}
           icon={FolderTree}
           accent="primary"
           hint="tous statuts confondus"
         />
         <StatsCard
           label="Validés"
-          value={depositorStats.validated}
+          value={liveStats.validated}
           icon={BadgeCheck}
           accent="success"
           hint="publiés en accès libre"
         />
         <StatsCard
           label="En attente"
-          value={depositorStats.pending}
+          value={liveStats.pending}
           icon={Clock}
           accent="warning"
           hint="en cours de validation"
         />
         <StatsCard
           label="Vues cumulées"
-          value={nf.format(depositorStats.views)}
+          value={nf.format(liveStats.views)}
           icon={Eye}
           accent="ai"
-          hint={`${nf.format(depositorStats.downloads)} téléchargements`}
+          hint={`${nf.format(liveStats.downloads)} téléchargements`}
         />
       </div>
 
@@ -139,27 +163,42 @@ export default function DeposantDashboardPage() {
             </Button>
           </CardHeader>
           <CardContent className="px-0">
-            <ul className="divide-y divide-border border-t border-border">
-              {recent.map((d) => (
-                <li key={d.id}>
-                  <Link
-                    href={`/deposant/dossier/${d.id}`}
-                    className="flex items-center gap-3 px-6 py-3.5 transition-colors hover:bg-muted/50"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-foreground">
-                        {d.title}
-                      </p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {d.reference} · {d.type} · {fmtDate(d.updatedAt)}
-                      </p>
-                    </div>
-                    <DossierStatusBadge status={d.status} />
-                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {recent.length === 0 ? (
+              <div className="border-t border-border px-6 py-6">
+                <EmptyState
+                  icon={SearchX}
+                  title="Aucun dossier déposé"
+                  description="Vos dossiers apparaîtront ici après votre premier dépôt."
+                  action={
+                    <Button variant="outline" asChild>
+                      <Link href="/deposant/deposer">Déposer un document</Link>
+                    </Button>
+                  }
+                />
+              </div>
+            ) : (
+              <ul className="divide-y divide-border border-t border-border">
+                {recent.map((d) => (
+                  <li key={d.id}>
+                    <Link
+                      href={`/deposant/dossier/${d.id}`}
+                      className="flex items-center gap-3 px-6 py-3.5 transition-colors hover:bg-muted/50"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {d.title}
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {d.reference} · {d.type} · {fmtDate(d.updatedAt)}
+                        </p>
+                      </div>
+                      <DossierStatusBadge status={d.status} />
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
 
@@ -186,8 +225,8 @@ export default function DeposantDashboardPage() {
                       className={`h-full rounded-full ${b.bar}`}
                       style={{
                         width: `${
-                          depositorStats.total
-                            ? (b.value / depositorStats.total) * 100
+                          liveStats.total
+                            ? (b.value / liveStats.total) * 100
                             : 0
                         }%`,
                       }}
@@ -210,26 +249,32 @@ export default function DeposantDashboardPage() {
               </span>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
-              {proofs.map((d) => (
-                <Link
-                  key={d.id}
-                  href={`/deposant/preuve/${d.id}`}
-                  className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5"
-                >
-                  <span className="grid size-8 shrink-0 place-items-center rounded-md bg-success/12 text-success">
-                    <ShieldCheck className="size-4" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">
-                      {d.proof?.reference}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {d.title}
-                    </p>
-                  </div>
-                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-                </Link>
-              ))}
+              {proofs.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-border px-3 py-4 text-sm text-muted-foreground">
+                  Aucune preuve disponible tant qu'un dossier n'est pas validé puis archivé.
+                </p>
+              ) : (
+                proofs.map((d) => (
+                  <Link
+                    key={d.id}
+                    href={`/deposant/preuve/${d.id}`}
+                    className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5"
+                  >
+                    <span className="grid size-8 shrink-0 place-items-center rounded-md bg-success/12 text-success">
+                      <ShieldCheck className="size-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {d.proof?.reference}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {d.title}
+                      </p>
+                    </div>
+                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                  </Link>
+                ))
+              )}
             </CardContent>
           </Card>
         </div>

@@ -15,26 +15,22 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { facets, platformStats } from "@/lib/mock-data";
-
-const nf = new Intl.NumberFormat("fr-FR");
+import { messageForApiError } from "@/lib/api/errors";
+import { useApiResource } from "@/lib/api/hooks";
+import { listInstitutions } from "@/lib/api/resources";
+import type { Institution, Paginated } from "@/lib/api/types";
 
 const highlights = [
   { icon: Sparkles, text: "Extraction automatique des métadonnées par IA" },
   { icon: Database, text: "Archivage institutionnel pérenne et structuré" },
   { icon: BadgeCheck, text: "Validation académique et science ouverte" },
-];
-
-const panelStats = [
-  { value: `${nf.format(platformStats.documents)}+`, label: "Documents" },
-  { value: `${nf.format(platformStats.authors)}`, label: "Auteurs" },
-  { value: `${platformStats.institutions}`, label: "Institutions" },
 ];
 
 const roles = [
@@ -49,7 +45,7 @@ const emptyForm = {
   lastName: "",
   email: "",
   role: roles[0],
-  faculty: "",
+  institution: "",
   password: "",
   confirm: "",
   terms: false,
@@ -76,14 +72,26 @@ function passwordStrength(pwd: string) {
   return { score, ...levels[score] };
 }
 
+function listFrom<T>(data: Paginated<T> | T[] | null) {
+  if (!data) return [];
+  return Array.isArray(data) ? data : data.results;
+}
+
 export default function SignupPage() {
+  const { register } = useAuth();
+  const institutions = useApiResource(() => listInstitutions(), [], null);
   const [form, setForm] = React.useState<FormState>(emptyForm);
   const [errors, setErrors] = React.useState<FieldErrors>({});
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirm, setShowConfirm] = React.useState(false);
   const [submitted, setSubmitted] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
+  const [apiError, setApiError] = React.useState<string | null>(null);
 
-  const faculties = facets.faculties;
+  const institutionOptions = React.useMemo(
+    () => listFrom<Institution>(institutions.data).filter((item) => item.status !== "DISABLED"),
+    [institutions.data],
+  );
   const strength = passwordStrength(form.password);
   const passwordsMatch =
     form.confirm.length > 0 && form.confirm === form.password;
@@ -99,7 +107,7 @@ export default function SignupPage() {
     if (!values.lastName.trim()) next.lastName = "Nom requis.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email))
       next.email = "Adresse e-mail invalide.";
-    if (!values.faculty) next.faculty = "Sélectionnez votre établissement.";
+    if (!values.institution) next.institution = "Sélectionnez votre université.";
     if (values.password.length < 8)
       next.password = "Le mot de passe doit contenir au moins 8 caractères.";
     if (values.confirm !== values.password)
@@ -109,12 +117,27 @@ export default function SignupPage() {
     return next;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const found = validate(form);
     setErrors(found);
+    setApiError(null);
     if (Object.keys(found).length === 0) {
-      setSubmitted(true);
+      setSubmitting(true);
+      try {
+        await register({
+          email: form.email,
+          full_name: `${form.firstName.trim()} ${form.lastName.trim()}`.trim(),
+          password: form.password,
+          institution: form.institution,
+          preferred_language: "fr",
+        });
+        setSubmitted(true);
+      } catch (err) {
+        setApiError(messageForApiError(err));
+      } finally {
+        setSubmitting(false);
+      }
     }
   }
 
@@ -164,20 +187,15 @@ export default function SignupPage() {
             ))}
           </ul>
 
-          <div className="mt-10 flex gap-8 border-t border-white/10 pt-6">
-            {panelStats.map((s) => (
-              <div key={s.label}>
-                <div className="font-heading text-2xl font-semibold">
-                  {s.value}
-                </div>
-                <div className="mt-0.5 text-xs text-white/60">{s.label}</div>
-              </div>
-            ))}
+          <div className="mt-10 border-t border-white/10 pt-6">
+            <p className="text-sm text-white/70">
+              Les universités disponibles sont chargées depuis l'API institutionnelle.
+            </p>
           </div>
         </div>
 
         <p className="relative text-sm text-white/60">
-          © 2026 OpenScience Hub — Université de Yaoundé I
+          © 2026 OpenScience Hub
         </p>
       </div>
 
@@ -303,22 +321,30 @@ export default function SignupPage() {
                       ))}
                     </Select>
                   </Field>
-                  <Field label="Établissement" htmlFor="faculty" error={errors.faculty}>
+                  <Field label="Université" htmlFor="institution" error={errors.institution}>
                     <Select
-                      id="faculty"
-                      value={form.faculty}
-                      onChange={(e) => update("faculty", e.target.value)}
-                      aria-invalid={!!errors.faculty}
+                      id="institution"
+                      value={form.institution}
+                      onChange={(e) => update("institution", e.target.value)}
+                      aria-invalid={!!errors.institution}
+                      disabled={institutions.loading || institutionOptions.length === 0}
                     >
                       <option value="" disabled>
-                        Sélectionnez…
+                        {institutions.loading
+                          ? "Chargement des universités..."
+                          : "Sélectionnez votre université"}
                       </option>
-                      {faculties.map((f) => (
-                        <option key={f.label} value={f.label}>
-                          {f.label}
+                      {institutionOptions.map((institution) => (
+                        <option key={institution.id} value={institution.id}>
+                          {institution.short_name
+                            ? `${institution.name} (${institution.short_name})`
+                            : institution.name}
                         </option>
                       ))}
                     </Select>
+                    {institutions.error && (
+                      <p className="text-xs text-destructive">{institutions.error}</p>
+                    )}
                   </Field>
                 </div>
 
@@ -421,11 +447,11 @@ export default function SignupPage() {
                     />
                     <span className="text-xs leading-relaxed text-muted-foreground">
                       J&apos;accepte les{" "}
-                      <Link href="#" className="font-medium text-primary hover:underline">
+                      <Link href="/faq" className="font-medium text-primary hover:underline">
                         conditions d&apos;utilisation
                       </Link>{" "}
                       et la{" "}
-                      <Link href="#" className="font-medium text-primary hover:underline">
+                      <Link href="/faq" className="font-medium text-primary hover:underline">
                         charte de science ouverte
                       </Link>
                       .
@@ -436,9 +462,26 @@ export default function SignupPage() {
                   )}
                 </div>
 
-                <Button type="submit" size="lg" className="mt-1 w-full">
-                  Créer mon compte
-                  <ArrowRight className="size-4" />
+                {apiError && (
+                  <p className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                    {apiError}
+                  </p>
+                )}
+
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="mt-1 w-full"
+                  disabled={submitting || institutions.loading || institutionOptions.length === 0}
+                >
+                  {submitting ? (
+                    "Création du compte..."
+                  ) : (
+                    <>
+                      Créer mon compte
+                      <ArrowRight className="size-4" />
+                    </>
+                  )}
                 </Button>
               </form>
 

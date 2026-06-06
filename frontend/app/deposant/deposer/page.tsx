@@ -23,6 +23,10 @@ import { Progress } from "@/components/ui/progress";
 import { UploadDropzone } from "@/components/upload-dropzone";
 import { StepperUpload } from "@/components/stepper-upload";
 import { AiMetadataPanel } from "@/components/ai-metadata-panel";
+import { useAuth } from "@/components/auth-provider";
+import { messageForApiError } from "@/lib/api/errors";
+import { acceptMetadata, addContributor, createWork, extractMetadata, listInstitutions, submitWork, updateWork, uploadDocument } from "@/lib/api/resources";
+import type { Institution, Paginated } from "@/lib/api/types";
 
 const steps = [
   { label: "Téléversement" },
@@ -38,25 +42,6 @@ const phases = [
   "Analyse du résumé et des mots-clés…",
   "Classification disciplinaire…",
 ];
-
-const EXTRACTED = {
-  title:
-    "Extraction automatique de métadonnées à partir de documents PDF académiques",
-  authors: "Kamdem Tiotsop Brice",
-  supervisors: "Dr. Ondoa Mvondo Alice",
-  abstract:
-    "Ce travail développe un pipeline d'extraction de métadonnées (titre, auteurs, résumé, mots-clés) à partir de fichiers PDF hétérogènes. La méthode s'appuie sur l'analyse de mise en page et un modèle de langage affiné pour atteindre une précision moyenne de 91 %.",
-  keywords:
-    "Extraction d'information, Analyse de PDF, Métadonnées, Modèle de langage",
-  type: "Mémoire",
-  year: "2026",
-  faculty: "École Nationale Supérieure Polytechnique",
-  department: "Génie Informatique",
-  domain: "Intelligence Artificielle",
-  language: "Français",
-  license: "CC BY 4.0",
-  level: "Master 2",
-};
 
 const empty = {
   title: "",
@@ -74,34 +59,89 @@ const empty = {
   level: "Master 2",
 };
 
+function workType(value: string) {
+  if (value === "Thèse") return "THESE";
+  if (value === "Article") return "ARTICLE";
+  return "MEMOIRE";
+}
+
+function language(value: string) {
+  return value === "Anglais" ? "EN" : "FR";
+}
+
+function listFrom<T>(data: Paginated<T> | T[]) {
+  return Array.isArray(data) ? data : data.results;
+}
+
 export default function DeposerPage() {
+  const { user } = useAuth();
   const [step, setStep] = React.useState(0);
   const [file, setFile] = React.useState<File | null>(null);
   const [progress, setProgress] = React.useState(0);
   const [form, setForm] = React.useState(empty);
+  const [workId, setWorkId] = React.useState<string | null>(null);
+  const [apiError, setApiError] = React.useState<string | null>(null);
+  const [submitting, setSubmitting] = React.useState(false);
 
-  React.useEffect(() => {
-    if (step !== 1) return;
-    const interval = setInterval(() => {
-      setProgress((p) => (p >= 100 ? 100 : Math.min(100, p + 4)));
-    }, 90);
-    return () => clearInterval(interval);
-  }, [step]);
-
-  function startAnalysis() {
-    setProgress(0);
-    setStep(1);
+  async function resolveInstitution() {
+    if (typeof user?.institution === "string" && user.institution) return user.institution;
+    const data = await listInstitutions();
+    const first = listFrom<Institution>(data)[0];
+    if (!first?.id) throw new Error("Aucune institution disponible pour créer le dossier.");
+    return first.id;
   }
 
-  React.useEffect(() => {
-    if (step === 1 && progress >= 100) {
-      const t = setTimeout(() => {
-        setForm({ ...EXTRACTED });
-        setStep(2);
-      }, 600);
-      return () => clearTimeout(t);
+  async function startAnalysis() {
+    if (!file) return;
+    setApiError(null);
+    setProgress(0);
+    setStep(1);
+    try {
+      setProgress(10);
+      const institution = await resolveInstitution();
+      const work = await createWork({
+        type: workType(form.type),
+        title: file.name.replace(/\.pdf$/i, ""),
+        abstract_text: "",
+        language: language(form.language),
+        academic_year: form.year,
+        keywords: [],
+        visibility: "PRIVATE",
+        institution,
+      });
+      setWorkId(work.id);
+      setProgress(35);
+      await uploadDocument(work.id, file, "Dépôt initial");
+      setProgress(65);
+      const extraction = await extractMetadata(work.id);
+      const metadata = extraction.metadata || {};
+      setForm({
+        ...empty,
+        title: String(metadata.title || extraction.extracted_title || work.title || ""),
+        authors: Array.isArray((metadata as { authors?: unknown }).authors)
+          ? ((metadata as { authors: string[] }).authors || []).join(", ")
+          : "",
+        supervisors: work.supervisor_name || "",
+        abstract: String(metadata.abstract || extraction.extracted_abstract || ""),
+        keywords: Array.isArray(metadata.keywords)
+          ? (metadata.keywords as string[]).join(", ")
+          : (extraction.extracted_keywords || []).join(", "),
+        type: form.type,
+        year: form.year,
+        faculty: "",
+        department: "",
+        domain: String(metadata.scientific_domain || extraction.suggested_domain || ""),
+        language: metadata.language === "en" ? "Anglais" : "Français",
+        license: form.license,
+        level: form.level,
+      });
+      setProgress(100);
+      setStep(2);
+    } catch (err) {
+      setApiError(messageForApiError(err));
+      setStep(0);
     }
-  }, [step, progress]);
+  }
 
   const phaseIndex = Math.min(
     phases.length - 1,
@@ -120,7 +160,54 @@ export default function DeposerPage() {
     setFile(null);
     setForm(empty);
     setProgress(0);
+    setWorkId(null);
+    setApiError(null);
     setStep(0);
+  }
+
+  async function submitForValidation() {
+    if (!workId) {
+      setApiError("Aucun dossier backend n'a été créé pour ce dépôt.");
+      return;
+    }
+    setSubmitting(true);
+    setApiError(null);
+    try {
+      const keywords = keywordList;
+      await acceptMetadata(workId, {
+        title: form.title,
+        abstract_text: form.abstract,
+        scientific_domain: form.domain,
+        keywords,
+      });
+      await updateWork(workId, {
+        type: workType(form.type),
+        academic_year: form.year,
+        language: language(form.language),
+        supervisor_name: form.supervisors,
+        scientific_domain: form.domain,
+        title: form.title,
+        abstract_text: form.abstract,
+        keywords,
+      });
+      for (const [index, name] of form.authors
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean)
+        .entries()) {
+        await addContributor(workId, {
+          contributor_type: "AUTHOR",
+          display_name: name,
+          order_index: index,
+        });
+      }
+      await submitWork(workId);
+      setStep(3);
+    } catch (err) {
+      setApiError(messageForApiError(err));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -162,6 +249,11 @@ export default function DeposerPage() {
                 onFile={setFile}
                 onClear={() => setFile(null)}
               />
+              {apiError && (
+                <p className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {apiError}
+                </p>
+              )}
               <div className="flex justify-end">
                 <Button size="lg" disabled={!file} onClick={startAnalysis}>
                   <Sparkles className="size-4" />
@@ -382,11 +474,16 @@ export default function DeposerPage() {
                   <ArrowLeft className="size-4" />
                   Retour
                 </Button>
-                <Button size="lg" onClick={() => setStep(3)}>
-                  Soumettre pour validation
+                <Button size="lg" onClick={submitForValidation} disabled={submitting}>
+                  {submitting ? "Soumission..." : "Soumettre pour validation"}
                   <ArrowRight className="size-4" />
                 </Button>
               </div>
+              {apiError && (
+                <p className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {apiError}
+                </p>
+              )}
             </div>
           )}
 

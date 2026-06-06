@@ -8,11 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
-import {
-  auditLog,
-  type AuditSeverity,
-  type UserRole,
-} from "@/lib/admin-data";
+import { useApiResource } from "@/lib/api/hooks";
+import { getAdminAudit } from "@/lib/api/resources";
+
+type AuditSeverity = "info" | "warning" | "critical";
+type UserRole = "Administrateur";
 
 type BadgeVariant =
   | "default"
@@ -38,19 +38,36 @@ const severityLabel: Record<AuditSeverity, string> = {
 
 const roleVariant: Record<UserRole, BadgeVariant> = {
   Administrateur: "brand",
-  Gestionnaire: "default",
-  Validateur: "ai",
-  Déposant: "success",
-  Lecteur: "secondary",
 };
 
 export default function AdminAuditPage() {
   const [query, setQuery] = React.useState("");
   const [severity, setSeverity] = React.useState<string>("all");
+  const audit = useApiResource(() => getAdminAudit(), [], null);
+  const liveRows = React.useMemo(
+    () =>
+      (Array.isArray(audit.data) ? audit.data : audit.data?.results || []).map((event) => ({
+        id: String(event.id),
+        time: String(event.created_at || ""),
+        actor: String(event.actor || "Système"),
+        role: "Administrateur" as UserRole,
+        action: String(event.action_type || event.module || "Événement"),
+        target: String(event.comment || event.object_status || "OpenScience Hub"),
+        ip: String(event.ip_address || "—"),
+        severity:
+          String(event.severity || "").toLowerCase() === "critical"
+            ? ("critical" as AuditSeverity)
+            : String(event.severity || "").toLowerCase() === "warning"
+              ? ("warning" as AuditSeverity)
+              : ("info" as AuditSeverity),
+      })) || [],
+    [audit.data],
+  );
+  const source = liveRows;
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-    return auditLog.filter((e) => {
+    return source.filter((e) => {
       const matchesQuery =
         !q ||
         e.actor.toLowerCase().includes(q) ||
@@ -61,10 +78,10 @@ export default function AdminAuditPage() {
       const matchesSeverity = severity === "all" || e.severity === severity;
       return matchesQuery && matchesSeverity;
     });
-  }, [query, severity]);
+  }, [query, severity, source]);
 
-  const criticalCount = auditLog.filter((e) => e.severity === "critical").length;
-  const warningCount = auditLog.filter((e) => e.severity === "warning").length;
+  const criticalCount = source.filter((e) => e.severity === "critical").length;
+  const warningCount = source.filter((e) => e.severity === "warning").length;
 
   return (
     <>
@@ -81,7 +98,7 @@ export default function AdminAuditPage() {
       {/* Résumé */}
       <div className="mb-5 flex flex-wrap items-center gap-2 text-sm">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-muted-foreground">
-          {auditLog.length} événements
+          {audit.loading ? "Chargement..." : `${source.length} événements`}
         </span>
         <Badge variant="destructive">{criticalCount} critiques</Badge>
         <Badge variant="warning">{warningCount} avertissements</Badge>

@@ -1,6 +1,6 @@
 """Test E2E du backend via le client DRF (sans serveur réseau).
 
-Usage : DATABASE_URL=... SIMBA_MODE=mock SSI_MODE=mock python scripts/e2e_check.py
+Usage : DATABASE_URL=... SIMBA_MODE=live SSI_MODE=live python scripts/e2e_check.py
 Valide la chaîne : referentiel -> depot -> upload -> extraction IA -> soumission
 -> decision -> archivage -> preuve/QR -> verification -> catalogue.
 """
@@ -59,7 +59,7 @@ r = dep_client.post(f"/api/v1/works/{wid}/documents", {"file": pdf}, format="mul
 check("Upload PDF (201)", r.status_code == 201)
 check("Hash SHA-256 calcule (64 hex)", len(r.data.get("sha256_hash", "")) == 64)
 
-# --- 4. Extraction IA (mock) ----------------------------------------------
+# --- 4. Extraction IA (simba_ia live) --------------------------------------
 r = dep_client.post(f"/api/v1/works/{wid}/extract-metadata")
 check("Extraction IA EXTRACTED", r.status_code == 200 and r.data.get("status") == "EXTRACTED")
 
@@ -72,7 +72,7 @@ check("Validation metadonnees (200)", r.status_code == 200)
 
 # --- 6. Soumission ---------------------------------------------------------
 r = dep_client.post(f"/api/v1/works/{wid}/submit")
-check("Soumission -> SUBMITTED", r.status_code == 200 and r.data.get("status") == "SUBMITTED")
+check("Soumission -> SOUMIS", r.status_code == 200 and r.data.get("status") == "SOUMIS")
 
 # --- 7. Décision (admin) ---------------------------------------------------
 r = adm_client.post(f"/api/v1/works/{wid}/decision", {"decision_type": "VALIDATE_AFTER_DEFENSE", "comment": "OK"}, format="json")
@@ -140,7 +140,7 @@ check("Creation document-type (201)", r.status_code == 201)
 r = adm_client.get("/api/v1/accounts/permissions")
 check("Liste permissions (200)", r.status_code == 200)
 
-# Revocation puis reissue de la preuve (service e-IDStack mock)
+# Revocation puis reissue de la preuve (service e-IDStack de IDS live)
 from apps.ssi.models import VerificationProof  # noqa: E402
 proof_obj = VerificationProof.objects.filter(archive_record__work_id=wid).first()
 r = adm_client.post(f"/api/v1/ssi/proofs/{proof_obj.id}/revoke", {"reason": "test"}, format="json")

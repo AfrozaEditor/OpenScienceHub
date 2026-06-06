@@ -11,6 +11,15 @@ class VersionType(models.TextChoices):
     FINAL_ARCHIVE = "FINAL_ARCHIVE", "Version finale archivée"
 
 
+class VersionStatus(models.TextChoices):
+    ACTIVE = "ACTIVE", "Active"
+    REPLACED = "REPLACED", "Remplacée"
+    UNDER_CORRECTION = "UNDER_CORRECTION", "En correction"
+    FINAL = "FINAL", "Finale"
+    ARCHIVED = "ARCHIVED", "Archivée"
+    REJECTED = "REJECTED", "Rejetée"
+
+
 def upload_to(instance, filename):
     return f"works/{instance.work_id}/v{instance.version_number}_{filename}"
 
@@ -26,6 +35,7 @@ class DocumentVersion(TimeStampedModel):
     sha256_hash = models.CharField(max_length=64, db_index=True)
     change_note = models.TextField(blank=True)
     is_final = models.BooleanField(default=False)
+    status = models.CharField(max_length=30, choices=VersionStatus.choices, default=VersionStatus.ACTIVE)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="uploaded_versions")
 
     class Meta:

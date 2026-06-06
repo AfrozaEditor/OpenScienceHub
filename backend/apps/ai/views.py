@@ -1,13 +1,25 @@
+import re
+
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import permissions, status, views
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
-from apps.works.models import ScientificWork
+from apps.accounts.services import get_user_capabilities, user_can_access_work
+from apps.works.models import ScientificWork, Visibility
 
 from .client import SimbaClient, SimbaError
 from .files import build_document_file_url
 from .models import AIQueryLog, ExtractionStatus, MetadataExtraction
+
+
+def _ensure_work_access(request, work: ScientificWork, *, allow_public: bool = False) -> None:
+    if allow_public and work.visibility == Visibility.PUBLIC:
+        return
+    if not request.user.is_authenticated or not user_can_access_work(request.user, work):
+        raise PermissionDenied("Vous n'avez pas accès à ce dossier.")
 
 
 class ExtractMetadataView(views.APIView):
@@ -17,6 +29,7 @@ class ExtractMetadataView(views.APIView):
 
     def post(self, request, work_id):
         work = get_object_or_404(ScientificWork, pk=work_id)
+        _ensure_work_access(request, work)
         version = work.documents.order_by("-version_number").first()
         if not version:
             return Response({"detail": "Aucun document à analyser."}, status=status.HTTP_400_BAD_REQUEST)
@@ -58,6 +71,7 @@ class MetadataAcceptView(views.APIView):
 
     def post(self, request, work_id):
         work = get_object_or_404(ScientificWork, pk=work_id)
+        _ensure_work_access(request, work)
         data = request.data
         for field in ("title", "abstract_text", "scientific_domain"):
             if field in data:
@@ -70,6 +84,12 @@ class MetadataAcceptView(views.APIView):
             MetadataExtraction.objects.filter(document_version=version).update(
                 status=ExtractionStatus.REVIEWED, reviewed_at=timezone.now()
             )
+        try:
+            from apps.ai.indexing import index_work_for_assistant
+
+            index_work_for_assistant(work, request=request)
+        except Exception:
+            pass
         return Response({"detail": "Métadonnées validées.", "work_id": str(work.id)})
 
 
@@ -78,15 +98,55 @@ class AssistantQueryView(views.APIView):
 
     permission_classes = [permissions.AllowAny]
 
+    def _filters_for_request(self, request, question: str, filters: dict) -> dict:
+        filters = dict(filters or {})
+        allowed = ["PUBLIC"]
+        user = request.user
+
+        if user.is_authenticated:
+            if get_user_capabilities(user)["is_platform_admin"]:
+                allowed = ["PUBLIC", "INSTITUTION_ONLY", "RESTRICTED", "PRIVATE"]
+            else:
+                accessible = ScientificWork.objects.filter(
+                    Q(created_by=user) | Q(contributors__user=user)
+                ).distinct()
+                requested_work_id = filters.get("work_id")
+                if requested_work_id:
+                    if accessible.filter(pk=requested_work_id).exists():
+                        allowed = ["PUBLIC", "INSTITUTION_ONLY", "RESTRICTED", "PRIVATE"]
+                    else:
+                        filters.pop("work_id", None)
+                else:
+                    terms = [
+                        term for term in re.split(r"\W+", question)
+                        if len(term) >= 4
+                    ][:10]
+                    query = Q()
+                    for term in terms:
+                        query |= (
+                            Q(title__icontains=term)
+                            | Q(reference_code__icontains=term)
+                            | Q(keywords__icontains=term)
+                        )
+                    matched = accessible.filter(query).order_by("-updated_at").first() if terms else None
+                    if matched:
+                        filters["work_id"] = str(matched.id)
+                        allowed = ["PUBLIC", "INSTITUTION_ONLY", "RESTRICTED", "PRIVATE"]
+
+        filters["allowed_visibilities"] = allowed
+        return filters
+
     def post(self, request):
         question = request.data.get("question", "").strip()
         if not question:
             return Response({"detail": "Question requise."}, status=status.HTTP_400_BAD_REQUEST)
-        filters = request.data.get("filters", {})
-        # Public : seuls les documents publics sont interrogeables
-        allowed = ["PUBLIC"]
+        filters = self._filters_for_request(request, question, request.data.get("filters", {}))
         try:
-            result = SimbaClient().assistant_query(question=question, allowed_visibilities=allowed, filters=filters)
+            result = SimbaClient().assistant_query(
+                question=question,
+                allowed_visibilities=filters["allowed_visibilities"],
+                filters={k: v for k, v in filters.items() if k != "allowed_visibilities"},
+            )
         except SimbaError:
             return Response({"answer_status": "FAILED", "answer": None, "sources": []}, status=502)
 
@@ -94,7 +154,7 @@ class AssistantQueryView(views.APIView):
             question=question,
             answer=result.get("answer") or "",
             answer_status=result.get("answer_status", "ANSWERED"),
-            filters={"allowed_visibilities": allowed, **(filters or {})},
+            filters=filters,
             user=request.user if request.user.is_authenticated else None,
         )
         return Response(result)
@@ -105,6 +165,7 @@ class SimilarWorksView(views.APIView):
 
     def get(self, request, work_id):
         work = get_object_or_404(ScientificWork, pk=work_id)
+        _ensure_work_access(request, work, allow_public=True)
         try:
             result = SimbaClient().similar(work_id=work.id, allowed_visibilities=["PUBLIC"])
         except SimbaError:
@@ -119,6 +180,7 @@ class MetadataExtractionView(views.APIView):
 
     def get(self, request, work_id):
         work = get_object_or_404(ScientificWork, pk=work_id)
+        _ensure_work_access(request, work)
         version = work.documents.order_by("-version_number").first()
         extraction = MetadataExtraction.objects.filter(document_version=version).order_by("-created_at").first() if version else None
         if not extraction:
@@ -142,6 +204,7 @@ class SummaryView(views.APIView):
 
     def get(self, request, work_id):
         work = get_object_or_404(ScientificWork, pk=work_id)
+        _ensure_work_access(request, work, allow_public=True)
         version = work.documents.order_by("-version_number").first()
         try:
             result = SimbaClient().summarize(work_id=work.id, version_id=version.id if version else None)

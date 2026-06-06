@@ -1,0 +1,52 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - link "OpenScience Hub OpenScience Hub" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - img "OpenScience Hub" [ref=e6]
+        - generic [ref=e7]: OpenScience Hub
+      - generic [ref=e8]:
+        - heading "Le répertoire institutionnel intelligent de la science ouverte universitaire." [level=1] [ref=e9]
+        - list [ref=e10]:
+          - listitem [ref=e11]:
+            - img [ref=e13]
+            - generic [ref=e16]: Extraction automatique des métadonnées par IA
+          - listitem [ref=e17]:
+            - img [ref=e19]
+            - generic [ref=e23]: Archivage institutionnel pérenne et structuré
+          - listitem [ref=e24]:
+            - img [ref=e26]
+            - generic [ref=e29]: Validation académique et science ouverte
+      - paragraph [ref=e30]: © 2026 OpenScience Hub
+    - generic [ref=e32]:
+      - heading "Connexion" [level=2] [ref=e33]
+      - paragraph [ref=e34]: Accédez à votre espace de dépôt et de gestion documentaire.
+      - generic [ref=e35]:
+        - generic [ref=e36]:
+          - generic [ref=e37]: Adresse e-mail institutionnelle
+          - textbox "Adresse e-mail institutionnelle" [ref=e38]:
+            - /placeholder: prenom.nom@univ-yaounde1.cm
+        - generic [ref=e39]:
+          - generic [ref=e40]:
+            - generic [ref=e41]: Mot de passe
+            - link "Mot de passe oublié ?" [ref=e42] [cursor=pointer]:
+              - /url: mailto:contact@openscience-hub.cm?subject=Réinitialisation%20du%20mot%20de%20passe
+          - textbox "Mot de passe" [ref=e43]:
+            - /placeholder: ••••••••
+        - button "Se connecter" [ref=e44]:
+          - text: Se connecter
+          - img
+      - generic [ref=e45]:
+        - separator [ref=e46]
+        - generic [ref=e47]: ou
+        - separator [ref=e48]
+      - link "Continuer en tant qu'invité" [ref=e49] [cursor=pointer]:
+        - /url: /explorer
+      - paragraph [ref=e50]:
+        - text: Pas encore de compte ?
+        - link "Créer un compte" [ref=e51] [cursor=pointer]:
+          - /url: /signup
+  - button "Ouvrir l'assistant IA" [ref=e53]:
+    - img [ref=e55]
+  - button "Open Next.js Dev Tools" [ref=e69] [cursor=pointer]:
+    - img [ref=e70]

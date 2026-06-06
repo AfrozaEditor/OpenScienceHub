@@ -1,8 +1,10 @@
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from rest_framework import permissions, views
+from rest_framework import permissions, status, views
 from rest_framework.response import Response
 
+from apps.accounts.permissions import IsInstitutionAdminOrPlatformAdmin
+from apps.accounts.services import get_user_capabilities, user_can_access_work
 from apps.works.models import ScientificWork
 
 from .client import EidStackClient, EidStackError
@@ -30,35 +32,66 @@ class WorkProofView(views.APIView):
 
     def get(self, request, work_id):
         work = get_object_or_404(ScientificWork, pk=work_id)
-        proof = VerificationProof.objects.filter(archive_record__work=work).first()
+        if not user_can_access_work(request.user, work):
+            return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
+        proof = (
+            VerificationProof.objects.select_related(
+                "credential__schema",
+                "archive_record__document_version",
+            )
+            .filter(archive_record__work=work)
+            .first()
+        )
         if not proof:
-            return Response({"detail": "Preuve non disponible.", "proof_status": "NONE"})
+            return Response(
+                {"detail": "Preuve non disponible.", "proof_status": "NONE"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        schema = proof.credential.schema if proof.credential and proof.credential.schema else None
         return Response({
             "id": str(proof.id),
             "proof_code": proof.proof_code,
             "document_hash": proof.document_hash,
+            "archive_hash": proof.archive_record.document_hash,
+            "version_hash": proof.archive_record.document_version.sha256_hash,
+            "hashes_match": (
+                proof.document_hash == proof.archive_record.document_hash
+                == proof.archive_record.document_version.sha256_hash
+            ),
             "verification_url": proof.verification_url,
             "qr_code_url": proof.qr_code_url,
             "status": proof.status,
+            "proof_type": proof.proof_type,
+            "credential_id": proof.credential.credential_id if proof.credential else "",
+            "credential_status": proof.credential.status if proof.credential else "",
+            "issuer_did": proof.credential.issuer_did if proof.credential else "",
+            "schema": f"{schema.schema_name} v{schema.version}" if schema else "ScientificWorkArchiveCredential",
+            "is_mock": bool(proof.credential.is_mock) if proof.credential else False,
             "issued_at": proof.issued_at,
         })
 
 
 class ProofRevokeView(views.APIView):
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [IsInstitutionAdminOrPlatformAdmin]
 
     def post(self, request, pk):
         proof = get_object_or_404(VerificationProof, pk=pk)
+        if not get_user_capabilities(request.user)["is_platform_admin"]:
+            if proof.archive_record.work.institution_id != request.user.institution_id:
+                return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
         reason = request.data.get("reason", "")
         revoke_proof(proof, request.user, reason=reason)
         return Response({"proof_code": proof.proof_code, "status": proof.status})
 
 
 class ProofReissueView(views.APIView):
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [IsInstitutionAdminOrPlatformAdmin]
 
     def post(self, request, pk):
         proof = get_object_or_404(VerificationProof, pk=pk)
+        if not get_user_capabilities(request.user)["is_platform_admin"]:
+            if proof.archive_record.work.institution_id != request.user.institution_id:
+                return Response({"detail": "Accès refusé."}, status=status.HTTP_403_FORBIDDEN)
         proof = reissue_proof(proof, request.user)
         return Response({"proof_code": proof.proof_code, "status": proof.status})
 
@@ -80,13 +113,16 @@ def _connection_payload(conn: EidStackConnection) -> dict:
 class SsiConnectionView(views.APIView):
     """GET/PUT /admin/ssi/connection?institution=<id> — config e-IDStack (secrets masqués)."""
 
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [IsInstitutionAdminOrPlatformAdmin]
 
     def _get_institution_id(self, request):
         return request.query_params.get("institution") or request.data.get("institution")
 
     def get(self, request):
         inst_id = self._get_institution_id(request)
+        scope = get_user_capabilities(request.user)
+        if not scope["is_platform_admin"]:
+            inst_id = str(request.user.institution_id)
         conn = EidStackConnection.objects.filter(institution_id=inst_id).first() if inst_id else EidStackConnection.objects.first()
         if not conn:
             return Response({"detail": "Aucune connexion configurée.", "connection_status": "NOT_CONFIGURED"})
@@ -94,6 +130,9 @@ class SsiConnectionView(views.APIView):
 
     def put(self, request):
         inst_id = self._get_institution_id(request)
+        scope = get_user_capabilities(request.user)
+        if not scope["is_platform_admin"]:
+            inst_id = str(request.user.institution_id)
         if not inst_id:
             return Response({"detail": "institution requise."}, status=400)
         conn, _ = EidStackConnection.objects.get_or_create(institution_id=inst_id)
@@ -114,7 +153,7 @@ class SsiConnectionView(views.APIView):
 class SsiTestConnectionView(views.APIView):
     """POST /admin/ssi/test-connection — teste l'accès e-IDStack (get issuer DID)."""
 
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [IsInstitutionAdminOrPlatformAdmin]
 
     def post(self, request):
         client = EidStackClient()

@@ -5,11 +5,11 @@ API du hub intelligent des travaux scientifiques universitaires. Voir la doc de 
 ## Stack
 Python 3.11+ · Django 5 · Django REST Framework · PostgreSQL · JWT · drf-spectacular · Docker.
 
-> Validé de bout en bout : `manage.py check` (0 problème), migrations appliquées sur PostgreSQL, et **33/33 tests E2E** (`scripts/e2e_check.py`) couvrant tout le parcours + l'orchestration des services : dépôt → upload (hash) → **extraction IA (simba_ia)** → validation → décision → archivage → **indexation (simba_ia)** + **émission preuve (e-IDStack)** + QR → vérification publique → catalogue/facettes → Assistant IA / résumé / similaires → inbox validation → corrections (PATCH) → dashboard/stats/audit admin → **révocation/réémission/test-connexion e-IDStack** → document-types.
+> Validé de bout en bout : `manage.py check` (0 problème), migrations appliquées sur PostgreSQL, suite backend critique **53/53 tests**, et smoke test live `scripts/full_stack_live_check.py` couvrant dépôt → upload (hash) → **extraction IA (simba_ia)** → validation humaine → version finale → archivage → **indexation (simba_ia)** + **émission preuve (e-IDStack de IDS)** + QR → vérification publique → Assistant IA / résumé / similaires → révocation/réémission.
 
 ## Architecture orientée services
 
-Le backend est le **chef d'orchestre** ; il appelle deux services externes via des clients dédiés (avec mode `mock` pour tourner hors-ligne) :
+Le backend est le **chef d'orchestre** ; il appelle deux services externes via des clients dédiés, sans réponse simulée en runtime :
 - **`apps/ai/client.py` → `simba_ia`** : `extract`, `index`, `assistant_query`, `similar`, `summarize`.
 - **`apps/ssi/client.py` → `e-IDStack de IDS`** : `get_issuer_did`, `offer_credential`, `verify_credential`. SSI **sans wallet** (plateforme dépositaire, vérification web).
 
@@ -51,7 +51,7 @@ docker compose up --build
 
 Au démarrage, le conteneur `web` :
 1. attend PostgreSQL,
-2. applique les migrations (`makemigrations` + `migrate`),
+2. applique les migrations existantes (`migrate` uniquement),
 3. collecte les fichiers statiques,
 4. crée un superuser (`admin@openscience.local` / `adminpass`),
 5. lance Gunicorn sur le port 8000.
@@ -104,10 +104,10 @@ python manage.py runserver
 | Admin : paramètres IA / recherche | `GET /api/v1/admin/ai-settings|search-settings` |
 
 ## Intégrations
-- **simba_ia** (IA) : `SIMBA_MODE=mock|live`, `SIMBA_IA_URL`, `SIMBA_API_KEY`.
-- **e-IDStack de IDS** (SSI) : `SSI_MODE=mock|live`, `EIDSTACK_BASE_URL`, `EIDSTACK_API_KEY`. Modèle **sans wallet** (plateforme dépositaire, vérification web).
+- **simba_ia** (IA) : `SIMBA_MODE=live`, `SIMBA_IA_URL`, `SIMBA_API_KEY`.
+- **e-IDStack de IDS** (SSI) : `SSI_MODE=live`, `EIDSTACK_BASE_URL`, `EIDSTACK_API_KEY`. Modèle **sans wallet** (plateforme dépositaire, vérification web).
 
-En mode `mock`, l'extraction IA et l'émission de preuve fonctionnent **sans services externes** (idéal démo).
+Si `SIMBA_MODE` ou `SSI_MODE` n'est pas `live`, les clients refusent l'opération avec une erreur explicite. Les indisponibilités de service sont traitées par les workflows (`FAILED` pour l'index IA, `SSI_PENDING` pour la preuve) sans inventer de résultat.
 
 ## Structure
 Voir `AGENTS.md` (apps : common, accounts, institutions, works, documents, validation, archive, search, ai, ssi, audit).

@@ -1,0 +1,441 @@
+- generic [ref=e1]:
+  - generic [ref=e103]:
+    - banner [ref=e104]:
+      - generic [ref=e105]:
+        - link "OpenScience Hub OpenScience Hub Répertoire Institutionnel Intelligent" [ref=e106] [cursor=pointer]:
+          - /url: /
+          - img "OpenScience Hub" [ref=e107]
+          - generic [ref=e108]:
+            - generic [ref=e109]: OpenScience Hub
+            - generic [ref=e110]: Répertoire Institutionnel Intelligent
+        - button "Menu" [ref=e543]:
+          - img [ref=e544]
+    - generic [ref=e122]:
+      - heading "Explorer le répertoire scientifique" [level=1] [ref=e123]
+      - paragraph [ref=e124]: Recherchez parmi les mémoires, thèses, articles et rapports archivés.
+      - search [ref=e126]:
+        - img [ref=e127]
+        - searchbox "Rechercher dans le répertoire" [ref=e130]
+        - button "Rechercher" [ref=e131]
+    - main [ref=e132]:
+      - generic [ref=e133]:
+        - complementary [ref=e134]:
+          - button "Filtres" [active] [ref=e546]:
+            - img
+            - text: Filtres
+          - generic [ref=e136]:
+            - heading "Filtres" [level=2] [ref=e138]:
+              - img [ref=e139]
+              - text: Filtres
+            - generic [ref=e141]:
+              - button "Type de document" [expanded] [ref=e142]:
+                - generic [ref=e143]:
+                  - img [ref=e144]
+                  - text: Type de document
+                - img [ref=e147]
+              - button "Mémoire 5" [ref=e150]:
+                - generic [ref=e152]: Mémoire
+                - generic [ref=e153]: "5"
+            - generic [ref=e154]:
+              - button "Année" [expanded] [ref=e155]:
+                - generic [ref=e156]:
+                  - img [ref=e157]
+                  - text: Année
+                - img [ref=e159]
+              - button "2025 5" [ref=e162]:
+                - generic [ref=e164]: "2025"
+                - generic [ref=e165]: "5"
+            - button "Faculté" [ref=e167]:
+              - generic [ref=e168]:
+                - img [ref=e169]
+                - text: Faculté
+              - img [ref=e173]
+            - button "Département" [ref=e176]:
+              - generic [ref=e177]:
+                - img [ref=e178]
+                - text: Département
+              - img [ref=e188]
+            - generic [ref=e190]:
+              - button "Domaine scientifique" [expanded] [ref=e191]:
+                - generic [ref=e192]:
+                  - img [ref=e193]
+                  - text: Domaine scientifique
+                - img [ref=e197]
+              - button "Informatique 5" [ref=e200]:
+                - generic [ref=e202]: Informatique
+                - generic [ref=e203]: "5"
+            - button "Langue" [ref=e205]:
+              - generic [ref=e206]:
+                - img [ref=e207]
+                - text: Langue
+              - img [ref=e211]
+            - button "Accès" [ref=e214]:
+              - generic [ref=e215]:
+                - img [ref=e216]
+                - text: Accès
+              - img [ref=e219]
+            - button "Statut" [ref=e222]:
+              - generic [ref=e223]:
+                - img [ref=e224]
+                - text: Statut
+              - img [ref=e227]
+        - generic [ref=e229]:
+          - generic [ref=e230]:
+            - paragraph [ref=e231]: 5 résultats
+            - generic [ref=e232]:
+              - generic [ref=e233]: Trier par
+              - generic [ref=e235]:
+                - combobox [ref=e236]:
+                  - option "Pertinence" [selected]
+                  - option "Plus récent"
+                  - option "Plus téléchargé"
+                  - option "Plus cité"
+                - img
+          - generic [ref=e238]:
+            - generic [ref=e240]:
+              - generic [ref=e241]:
+                - generic [ref=e242]:
+                  - img
+                  - text: Mémoire
+                - generic [ref=e243]:
+                  - img
+                  - text: Validé
+                - generic [ref=e244]:
+                  - img
+                  - text: Public
+                - generic [ref=e245]: "2025"
+              - link "Integration complete IDS IA Docker" [ref=e246] [cursor=pointer]:
+                - /url: /documents/osh-ufs304-ds30-2025-0002
+                - heading "Integration complete IDS IA Docker" [level=3] [ref=e247]
+              - generic [ref=e248]:
+                - generic [ref=e249]:
+                  - img [ref=e250]
+                  - generic [ref=e255]: Auteur non renseigné
+                - generic [ref=e256]:
+                  - img [ref=e257]
+                  - text: "Encadrement : Non renseigné"
+              - paragraph [ref=e260]: Test full stack live.
+              - generic [ref=e261]:
+                - generic [ref=e262]: IDS
+                - generic [ref=e263]: SSI
+                - generic [ref=e264]: IA
+                - generic [ref=e265]: Docker
+              - generic [ref=e266]:
+                - generic [ref=e267]: Institution
+                - generic [ref=e269]: Informatique
+              - generic [ref=e270]:
+                - generic [ref=e271]:
+                  - generic [ref=e272]:
+                    - img [ref=e273]
+                    - text: "0"
+                  - generic [ref=e276]:
+                    - img [ref=e277]
+                    - text: "0"
+                  - generic [ref=e280]:
+                    - img [ref=e281]
+                    - text: 0 citations
+                - generic [ref=e284]:
+                  - link "Citer" [ref=e285] [cursor=pointer]:
+                    - /url: /documents/osh-ufs304-ds30-2025-0002#citer
+                    - img
+                    - text: Citer
+                  - link "Télécharger" [ref=e286] [cursor=pointer]:
+                    - /url: /media/works/9acc8de7-b060-4c84-846a-05aa85f7363e/v1_memoire-full-stack.pdf
+                    - img
+                    - text: Télécharger
+                  - link "Voir détails" [ref=e287] [cursor=pointer]:
+                    - /url: /documents/osh-ufs304-ds30-2025-0002
+                    - text: Voir détails
+                    - img
+            - generic [ref=e289]:
+              - generic [ref=e290]:
+                - generic [ref=e291]:
+                  - img
+                  - text: Mémoire
+                - generic [ref=e292]:
+                  - img
+                  - text: Validé
+                - generic [ref=e293]:
+                  - img
+                  - text: Public
+                - generic [ref=e294]: "2025"
+              - link "Integration complete IDS IA Docker" [ref=e295] [cursor=pointer]:
+                - /url: /documents/osh-ufs836-ds83-2025-0002
+                - heading "Integration complete IDS IA Docker" [level=3] [ref=e296]
+              - generic [ref=e297]:
+                - generic [ref=e298]:
+                  - img [ref=e299]
+                  - generic [ref=e304]: Auteur non renseigné
+                - generic [ref=e305]:
+                  - img [ref=e306]
+                  - text: "Encadrement : Non renseigné"
+              - paragraph [ref=e309]: Test full stack live.
+              - generic [ref=e310]:
+                - generic [ref=e311]: IDS
+                - generic [ref=e312]: SSI
+                - generic [ref=e313]: IA
+                - generic [ref=e314]: Docker
+              - generic [ref=e315]:
+                - generic [ref=e316]: Institution
+                - generic [ref=e318]: Informatique
+              - generic [ref=e319]:
+                - generic [ref=e320]:
+                  - generic [ref=e321]:
+                    - img [ref=e322]
+                    - text: "0"
+                  - generic [ref=e325]:
+                    - img [ref=e326]
+                    - text: "0"
+                  - generic [ref=e329]:
+                    - img [ref=e330]
+                    - text: 0 citations
+                - generic [ref=e333]:
+                  - link "Citer" [ref=e334] [cursor=pointer]:
+                    - /url: /documents/osh-ufs836-ds83-2025-0002#citer
+                    - img
+                    - text: Citer
+                  - link "Télécharger" [ref=e335] [cursor=pointer]:
+                    - /url: /media/works/91940802-31cd-4f72-9d81-8b8ec71047c7/v1_memoire-full-stack.pdf
+                    - img
+                    - text: Télécharger
+                  - link "Voir détails" [ref=e336] [cursor=pointer]:
+                    - /url: /documents/osh-ufs836-ds83-2025-0002
+                    - text: Voir détails
+                    - img
+            - generic [ref=e338]:
+              - generic [ref=e339]:
+                - generic [ref=e340]:
+                  - img
+                  - text: Mémoire
+                - generic [ref=e341]:
+                  - img
+                  - text: Validé
+                - generic [ref=e342]:
+                  - img
+                  - text: Public
+                - generic [ref=e343]: "2025"
+              - link "Integration complete IDS IA Docker" [ref=e344] [cursor=pointer]:
+                - /url: /documents/osh-ufs420-ds42-2025-0002
+                - heading "Integration complete IDS IA Docker" [level=3] [ref=e345]
+              - generic [ref=e346]:
+                - generic [ref=e347]:
+                  - img [ref=e348]
+                  - generic [ref=e353]: Auteur non renseigné
+                - generic [ref=e354]:
+                  - img [ref=e355]
+                  - text: "Encadrement : Non renseigné"
+              - paragraph [ref=e358]: Test full stack live.
+              - generic [ref=e359]:
+                - generic [ref=e360]: IDS
+                - generic [ref=e361]: SSI
+                - generic [ref=e362]: IA
+                - generic [ref=e363]: Docker
+              - generic [ref=e364]:
+                - generic [ref=e365]: Institution
+                - generic [ref=e367]: Informatique
+              - generic [ref=e368]:
+                - generic [ref=e369]:
+                  - generic [ref=e370]:
+                    - img [ref=e371]
+                    - text: "0"
+                  - generic [ref=e374]:
+                    - img [ref=e375]
+                    - text: "0"
+                  - generic [ref=e378]:
+                    - img [ref=e379]
+                    - text: 0 citations
+                - generic [ref=e382]:
+                  - link "Citer" [ref=e383] [cursor=pointer]:
+                    - /url: /documents/osh-ufs420-ds42-2025-0002#citer
+                    - img
+                    - text: Citer
+                  - link "Télécharger" [ref=e384] [cursor=pointer]:
+                    - /url: /media/works/8bbcca60-2e5d-4428-810a-a343f94c4e8b/v1_memoire-full-stack.pdf
+                    - img
+                    - text: Télécharger
+                  - link "Voir détails" [ref=e385] [cursor=pointer]:
+                    - /url: /documents/osh-ufs420-ds42-2025-0002
+                    - text: Voir détails
+                    - img
+            - generic [ref=e387]:
+              - generic [ref=e388]:
+                - generic [ref=e389]:
+                  - img
+                  - text: Mémoire
+                - generic [ref=e390]:
+                  - img
+                  - text: Validé
+                - generic [ref=e391]:
+                  - img
+                  - text: Public
+                - generic [ref=e392]: "2025"
+              - link "Integration complete IDS IA Docker" [ref=e393] [cursor=pointer]:
+                - /url: /documents/osh-ufs392-ds39-2025-0002
+                - heading "Integration complete IDS IA Docker" [level=3] [ref=e394]
+              - generic [ref=e395]:
+                - generic [ref=e396]:
+                  - img [ref=e397]
+                  - generic [ref=e402]: Auteur non renseigné
+                - generic [ref=e403]:
+                  - img [ref=e404]
+                  - text: "Encadrement : Non renseigné"
+              - paragraph [ref=e407]: Test full stack live.
+              - generic [ref=e408]:
+                - generic [ref=e409]: IDS
+                - generic [ref=e410]: SSI
+                - generic [ref=e411]: IA
+                - generic [ref=e412]: Docker
+              - generic [ref=e413]:
+                - generic [ref=e414]: Institution
+                - generic [ref=e416]: Informatique
+              - generic [ref=e417]:
+                - generic [ref=e418]:
+                  - generic [ref=e419]:
+                    - img [ref=e420]
+                    - text: "0"
+                  - generic [ref=e423]:
+                    - img [ref=e424]
+                    - text: "0"
+                  - generic [ref=e427]:
+                    - img [ref=e428]
+                    - text: 0 citations
+                - generic [ref=e431]:
+                  - link "Citer" [ref=e432] [cursor=pointer]:
+                    - /url: /documents/osh-ufs392-ds39-2025-0002#citer
+                    - img
+                    - text: Citer
+                  - link "Télécharger" [ref=e433] [cursor=pointer]:
+                    - /url: /media/works/e3994b51-daf0-4391-9420-44e227b59852/v1_memoire-full-stack.pdf
+                    - img
+                    - text: Télécharger
+                  - link "Voir détails" [ref=e434] [cursor=pointer]:
+                    - /url: /documents/osh-ufs392-ds39-2025-0002
+                    - text: Voir détails
+                    - img
+            - generic [ref=e436]:
+              - generic [ref=e437]:
+                - generic [ref=e438]:
+                  - img
+                  - text: Mémoire
+                - generic [ref=e439]:
+                  - img
+                  - text: Validé
+                - generic [ref=e440]:
+                  - img
+                  - text: Public
+                - generic [ref=e441]: "2025"
+              - link "Integration complete IDS IA Docker" [ref=e442] [cursor=pointer]:
+                - /url: /documents/osh-ufs367-ds36-2025-0002
+                - heading "Integration complete IDS IA Docker" [level=3] [ref=e443]
+              - generic [ref=e444]:
+                - generic [ref=e445]:
+                  - img [ref=e446]
+                  - generic [ref=e451]: Auteur non renseigné
+                - generic [ref=e452]:
+                  - img [ref=e453]
+                  - text: "Encadrement : Non renseigné"
+              - paragraph [ref=e456]: Test full stack live.
+              - generic [ref=e457]:
+                - generic [ref=e458]: IDS
+                - generic [ref=e459]: SSI
+                - generic [ref=e460]: IA
+                - generic [ref=e461]: Docker
+              - generic [ref=e462]:
+                - generic [ref=e463]: Institution
+                - generic [ref=e465]: Informatique
+              - generic [ref=e466]:
+                - generic [ref=e467]:
+                  - generic [ref=e468]:
+                    - img [ref=e469]
+                    - text: "0"
+                  - generic [ref=e472]:
+                    - img [ref=e473]
+                    - text: "0"
+                  - generic [ref=e476]:
+                    - img [ref=e477]
+                    - text: 0 citations
+                - generic [ref=e480]:
+                  - link "Citer" [ref=e481] [cursor=pointer]:
+                    - /url: /documents/osh-ufs367-ds36-2025-0002#citer
+                    - img
+                    - text: Citer
+                  - link "Télécharger" [ref=e482] [cursor=pointer]:
+                    - /url: /media/works/aae9c719-a186-4cb7-963d-cc8a44761a5a/v1_memoire-full-stack.pdf
+                    - img
+                    - text: Télécharger
+                  - link "Voir détails" [ref=e483] [cursor=pointer]:
+                    - /url: /documents/osh-ufs367-ds36-2025-0002
+                    - text: Voir détails
+                    - img
+    - contentinfo [ref=e484]:
+      - generic [ref=e485]:
+        - generic [ref=e486]:
+          - generic [ref=e487]:
+            - generic [ref=e488]:
+              - img "OpenScience Hub" [ref=e489]
+              - generic [ref=e490]:
+                - generic [ref=e491]: OpenScience Hub
+                - generic [ref=e492]: Répertoire Institutionnel Intelligent
+            - paragraph [ref=e493]: Centralisez, valorisez et retrouvez toute la production scientifique universitaire grâce à une recherche intelligente et une extraction automatique des métadonnées par IA.
+            - generic [ref=e494]:
+              - generic [ref=e495]:
+                - img [ref=e496]
+                - text: Institutions partenaires configurées dans OpenScience Hub
+              - generic [ref=e499]:
+                - img [ref=e500]
+                - text: contact@openscience-hub.cm
+          - generic [ref=e503]:
+            - heading "Plateforme" [level=3] [ref=e504]
+            - list [ref=e505]:
+              - listitem [ref=e506]:
+                - link "Explorer les travaux" [ref=e507] [cursor=pointer]:
+                  - /url: /explorer
+              - listitem [ref=e508]:
+                - link "Déposer un document" [ref=e509] [cursor=pointer]:
+                  - /url: /deposant/deposer
+              - listitem [ref=e510]:
+                - link "Communautés" [ref=e511] [cursor=pointer]:
+                  - /url: /communautes
+              - listitem [ref=e512]:
+                - link "Statistiques" [ref=e513] [cursor=pointer]:
+                  - /url: /admin/statistiques
+          - generic [ref=e514]:
+            - heading "Ressources" [level=3] [ref=e515]
+            - list [ref=e516]:
+              - listitem [ref=e517]:
+                - link "Guide de dépôt" [ref=e518] [cursor=pointer]:
+                  - /url: /faq
+              - listitem [ref=e519]:
+                - link "Métadonnées et Assistant IA" [ref=e520] [cursor=pointer]:
+                  - /url: /assistant
+              - listitem [ref=e521]:
+                - link "Politique d'accès" [ref=e522] [cursor=pointer]:
+                  - /url: /faq
+              - listitem [ref=e523]:
+                - link "API et exports" [ref=e524] [cursor=pointer]:
+                  - /url: /admin/preuves
+          - generic [ref=e525]:
+            - heading "Institution" [level=3] [ref=e526]
+            - list [ref=e527]:
+              - listitem [ref=e528]:
+                - link "À propos" [ref=e529] [cursor=pointer]:
+                  - /url: /
+              - listitem [ref=e530]:
+                - link "Science ouverte" [ref=e531] [cursor=pointer]:
+                  - /url: /communautes
+              - listitem [ref=e532]:
+                - link "Gouvernance" [ref=e533] [cursor=pointer]:
+                  - /url: /admin/dashboard
+              - listitem [ref=e534]:
+                - link "Contact" [ref=e535] [cursor=pointer]:
+                  - /url: mailto:contact@openscience-hub.cm
+        - generic [ref=e536]:
+          - generic [ref=e537]: © 2026 OpenScience Hub — Science ouverte universitaire.
+          - generic [ref=e538]:
+            - img [ref=e539]
+            - text: Archivage institutionnel certifié
+  - button "Ouvrir l'assistant IA" [ref=e83]:
+    - img [ref=e85]
+  - button "Open Next.js Dev Tools" [ref=e99] [cursor=pointer]:
+    - img [ref=e100]
+  - alert [ref=e542]

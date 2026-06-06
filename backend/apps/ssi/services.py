@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import io
 import uuid
+from pathlib import Path
 
 import qrcode
 from django.conf import settings
@@ -10,6 +11,11 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
+from rest_framework.exceptions import ValidationError
+from PIL import Image, ImageDraw
+
+from apps.documents.models import VersionStatus
+from apps.works.models import WorkStatus
 
 from .client import EidStackClient, EidStackError
 from .models import (
@@ -22,6 +28,15 @@ from .models import (
     VerificationResult,
     VerificationSource,
 )
+
+QR_PALETTE = {
+    "primary": "#0B132B",
+    "secondary": "#1D4ED8",
+    "background": "#F8FAFC",
+    "card": "#FFFFFF",
+    "border": "#E2E8F0",
+}
+QR_ICON_PATH = Path(__file__).resolve().parent / "assets" / "openscience_icon.png"
 
 
 def _build_attributes(work, final_version) -> list[dict]:
@@ -39,7 +54,71 @@ def _build_attributes(work, final_version) -> list[dict]:
 
 
 def _generate_qr(verification_url: str, proof_code: str) -> str:
-    img = qrcode.make(verification_url)
+    qr = qrcode.QRCode(
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=16,
+        border=4,
+    )
+    qr.add_data(verification_url)
+    qr.make(fit=True)
+    qr_img = qr.make_image(
+        fill_color=QR_PALETTE["primary"],
+        back_color=QR_PALETTE["background"],
+    ).convert("RGBA")
+    qr_img = qr_img.resize((720, 720), Image.Resampling.NEAREST)
+
+    canvas_size = 860
+    img = Image.new("RGBA", (canvas_size, canvas_size), QR_PALETTE["background"])
+    draw = ImageDraw.Draw(img)
+
+    shadow_box = (54, 58, canvas_size - 54, canvas_size - 50)
+    draw.rounded_rectangle(shadow_box, radius=44, fill=(11, 19, 43, 16))
+    card_box = (50, 50, canvas_size - 58, canvas_size - 58)
+    draw.rounded_rectangle(
+        card_box,
+        radius=44,
+        fill=QR_PALETTE["card"],
+        outline=QR_PALETTE["border"],
+        width=3,
+    )
+    draw.rounded_rectangle(
+        card_box,
+        radius=44,
+        outline=QR_PALETTE["secondary"],
+        width=4,
+    )
+    img.alpha_composite(qr_img, ((canvas_size - 720) // 2, (canvas_size - 720) // 2))
+
+    icon = Image.open(QR_ICON_PATH).convert("RGBA")
+    icon.thumbnail((150, 150), Image.Resampling.LANCZOS)
+    icon_box_size = 174
+    icon_box = Image.new("RGBA", (icon_box_size, icon_box_size), (255, 255, 255, 0))
+    icon_draw = ImageDraw.Draw(icon_box)
+    icon_draw.rounded_rectangle(
+        (0, 0, icon_box_size - 1, icon_box_size - 1),
+        radius=30,
+        fill=QR_PALETTE["card"],
+        outline=QR_PALETTE["border"],
+        width=2,
+    )
+    icon_box.alpha_composite(
+        icon,
+        ((icon_box_size - icon.width) // 2, (icon_box_size - icon.height) // 2),
+    )
+    icon_mask = Image.new("L", (icon_box_size, icon_box_size), 0)
+    mask_draw = ImageDraw.Draw(icon_mask)
+    mask_draw.rounded_rectangle(
+        (0, 0, icon_box_size - 1, icon_box_size - 1),
+        radius=30,
+        fill=255,
+    )
+    rounded_icon = Image.new("RGBA", (icon_box_size, icon_box_size), (255, 255, 255, 0))
+    rounded_icon.paste(icon_box, (0, 0), icon_mask)
+    img.alpha_composite(
+        rounded_icon,
+        ((canvas_size - icon_box_size) // 2, (canvas_size - icon_box_size) // 2),
+    )
+
     buffer = io.BytesIO()
     img.save(buffer, format="PNG")
     path = f"qrcodes/{proof_code}.png"
@@ -52,6 +131,14 @@ def issue_proof_for_archive(archive_record, actor=None) -> VerificationProof:
     """Émet la preuve après archivage. Statut PENDING si e-IDStack échoue."""
     work = archive_record.work
     final_version = archive_record.document_version
+    if work.status != WorkStatus.ARCHIVE:
+        raise ValidationError("La preuve ne peut être émise qu'après archivage.")
+    if final_version.status != VersionStatus.ARCHIVED or not final_version.is_final:
+        raise ValidationError("La preuve doit pointer vers une version finale archivée.")
+    if archive_record.document_hash != final_version.sha256_hash:
+        raise ValidationError("Le hash de l'archive ne correspond pas à la version finale.")
+    if hasattr(archive_record, "verification_proof"):
+        return archive_record.verification_proof
     proof_code = f"OSH-VC-{timezone.now():%Y}-{uuid.uuid4().hex[:8].upper()}"
     verification_url = f"{settings.PUBLIC_VERIFY_BASE_URL.rstrip('/')}/{proof_code}"
 
@@ -167,15 +254,31 @@ def _audit(action, actor, proof, severity="IMPORTANT", comment=""):
 def verify_proof(proof_code: str, source: str = VerificationSource.QR_CODE) -> dict:
     """Vérifie une preuve publique (hash + statut + credential)."""
     try:
-        proof = VerificationProof.objects.select_related("credential", "archive_record__work").get(proof_code=proof_code)
+        proof = VerificationProof.objects.select_related(
+            "credential__schema",
+            "archive_record__work__institution",
+            "archive_record__document_version",
+        ).get(proof_code=proof_code)
     except VerificationProof.DoesNotExist:
         return {"result": VerificationResult.NOT_FOUND}
 
-    if proof.status == ProofStatus.REVOKED:
+    archive_record = proof.archive_record
+    final_version = archive_record.document_version
+    hashes_match = (
+        bool(proof.document_hash)
+        and proof.document_hash == archive_record.document_hash
+        and proof.document_hash == final_version.sha256_hash
+    )
+
+    if not hashes_match or archive_record.work.status != WorkStatus.ARCHIVE:
+        result = VerificationResult.INVALID_HASH
+    elif proof.status == ProofStatus.REVOKED:
         result = VerificationResult.REVOKED
     elif proof.status in (ProofStatus.EXPIRED,):
         result = VerificationResult.EXPIRED
     elif proof.status in (ProofStatus.PENDING, ProofStatus.ERROR):
+        result = VerificationResult.TECHNICAL_ERROR
+    elif proof.credential and proof.credential.is_mock:
         result = VerificationResult.TECHNICAL_ERROR
     else:
         result = VerificationResult.VALID
@@ -190,6 +293,7 @@ def verify_proof(proof_code: str, source: str = VerificationSource.QR_CODE) -> d
     VerificationCheck.objects.create(proof=proof, result=result, source=source)
 
     work = proof.archive_record.work
+    schema = proof.credential.schema if proof.credential and proof.credential.schema else None
     return {
         "result": result,
         "proof_code": proof.proof_code,
@@ -199,7 +303,16 @@ def verify_proof(proof_code: str, source: str = VerificationSource.QR_CODE) -> d
         "institution": work.institution.name,
         "work_type": work.type,
         "document_hash": proof.document_hash,
+        "archive_hash": archive_record.document_hash,
+        "version_hash": final_version.sha256_hash,
+        "hashes_match": hashes_match,
         "archived_at": proof.archive_record.archived_at,
         "proof_status": proof.status,
+        "credential_id": proof.credential.credential_id if proof.credential else "",
+        "credential_status": proof.credential.status if proof.credential else "",
+        "issuer_did": proof.credential.issuer_did if proof.credential else "",
+        "schema": f"{schema.schema_name} v{schema.version}" if schema else "ScientificWorkArchiveCredential",
+        "is_mock": bool(proof.credential.is_mock) if proof.credential else False,
+        "proof_type": proof.proof_type,
         "verification_url": proof.verification_url,
     }

@@ -10,7 +10,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { AccessLevel, DocumentType } from "@/lib/mock-data";
+import type { AccessLevel, DocumentType } from "@/lib/domain-types";
 
 const typeConfig: Record<
   DocumentType,

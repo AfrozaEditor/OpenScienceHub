@@ -136,13 +136,13 @@ Après **Archivé** : émission de la preuve (e-IDStack) + QR + publication de l
 ## 9. Contraintes de la compétition (hackathon)
 
 - Livrer un **MVP démontrable** : dépôt → extraction IA → validation → archivage → preuve/QR → recherche à facettes → Assistant IA → vérification.
-- Le SSI peut démarrer en **mode simulé** (mock derrière la même interface) si e-IDStack n'est pas connecté, puis être branché réellement.
+- Le SSI démarre via **e-IDStack de IDS** en mode réel ; si le service n'est pas connecté, la preuve passe en état explicite (`SSI_PENDING`) et doit être réémise, sans preuve simulée.
 - Éviter le sur-engineering : pas de wallet complet, pas de ledger custom, peer review = **module** interne (pas un portail séparé).
 
 ## 10. Scope
 
 ### MVP (Phase 1)
-Auth + RBAC simple, référentiel minimal, dépôt + upload + hash, extraction IA (simba_ia), validation/correction des métadonnées, workflow simplifié, archivage, recherche à facettes, fiche publique, Assistant IA basique, génération QR + page de vérification, émission preuve (réelle si e-IDStack dispo, sinon simulée).
+Auth + RBAC simple, référentiel minimal, dépôt + upload + hash, extraction IA (simba_ia), validation/correction des métadonnées, workflow simplifié, archivage, recherche à facettes, fiche publique, Assistant IA basique, génération QR + page de vérification, émission preuve réelle via e-IDStack de IDS ou état `SSI_PENDING` réémissible.
 
 ### Hors scope MVP (roadmap)
 Workflows entièrement paramétrables, multi-rapporteurs, peer review avancé, statistiques avancées, wallet holder, révocation fine, fédération multi-institutions, détection de similarité avancée. Voir [ROADMAP.md](ROADMAP.md).

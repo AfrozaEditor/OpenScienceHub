@@ -28,17 +28,21 @@ import { FacetFilter } from "@/components/facet-filter";
 import { DocumentCard } from "@/components/document-card";
 import { DocumentListSkeleton } from "@/components/loading-skeleton";
 import { EmptyState } from "@/components/empty-state";
-import { documents, facets, type ScientificDocument } from "@/lib/mock-data";
+import { ApiState } from "@/components/api-state";
+import type { FacetOption, ScientificDocument } from "@/lib/domain-types";
+import { useApiResource } from "@/lib/api/hooks";
+import { catalogToDocument } from "@/lib/api/mappers";
+import { searchCatalog } from "@/lib/api/resources";
 
-const groups = [
-  { id: "type", title: "Type de document", icon: FileText, options: facets.types },
-  { id: "year", title: "Année", icon: Calendar, options: facets.years },
-  { id: "faculty", title: "Faculté", icon: Building2, options: facets.faculties },
-  { id: "department", title: "Département", icon: Boxes, options: facets.departments },
-  { id: "domain", title: "Domaine scientifique", icon: Atom, options: facets.domains },
-  { id: "language", title: "Langue", icon: Languages, options: facets.languages },
-  { id: "access", title: "Accès", icon: Lock, options: facets.access },
-  { id: "status", title: "Statut", icon: BadgeCheck, options: facets.statuses },
+const groupConfigs = [
+  { id: "type", title: "Type de document", icon: FileText },
+  { id: "year", title: "Année", icon: Calendar },
+  { id: "faculty", title: "Faculté", icon: Building2 },
+  { id: "department", title: "Département", icon: Boxes },
+  { id: "domain", title: "Domaine scientifique", icon: Atom },
+  { id: "language", title: "Langue", icon: Languages },
+  { id: "access", title: "Accès", icon: Lock },
+  { id: "status", title: "Statut", icon: BadgeCheck },
 ] as const;
 
 const fieldOf: Record<string, (d: ScientificDocument) => string> = {
@@ -54,12 +58,25 @@ const fieldOf: Record<string, (d: ScientificDocument) => string> = {
 
 type Filters = Record<string, string[]>;
 
+function buildFacetOptions(
+  documents: ScientificDocument[],
+  selector: (document: ScientificDocument) => string,
+): FacetOption[] {
+  const counts = new Map<string, number>();
+  for (const document of documents) {
+    const value = selector(document);
+    if (value) counts.set(value, (counts.get(value) || 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
 function ExplorerContent() {
   const sp = useSearchParams();
   const [query, setQuery] = React.useState("");
   const [filters, setFilters] = React.useState<Filters>({});
   const [sort, setSort] = React.useState("relevance");
-  const [loading, setLoading] = React.useState(true);
   const [showFilters, setShowFilters] = React.useState(false);
 
   React.useEffect(() => {
@@ -68,15 +85,33 @@ function ExplorerContent() {
     if (domain) setFilters((f) => ({ ...f, domain: [domain] }));
   }, [sp]);
 
-  React.useEffect(() => {
-    setLoading(true);
-    const t = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(t);
-  }, [query, filters, sort]);
+  const liveCatalog = useApiResource(
+    () =>
+      searchCatalog({
+        q: query,
+        search: query,
+        ordering: sort === "recent" ? "-archived_at" : undefined,
+      }),
+    [query, sort],
+    null,
+  );
+
+  const liveDocuments = React.useMemo(
+    () => liveCatalog.data?.results?.map(catalogToDocument) || [],
+    [liveCatalog.data],
+  );
+  const groups = React.useMemo(
+    () =>
+      groupConfigs.map((group) => ({
+        ...group,
+        options: buildFacetOptions(liveDocuments, fieldOf[group.id]),
+      })),
+    [liveDocuments],
+  );
 
   const results = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-    const filtered = documents.filter((d) => {
+    const filtered = liveDocuments.filter((d) => {
       if (q) {
         const haystack = [
           d.title,
@@ -113,7 +148,7 @@ function ExplorerContent() {
         sorted.sort((a, b) => b.views - a.views);
     }
     return sorted;
-  }, [query, filters, sort]);
+  }, [liveDocuments, query, filters, sort]);
 
   const activeChips = groups.flatMap((g) =>
     (filters[g.id] ?? []).map((value) => ({ groupId: g.id, value }))
@@ -213,7 +248,7 @@ function ExplorerContent() {
           <div className="min-w-0 flex-1">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-muted-foreground">
-                {loading ? (
+                {liveCatalog.loading ? (
                   "Recherche en cours…"
                 ) : (
                   <>
@@ -268,32 +303,39 @@ function ExplorerContent() {
             )}
 
             <div className="mt-6">
-              {loading ? (
-                <DocumentListSkeleton count={4} />
-              ) : results.length === 0 ? (
-                <EmptyState
-                  icon={SearchX}
-                  title="Aucun résultat trouvé"
-                  description="Essayez d'élargir votre recherche ou de retirer certains filtres."
-                  action={
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setQuery("");
-                        setFilters({});
-                      }}
-                    >
-                      Réinitialiser la recherche
-                    </Button>
-                  }
-                />
-              ) : (
-                <div className="flex flex-col gap-5">
-                  {results.map((doc) => (
-                    <DocumentCard key={doc.id} doc={doc} />
-                  ))}
-                </div>
-              )}
+              <ApiState
+                loading={liveCatalog.loading}
+                error={liveCatalog.error}
+                empty={results.length === 0}
+                emptyTitle="Aucun résultat trouvé"
+                emptyDescription="Essayez d'élargir votre recherche ou de retirer certains filtres."
+                onRetry={liveCatalog.reload}
+              >
+                {results.length === 0 ? (
+                  <EmptyState
+                    icon={SearchX}
+                    title="Aucun résultat trouvé"
+                    description="Essayez d'élargir votre recherche ou de retirer certains filtres."
+                    action={
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setQuery("");
+                          setFilters({});
+                        }}
+                      >
+                        Réinitialiser la recherche
+                      </Button>
+                    }
+                  />
+                ) : (
+                  <div className="flex flex-col gap-5">
+                    {results.map((doc) => (
+                      <DocumentCard key={doc.id} doc={doc} />
+                    ))}
+                  </div>
+                )}
+              </ApiState>
             </div>
           </div>
         </div>

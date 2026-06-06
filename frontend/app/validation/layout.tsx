@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
+import { AuthGuard } from "@/components/auth-guard";
 import { ValidationShell } from "@/components/validation/validation-shell";
 
 export const metadata: Metadata = {
@@ -10,5 +11,9 @@ export const metadata: Metadata = {
 };
 
 export default function ValidationLayout({ children }: { children: ReactNode }) {
-  return <ValidationShell>{children}</ValidationShell>;
+  return (
+    <AuthGuard roles={["validation", "validator", "reviewer", "admin"]}>
+      <ValidationShell>{children}</ValidationShell>
+    </AuthGuard>
+  );
 }

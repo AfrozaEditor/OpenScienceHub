@@ -8,32 +8,29 @@ from django.utils import timezone
 from django.utils.text import slugify
 from rest_framework.exceptions import ValidationError
 
+from apps.documents.models import VersionStatus
+from apps.workflow.services import ensure_archive_allowed
 from apps.works.models import ScientificWork, WorkStatus
 
 from .models import AccessLevel, ArchiveRecord
 
 
 def _pick_final_version(work: ScientificWork):
-    final = work.documents.filter(is_final=True).first()
+    final = work.documents.filter(is_final=True, status=VersionStatus.FINAL).first()
     if final:
         return final
-    latest = work.documents.order_by("-version_number").first()
-    if not latest:
-        raise ValidationError("Aucune version de document à archiver.")
-    latest.is_final = True
-    latest.version_type = "FINAL_ARCHIVE"
-    latest.save(update_fields=["is_final", "version_type", "updated_at"])
-    return latest
+    raise ValidationError("Sélectionnez une version finale avant archivage.")
 
 
 @transaction.atomic
 def archive_work(work: ScientificWork, actor=None, *, access_level=AccessLevel.OPEN_ACCESS, is_download_allowed=True):
-    if work.status not in (WorkStatus.VALIDATED, WorkStatus.UNDER_REVIEW):
-        raise ValidationError(f"Le dossier doit être validé avant archivage (statut actuel : {work.status}).")
+    ensure_archive_allowed(work, actor)
     if hasattr(work, "archive_record"):
         raise ValidationError("Ce dossier est déjà archivé.")
 
     final_version = _pick_final_version(work)
+    if not final_version.sha256_hash:
+        raise ValidationError("La version finale doit avoir un hash SHA-256.")
     base_slug = slugify(work.reference_code or work.title)[:60] or uuid.uuid4().hex[:12]
     slug = base_slug
     while ArchiveRecord.objects.filter(public_slug=slug).exists():
@@ -41,18 +38,21 @@ def archive_work(work: ScientificWork, actor=None, *, access_level=AccessLevel.O
 
     record = ArchiveRecord.objects.create(
         work=work, document_version=final_version, public_slug=slug,
+        document_hash=final_version.sha256_hash,
         access_level=access_level, is_download_allowed=is_download_allowed,
         published_at=timezone.now(),
     )
 
-    work.status = WorkStatus.ARCHIVED
+    work.status = WorkStatus.ARCHIVE
     work.save(update_fields=["status", "updated_at"])
+    final_version.status = VersionStatus.ARCHIVED
+    final_version.save(update_fields=["status", "updated_at"])
 
     _index_via_simba(record)
     _log_archive_events(work, actor)
     _audit_archive(work, actor)
 
-    # Émission de la preuve (SSI via e-IDStack ; mock si indisponible)
+    # Émission de la preuve réelle via e-IDStack ; SSI_PENDING si le service est indisponible.
     from apps.ssi.services import issue_proof_for_archive
     issue_proof_for_archive(record, actor)
 
@@ -94,8 +94,8 @@ def _index_via_simba(record: ArchiveRecord):
             entry.status = IndexStatus.FAILED
         entry.save(update_fields=["status", "indexed_at", "updated_at"])
     except Exception:
-        entry.status = IndexStatus.INDEXED
-        entry.indexed_at = timezone.now()
+        entry.status = IndexStatus.FAILED
+        entry.indexed_at = None
         entry.save(update_fields=["status", "indexed_at", "updated_at"])
 
 
@@ -117,7 +117,7 @@ def _log_archive_events(work, actor):
         from apps.validation.models import WorkflowEvent, WorkflowEventType
 
         WorkflowEvent.objects.create(
-            work=work, from_status=WorkStatus.VALIDATED, to_status=WorkStatus.ARCHIVED,
+            work=work, from_status=WorkStatus.ARCHIVABLE, to_status=WorkStatus.ARCHIVE,
             event_type=WorkflowEventType.ARCHIVE, actor=actor,
         )
     except Exception:

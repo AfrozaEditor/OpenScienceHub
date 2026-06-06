@@ -62,3 +62,26 @@ class AIAnswerCitation(TimeStampedModel):
     excerpt = models.TextField(blank=True)
     score = models.DecimalField(max_digits=4, decimal_places=3, default=0)
     page_number = models.PositiveIntegerField(null=True, blank=True)
+
+
+class AIPlatformSettings(TimeStampedModel):
+    """Configuration pilotage IA — plateforme (institution nulle) ou par institution."""
+
+    institution = models.OneToOneField(
+        "institutions.Institution",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="ai_platform_settings",
+    )
+    config = models.JSONField(default=dict)
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="ai_settings_updates",
+    )
+
+    class Meta:
+        verbose_name_plural = "AI platform settings"

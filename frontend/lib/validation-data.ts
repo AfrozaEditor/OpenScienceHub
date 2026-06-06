@@ -1,11 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { Inbox, LayoutDashboard } from "lucide-react";
 
-import {
-  getDocument,
-  getSimilarDocuments,
-  type ScientificDocument,
-} from "@/lib/mock-data";
+import type { ScientificDocument } from "@/lib/domain-types";
 
 /* -------------------------------------------------------------------------- */
 /* Navigation & compte                                                        */
@@ -21,13 +17,6 @@ export interface ValidationNavGroup {
   title: string;
   items: ValidationNavItem[];
 }
-
-export const validationAccount = {
-  name: "Dr. Owona Essomba Paul",
-  role: "Validateur",
-  email: "p.owona@uy1.cm",
-  initials: "OP",
-};
 
 /* -------------------------------------------------------------------------- */
 /* Dossiers de validation                                                     */
@@ -52,17 +41,7 @@ export interface Dossier {
   versionHash: string;
 }
 
-export const dossiers: Dossier[] = [
-  { id: "val-001", workSlug: "extraction-automatique-metadonnees-pdf-academiques", priority: "Haute", state: "À traiter", assignee: null, slaDays: 3, ageDays: 2, versionHash: "9f2c8a7b1d4e" },
-  { id: "val-002", workSlug: "modelisation-hydrologique-bassins-versants", priority: "Normale", state: "À traiter", assignee: null, slaDays: 7, ageDays: 1, versionHash: "77de10b3a9c2" },
-  { id: "val-003", workSlug: "energie-solaire-zones-rurales-cameroun", priority: "Basse", state: "À traiter", assignee: null, slaDays: 14, ageDays: 4, versionHash: "2b9d7f1a4c6e" },
-  { id: "val-004", workSlug: "classification-automatique-documents-scientifiques", priority: "Haute", state: "En cours", assignee: "Dr. Owona Essomba Paul", slaDays: 3, ageDays: 1, versionHash: "a1b2c3d4e5f6" },
-  { id: "val-005", workSlug: "detection-anomalies-reseau-apprentissage-profond", priority: "Haute", state: "En correction", assignee: "Dr. Owona Essomba Paul", slaDays: 3, ageDays: 6, versionHash: "c4f8e2a6b0d1" },
-  { id: "val-006", workSlug: "indexation-semantique-corpus-francophones", priority: "Normale", state: "En cours", assignee: "Dr. Njoya Hamadou", slaDays: 7, ageDays: 3, versionHash: "5e3a1b8c2f7d" },
-  { id: "val-007", workSlug: "diagnostic-precoce-paludisme-vision-par-ordinateur", priority: "Normale", state: "À traiter", assignee: null, slaDays: 7, ageDays: 5, versionHash: "0fa1cc93b27d" },
-  { id: "val-008", workSlug: "systeme-intelligent-archivage-memoires", priority: "Normale", state: "Validé", assignee: "Dr. Owona Essomba Paul", slaDays: 7, ageDays: 9, versionHash: "8d2049e7a1b3" },
-  { id: "val-009", workSlug: "optimisation-recherche-facettes-bibliotheques-numeriques", priority: "Basse", state: "Validé", assignee: "Dr. Njoya Hamadou", slaDays: 14, ageDays: 12, versionHash: "6c1e9f0a7b54" },
-];
+export const dossiers: Dossier[] = [];
 
 export const priorityRank: Record<Priority, number> = {
   Haute: 0,
@@ -75,7 +54,8 @@ export function getDossier(id: string): Dossier | undefined {
 }
 
 export function getDossierWork(d: Dossier): ScientificDocument | undefined {
-  return getDocument(d.workSlug);
+  void d;
+  return undefined;
 }
 
 export function priorityQueue(): Dossier[] {
@@ -155,12 +135,12 @@ export function buildAiAnalysis(doc: ScientificDocument): AiAnalysis {
       "Contrôler la cohérence entre le domaine détecté et le département.",
       "Valider la licence sélectionnée par le déposant.",
     ],
-    similar: getSimilarDocuments(doc, 3),
+    similar: [],
   };
 }
 
 /* -------------------------------------------------------------------------- */
-/* Détail : avis & corrections (graines)                                      */
+/* Détail : avis & corrections                                                */
 /* -------------------------------------------------------------------------- */
 
 export type Recommendation = "Accepter" | "Accepter avec corrections" | "Rejeter";
@@ -178,31 +158,6 @@ export interface Correction {
   field: string;
   request: string;
   status: "Ouverte" | "Résolue";
-}
-
-export function seedReviews(d: Dossier): Review[] {
-  if (d.state === "À traiter") return [];
-  return [
-    {
-      id: "rev-1",
-      reviewer: "Dr. Njoya Hamadou",
-      date: "01/06/2026",
-      recommendation:
-        d.state === "En correction" ? "Accepter avec corrections" : "Accepter",
-      comment:
-        d.state === "En correction"
-          ? "Travail solide mais quelques métadonnées à corriger avant publication."
-          : "Document conforme aux exigences scientifiques et documentaires.",
-    },
-  ];
-}
-
-export function seedCorrections(d: Dossier): Correction[] {
-  if (d.state !== "En correction") return [];
-  return [
-    { id: "cor-1", field: "Mots-clés", request: "Ajouter les mots-clés manquants suggérés par l'IA.", status: "Ouverte" },
-    { id: "cor-2", field: "Licence", request: "Confirmer la licence CC BY 4.0 (champ vide à l'extraction).", status: "Ouverte" },
-  ];
 }
 
 /* -------------------------------------------------------------------------- */

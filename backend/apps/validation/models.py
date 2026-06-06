@@ -7,8 +7,12 @@ from apps.common.models import TimeStampedModel
 
 class AssignmentType(models.TextChoices):
     SUPERVISOR_REVIEW = "SUPERVISOR_REVIEW", "Encadrement"
+    THESIS_DIRECTOR_REVIEW = "THESIS_DIRECTOR_REVIEW", "Direction de thèse"
+    RAPPORTEUR_REVIEW = "RAPPORTEUR_REVIEW", "Rapporteur / expert"
     SCIENTIFIC_COMMITTEE = "SCIENTIFIC_COMMITTEE", "Comité scientifique"
     PEER_REVIEW = "PEER_REVIEW", "Peer review"
+    DEPARTMENT_DECISION = "DEPARTMENT_DECISION", "Décision département"
+    DOCTORAL_SCHOOL_REVIEW = "DOCTORAL_SCHOOL_REVIEW", "École doctorale"
     ARCHIVE_CONTROL = "ARCHIVE_CONTROL", "Contrôle archive"
 
 
@@ -20,6 +24,10 @@ class AssignmentStatus(models.TextChoices):
 
 
 class Recommendation(models.TextChoices):
+    FAVORABLE = "FAVORABLE", "Favorable"
+    FAVORABLE_WITH_CORRECTIONS = "FAVORABLE_WITH_CORRECTIONS", "Favorable avec corrections"
+    UNFAVORABLE = "UNFAVORABLE", "Défavorable"
+    REVISE = "REVISE", "À réviser"
     ACCEPT = "ACCEPT", "Accepter"
     MINOR_CORRECTION = "MINOR_CORRECTION", "Correction mineure"
     MAJOR_CORRECTION = "MAJOR_CORRECTION", "Correction majeure"
@@ -57,9 +65,15 @@ class CorrectionStatus(models.TextChoices):
 
 class DecisionType(models.TextChoices):
     AUTHORIZE_DEFENSE = "AUTHORIZE_DEFENSE", "Autoriser soutenance"
+    RECORD_DEFENSE_PASSED = "RECORD_DEFENSE_PASSED", "Soutenance réussie"
     VALIDATE_AFTER_DEFENSE = "VALIDATE_AFTER_DEFENSE", "Validé après soutenance"
     REQUEST_CORRECTION = "REQUEST_CORRECTION", "Demander correction"
+    REQUEST_MINOR_REVISION = "REQUEST_MINOR_REVISION", "Révision mineure"
+    REQUEST_MAJOR_REVISION = "REQUEST_MAJOR_REVISION", "Révision majeure"
     ACCEPT_ARTICLE = "ACCEPT_ARTICLE", "Accepter article"
+    PUBLISH_ARTICLE = "PUBLISH_ARTICLE", "Publier article"
+    ACCEPT_FINAL_DEPOSIT = "ACCEPT_FINAL_DEPOSIT", "Accepter dépôt final"
+    MARK_ARCHIVABLE = "MARK_ARCHIVABLE", "Rendre archivable"
     REJECT = "REJECT", "Rejeter"
     ARCHIVE = "ARCHIVE", "Archiver"
 
@@ -101,7 +115,10 @@ class Review(TimeStampedModel):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="reviews")
     document_version = models.ForeignKey("documents.DocumentVersion", null=True, blank=True, on_delete=models.SET_NULL, related_name="reviews")
     comment = models.TextField()
-    recommendation = models.CharField(max_length=20, choices=Recommendation.choices)
+    public_comment = models.TextField(blank=True)
+    internal_comment = models.TextField(blank=True)
+    attachment = models.FileField(upload_to="reviews/", blank=True)
+    recommendation = models.CharField(max_length=40, choices=Recommendation.choices)
     conformity_score = models.PositiveSmallIntegerField(null=True, blank=True)
 
 

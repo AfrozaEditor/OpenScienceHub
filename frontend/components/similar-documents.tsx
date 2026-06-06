@@ -1,7 +1,7 @@
 import { Layers } from "lucide-react";
 
 import { DocumentCardCompact } from "@/components/document-card";
-import type { ScientificDocument } from "@/lib/mock-data";
+import type { ScientificDocument } from "@/lib/domain-types";
 
 export function SimilarDocuments({ docs }: { docs: ScientificDocument[] }) {
   if (docs.length === 0) return null;

@@ -13,6 +13,7 @@ class AccessLevel(models.TextChoices):
 class ArchiveRecord(TimeStampedModel):
     work = models.OneToOneField("works.ScientificWork", on_delete=models.CASCADE, related_name="archive_record")
     document_version = models.ForeignKey("documents.DocumentVersion", on_delete=models.PROTECT, related_name="archive_records")
+    document_hash = models.CharField(max_length=64, blank=True)
     public_slug = models.SlugField(max_length=80, unique=True)
     access_level = models.CharField(max_length=30, choices=AccessLevel.choices, default=AccessLevel.OPEN_ACCESS)
     is_download_allowed = models.BooleanField(default=True)

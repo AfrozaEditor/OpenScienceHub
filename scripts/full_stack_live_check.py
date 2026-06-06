@@ -20,7 +20,7 @@ import requests
 BACKEND_ROOT = os.getenv("BACKEND_ROOT", "http://localhost:8000").rstrip("/")
 BACKEND_URL = f"{BACKEND_ROOT}/api/v1"
 SIMBA_URL = os.getenv("SIMBA_URL", "http://localhost:8001").rstrip("/")
-IDS_URL = os.getenv("IDS_URL", "http://localhost:4000").rstrip("/")
+IDS_URL = os.getenv("IDS_URL", "http://localhost:4001").rstrip("/")
 ADMIN_EMAIL = os.getenv("DJANGO_SUPERUSER_EMAIL", "admin@openscience.local")
 ADMIN_PASSWORD = os.getenv("DJANGO_SUPERUSER_PASSWORD", "adminpass")
 
@@ -114,8 +114,37 @@ def main() -> None:
         "/departments",
         {"faculty": fac["id"], "name": f"Departement IA SSI {suffix}", "code": f"DS{suffix[-4:]}"},
     )
-    work = post_json(
+
+    deposant_email = f"fullstack-{suffix}@openscience.local"
+    deposant_password = f"FullStack-{suffix}"
+    deposant = post_json(
         session,
+        "/accounts/users",
+        {
+            "email": deposant_email,
+            "full_name": "OpenScience Full Stack Deposant",
+            "password": deposant_password,
+            "institution": inst["id"],
+            "role_code": "DEPOSANT",
+        },
+    )
+    check("Compte deposant cree", deposant.get("institution") == inst["id"], deposant)
+
+    deposant_session = requests.Session()
+    deposant_login = deposant_session.post(
+        f"{BACKEND_URL}/auth/login",
+        json={"email": deposant_email, "password": deposant_password},
+        timeout=30,
+    )
+    check(
+        "Login deposant backend",
+        deposant_login.status_code == 200 and deposant_login.json().get("access"),
+        deposant_login.text[:300],
+    )
+    deposant_session.headers.update({"Authorization": f"Bearer {deposant_login.json()['access']}"})
+
+    work = post_json(
+        deposant_session,
         "/works",
         {
             "type": "MEMOIRE",
@@ -129,14 +158,14 @@ def main() -> None:
     )
     work_id = work["id"]
 
-    contributor = session.post(
+    contributor = deposant_session.post(
         f"{BACKEND_URL}/works/{work_id}/contributors",
         json={"contributor_type": "AUTHOR", "display_name": "OpenScience Tester", "order_index": 0},
         timeout=30,
     )
     check("Ajout contributeur", contributor.status_code == 201, contributor.text[:300])
 
-    upload = session.post(
+    upload = deposant_session.post(
         f"{BACKEND_URL}/works/{work_id}/documents",
         files={
             "file": (
@@ -148,8 +177,9 @@ def main() -> None:
         timeout=60,
     )
     check("Upload PDF", upload.status_code == 201 and len(upload.json().get("sha256_hash", "")) == 64, upload.text[:300])
+    document_id = upload.json()["id"]
 
-    extraction = session.post(f"{BACKEND_URL}/works/{work_id}/extract-metadata", timeout=240)
+    extraction = deposant_session.post(f"{BACKEND_URL}/works/{work_id}/extract-metadata", timeout=240)
     check(
         "Extraction IA live",
         extraction.status_code == 200 and extraction.json().get("status") == "EXTRACTED",
@@ -157,7 +187,7 @@ def main() -> None:
     )
 
     metadata = post_json(
-        session,
+        deposant_session,
         f"/works/{work_id}/metadata/accept",
         {
             "title": "Integration complete IDS IA Docker",
@@ -168,15 +198,15 @@ def main() -> None:
     )
     check("Metadata acceptee", metadata.get("work_id") == work_id, metadata)
 
-    extraction_state = session.get(f"{BACKEND_URL}/works/{work_id}/metadata-extraction", timeout=60)
+    extraction_state = deposant_session.get(f"{BACKEND_URL}/works/{work_id}/metadata-extraction", timeout=60)
     check(
         "Derniere extraction IA disponible",
         extraction_state.status_code == 200 and extraction_state.json().get("status") == "REVIEWED",
         extraction_state.text[:400],
     )
 
-    submitted = session.post(f"{BACKEND_URL}/works/{work_id}/submit", timeout=30)
-    check("Soumission", submitted.status_code == 200 and submitted.json().get("status") == "SUBMITTED", submitted.text[:300])
+    submitted = deposant_session.post(f"{BACKEND_URL}/works/{work_id}/submit", timeout=30)
+    check("Soumission", submitted.status_code == 200 and submitted.json().get("status") == "SOUMIS", submitted.text[:300])
 
     decision = session.post(
         f"{BACKEND_URL}/works/{work_id}/decision",
@@ -184,6 +214,24 @@ def main() -> None:
         timeout=30,
     )
     check("Decision validation", decision.status_code == 201, decision.text[:300])
+
+    final_version = session.post(f"{BACKEND_URL}/documents/{document_id}/set-final", timeout=60)
+    check(
+        "Version finale selectionnee",
+        final_version.status_code == 200 and final_version.json().get("is_final") is True,
+        final_version.text[:400],
+    )
+
+    archivable = session.post(
+        f"{BACKEND_URL}/works/{work_id}/decision",
+        json={"decision_type": "MARK_ARCHIVABLE", "comment": "Prêt pour archivage full stack"},
+        timeout=30,
+    )
+    check(
+        "Decision archivable",
+        archivable.status_code == 201 and archivable.json().get("decision_type") == "MARK_ARCHIVABLE",
+        archivable.text[:300],
+    )
 
     archive = session.post(
         f"{BACKEND_URL}/works/{work_id}/archive",
@@ -223,7 +271,7 @@ def main() -> None:
         assistant.text[:600],
     )
 
-    proof = session.get(f"{BACKEND_URL}/works/{work_id}/proof", timeout=60)
+    proof = deposant_session.get(f"{BACKEND_URL}/works/{work_id}/proof", timeout=60)
     proof_data = proof.json()
     check("Preuve active", proof.status_code == 200 and proof_data.get("status") == "ACTIVE", proof.text[:400])
     check("Proof id disponible", bool(proof_data.get("id")), proof_data)

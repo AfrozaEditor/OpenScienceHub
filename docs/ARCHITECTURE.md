@@ -124,7 +124,7 @@ sequenceDiagram
 - Communication **HTTP REST** backend → `simba_ia`.
 - Deux usages : **extraction de métadonnées** (au dépôt) et **Assistant IA** (question/réponse sourcée + similarité).
 - Le backend stocke les résultats (`MetadataExtraction`, `AIQueryLog`) ; `simba_ia` gère embeddings et `pgvector`.
-- Client encapsulé : `ai/simba_client.py` (timeouts, retries, mode `mock` pour démo hors-ligne).
+- Client encapsulé : `apps/ai/client.py` (timeouts, retries, mode `live` obligatoire ; erreur explicite si le service n'est pas joignable).
 - Garde-fou : l'IA **propose**, l'humain **valide** ; aucune décision automatique.
 
 Endpoints attendus côté `simba_ia` (contrat indicatif) :
@@ -137,7 +137,7 @@ Endpoints attendus côté `simba_ia` (contrat indicatif) :
 
 - Communication **HTTP REST** backend → `ids/eidStack-CMU` (NestJS + Credo-TS, Swagger disponible).
 - Usages : **émission** d'un Verifiable Credential après archivage et **vérification** lors d'un scan QR.
-- Client encapsulé : `ssi/eidstack_client.py` (config par institution, gestion `SSI_PENDING`, mode `mock`).
+- Client encapsulé : `apps/ssi/client.py` (config par institution, gestion `SSI_PENDING`, mode `live` obligatoire).
 - Détails du contrat dans [SSI_INTEGRATION.md](SSI_INTEGRATION.md).
 - Garde-fou : aucune crypto « maison » ; le backend orchestre, e-IDStack signe/vérifie.
 
@@ -157,7 +157,7 @@ Endpoints attendus côté `simba_ia` (contrat indicatif) :
 
 ## 9. Environnements et exécution
 
-- **Dev** : `docker-compose` (PostgreSQL + Redis), backend en `runserver`, `simba_ia` et `eidStack` lançables séparément (ou mockés).
+- **Dev** : `docker-compose.yml` + `docker-compose.dev.yml` lancent PostgreSQL, Redis, backend, frontend, `simba_ia` et e-IDStack de IDS en mode live local.
 - **Config par environnement** : `TEST | STAGING | PRODUCTION` pour la connexion SSI.
 - **Docs API** : `drf-spectacular` expose `/api/schema` + Swagger UI.
 

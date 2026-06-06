@@ -36,7 +36,7 @@
 | **État vide** | Aucun contenu : message + action principale. |
 | **État chargement** | Skeletons / progress bar (upload, analyse IA). |
 | **État erreur** | Message clair + action `Réessayer`. |
-| **Statut de dossier** | DRAFT, SUBMITTED, UNDER_REVIEW, CORRECTION_REQUESTED, RESUBMITTED, VALIDATED, ARCHIVED, REJECTED. |
+| **Statut de dossier** | BROUILLON, SOUMIS, EN_INSTRUCTION, EN_EXPERTISE, CORRECTION_DEMANDEE, RE_SOUMIS, VALIDE, VALIDE_APRES_SOUTENANCE, ARCHIVABLE, ARCHIVE, REJETE. |
 | **Résultat de vérification** | VALID / INVALID_HASH / NOT_FOUND / REVOKED / EXPIRED / TECHNICAL_ERROR. |
 
 ## Data / intégration
@@ -45,7 +45,6 @@
 |---|---|
 | **lib/api** | Client HTTP centralisé (JWT, endpoints typés) — seul point d'accès au backend. |
 | **TanStack Query** | Cache et états des données serveur (loading/error/invalidations). |
-| **MSW** | Mock Service Worker : API simulée pour dev/démo hors-ligne. |
 | **OpenAPI types** | Types TS générés depuis le schéma backend. |
 
 ## Produit (rappel)

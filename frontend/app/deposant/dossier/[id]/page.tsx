@@ -22,13 +22,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { EmptyState } from "@/components/empty-state";
 import { DossierStatusBadge } from "@/components/dossier-status-badge";
-import { getDossier, type TimelineState } from "@/lib/mock-data";
+import type { Dossier, TimelineState } from "@/lib/domain-types";
+import { useApiResource } from "@/lib/api/hooks";
+import { workToDossier } from "@/lib/api/mappers";
+import { getWork, listDocuments } from "@/lib/api/resources";
 
 const dateFmt = new Intl.DateTimeFormat("fr-FR", {
   day: "numeric",
   month: "long",
   year: "numeric",
 });
+
+function documentFileUrl(file?: string) {
+  if (!file) return "";
+  try {
+    const url = new URL(file);
+    if (url.hostname === "backend" || url.port === "8000") {
+      return `${url.pathname}${url.search}${url.hash}`;
+    }
+  } catch {}
+  if (/^https?:\/\//.test(file)) return file;
+  return file.startsWith("/") ? file : `/${file}`;
+}
 
 function fmtDate(value: string) {
   if (!value || value === "—") return "—";
@@ -60,9 +75,56 @@ const nodeStyle: Record<
 
 export default function DossierDetailPage() {
   const params = useParams<{ id: string }>();
-  const dossier = getDossier(params.id);
+  const liveWork = useApiResource(() => getWork(params.id), [params.id], null);
+  const liveDocuments = useApiResource(() => listDocuments(params.id), [params.id], []);
+  const latestDocument = React.useMemo(() => {
+    const docs = liveDocuments.data || [];
+    return [...docs].sort((a, b) => b.version_number - a.version_number)[0];
+  }, [liveDocuments.data]);
+  const liveDossier = React.useMemo<Dossier | null>(() => {
+    if (!liveWork.data) return null;
+    const base = workToDossier(liveWork.data);
+    return {
+      id: base.id,
+      reference: base.reference,
+      title: base.title,
+      type: base.type,
+      status: base.status,
+      domain: base.domain,
+      faculty: "—",
+      department: "—",
+      level: liveWork.data.type,
+      language: liveWork.data.language || "FR",
+      abstract: liveWork.data.abstract_text || "Résumé non renseigné.",
+      keywords: base.keywords,
+      pages: latestDocument?.page_count || 0,
+      fileSize: latestDocument?.file_name || latestDocument?.file || "—",
+      submittedAt: liveWork.data.submitted_at || "—",
+      updatedAt: base.updatedAt,
+      views: 0,
+      downloads: 0,
+      aiConfidence: 0,
+      timeline: [
+        { label: "Création", date: liveWork.data.created_at || "—", state: "done" },
+        {
+          label: "Soumission",
+          date: liveWork.data.submitted_at || "—",
+          state: liveWork.data.submitted_at ? "done" : "pending",
+        },
+        {
+          label: "Validation",
+          date: "—",
+          state: ["VALIDE", "VALIDE_APRES_SOUTENANCE", "ACCEPTED", "PUBLISHED", "ARCHIVABLE", "ARCHIVE"].includes(liveWork.data.status) ? "done" : "pending",
+        },
+      ],
+      proof: undefined,
+    };
+  }, [liveWork.data, latestDocument]);
+  const dossier = liveDossier;
+  const latestDocumentUrl = documentFileUrl(latestDocument?.file);
+  const latestDocumentName = latestDocument?.file_name || "document.pdf";
 
-  if (!dossier) {
+  if (!dossier && !liveWork.loading) {
     return (
       <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
         <EmptyState
@@ -77,6 +139,18 @@ export default function DossierDetailPage() {
               </Link>
             </Button>
           }
+        />
+      </div>
+    );
+  }
+
+  if (!dossier) {
+    return (
+      <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+        <EmptyState
+          icon={FileText}
+          title="Chargement du dossier"
+          description="Récupération des informations depuis le backend."
         />
       </div>
     );
@@ -208,10 +282,19 @@ export default function DossierDetailPage() {
               ) : null}
 
               {dossier.status !== "Brouillon" && (
-                <Button variant="outline">
-                  <Download className="size-4" />
-                  Télécharger le PDF
-                </Button>
+                latestDocumentUrl ? (
+                  <Button variant="outline" asChild>
+                    <a href={latestDocumentUrl} download={latestDocumentName}>
+                      <Download className="size-4" />
+                      Télécharger le PDF
+                    </a>
+                  </Button>
+                ) : (
+                  <Button variant="outline" disabled>
+                    <Download className="size-4" />
+                    PDF indisponible
+                  </Button>
+                )
               )}
 
               <div className="mt-1 grid grid-cols-2 gap-3 border-t border-border pt-4">

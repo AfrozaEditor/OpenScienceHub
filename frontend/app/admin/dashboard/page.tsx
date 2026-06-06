@@ -1,15 +1,19 @@
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
 import {
   Activity,
   ArrowUpRight,
   BadgeCheck,
+  Bot,
   Boxes,
   Clock,
-  Download,
   FileText,
   ScrollText,
   ShieldCheck,
   Users,
+  XCircle,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -17,14 +21,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatsCard } from "@/components/stats-card";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
-import { adminStats } from "@/lib/mock-data";
-import {
-  auditLog,
-  services,
-  type ServiceStatus,
-} from "@/lib/admin-data";
+import { useApiResource } from "@/lib/api/hooks";
+import { getAdminAudit, getAdminDashboard } from "@/lib/api/resources";
+import type { AuditEvent } from "@/lib/api/types";
 
 const fr = new Intl.NumberFormat("fr-FR");
+const dateTime = new Intl.DateTimeFormat("fr-FR", {
+  dateStyle: "short",
+  timeStyle: "short",
+});
+
+type ServiceStatus = "operational" | "degraded" | "down";
 
 const statusDot: Record<ServiceStatus, string> = {
   operational: "bg-success",
@@ -34,7 +41,7 @@ const statusDot: Record<ServiceStatus, string> = {
 
 const statusLabel: Record<ServiceStatus, string> = {
   operational: "Opérationnel",
-  degraded: "Dégradé",
+  degraded: "Maintenance",
   down: "Hors service",
 };
 
@@ -56,9 +63,46 @@ const quickLinks = [
   { label: "Audit système", href: "/admin/audit", icon: ScrollText },
 ];
 
+function kpiValue(kpis: Record<string, unknown>, key: string) {
+  const value = kpis[key];
+  return typeof value === "number" ? value : 0;
+}
+
+function parseService(name: string, value: unknown) {
+  const row = value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+  const raw = String(row?.status || value || "").toUpperCase();
+  const status: ServiceStatus =
+    raw.includes("DOWN") || raw.includes("ERROR")
+      ? "down"
+      : raw.includes("MAINTENANCE") || raw.includes("DEGRADED")
+        ? "degraded"
+        : "operational";
+  const detail = String(row?.detail || raw || "État non renseigné");
+  return { name, status, detail };
+}
+
+function formatAuditDate(value: unknown) {
+  if (!value) return "—";
+  const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) return String(value);
+  return dateTime.format(date);
+}
+
 export default function AdminDashboardPage() {
-  const operational = services.filter((s) => s.status === "operational").length;
-  const incidents = services.filter((s) => s.status !== "operational");
+  const dashboard = useApiResource(() => getAdminDashboard(), [], null);
+  const liveAudit = useApiResource(() => getAdminAudit(), [], null);
+  const kpis = (dashboard.data?.kpis || {}) as Record<string, unknown>;
+  const serviceRows = Object.entries(dashboard.data?.services || {}).map(([name, value]) =>
+    parseService(name, value),
+  );
+  const operational = serviceRows.filter((s) => s.status === "operational").length;
+  const incidents = serviceRows.filter((s) => s.status !== "operational");
+  const auditRows = Array.isArray(liveAudit.data)
+    ? liveAudit.data
+    : liveAudit.data?.results || [];
+  const scopeLabel = dashboard.data?.scope?.is_platform_admin
+    ? "Administration plateforme"
+    : "Administration institutionnelle";
 
   return (
     <>
@@ -66,10 +110,7 @@ export default function AdminDashboardPage() {
         title="Tableau de bord"
         description="Vue d'ensemble de l'activité, de la validation et de la santé des services."
       >
-        <Badge variant="outline">
-          <Activity className="size-3 text-success" />
-          Temps réel
-        </Badge>
+        <Badge variant="outline">{scopeLabel}</Badge>
         <Button variant="outline" asChild>
           <Link href="/admin/statistiques">
             Statistiques détaillées
@@ -78,59 +119,79 @@ export default function AdminDashboardPage() {
         </Button>
       </AdminPageHeader>
 
-      {/* KPIs */}
+      {(dashboard.error || liveAudit.error) && (
+        <div className="mb-5 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
+          {dashboard.error || liveAudit.error}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatsCard
           label="Documents déposés"
-          value={fr.format(adminStats.deposited)}
+          value={fr.format(kpiValue(kpis, "total_works"))}
           icon={FileText}
           accent="primary"
-          trend={{ value: "+12%" }}
-          hint="ce mois"
+          hint="dossiers dans le périmètre"
         />
         <StatsCard
           label="Documents validés"
-          value={fr.format(adminStats.validated)}
+          value={fr.format(kpiValue(kpis, "validated_works"))}
           icon={BadgeCheck}
           accent="success"
-          trend={{ value: "+8%" }}
-          hint="ce mois"
+          hint="statuts validés ou publiables"
         />
         <StatsCard
           label="En attente"
-          value={fr.format(adminStats.pending)}
+          value={fr.format(kpiValue(kpis, "pending_works"))}
           icon={Clock}
           accent="warning"
-          hint="à traiter"
+          hint="soumis ou en instruction"
         />
         <StatsCard
-          label="Téléchargements"
-          value={fr.format(adminStats.downloads)}
-          icon={Download}
+          label="Documents archivés"
+          value={fr.format(kpiValue(kpis, "archived_works"))}
+          icon={FileText}
           accent="ai"
-          trend={{ value: "+23%" }}
-          hint="ce mois"
+          hint="archives finalisées"
         />
         <StatsCard
-          label="Auteurs actifs"
-          value={fr.format(adminStats.activeAuthors)}
+          label="Preuves vérifiables"
+          value={fr.format(kpiValue(kpis, "verifiable_documents"))}
+          icon={ShieldCheck}
+          accent="brand"
+          hint="preuves actives après archivage"
+        />
+        <StatsCard
+          label="Requêtes Assistant IA"
+          value={fr.format(kpiValue(kpis, "ai_queries"))}
+          icon={Bot}
+          accent="primary"
+          hint="questions journalisées"
+        />
+        <StatsCard
+          label="Utilisateurs actifs"
+          value={fr.format(kpiValue(kpis, "active_users_count"))}
           icon={Users}
           accent="brand"
-          trend={{ value: "+5%" }}
-          hint="ce trimestre"
+          hint="comptes actifs"
         />
         <StatsCard
-          label="Départements couverts"
-          value={adminStats.departments}
+          label="Facultés"
+          value={fr.format(kpiValue(kpis, "faculties_count"))}
           icon={Boxes}
           accent="primary"
-          hint="sur 7 facultés"
+          hint={`${fr.format(kpiValue(kpis, "departments_count"))} départements`}
+        />
+        <StatsCard
+          label="Documents rejetés"
+          value={fr.format(kpiValue(kpis, "rejected_works"))}
+          icon={XCircle}
+          accent="warning"
+          hint="décisions de rejet"
         />
       </div>
 
-      {/* Services + activity */}
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        {/* État des services */}
         <Card className="lg:col-span-2">
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -138,53 +199,47 @@ export default function AdminDashboardPage() {
               État des services
             </CardTitle>
             <Badge variant={incidents.length === 0 ? "success" : "warning"}>
-              {operational}/{services.length} opérationnels
+              {operational}/{Math.max(1, serviceRows.length)} opérationnels
             </Badge>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {services.map((s) => (
-                <div
-                  key={s.name}
-                  className="flex items-start justify-between gap-3 rounded-lg border border-border bg-card px-3.5 py-3"
-                >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="relative flex size-2.5">
-                        {s.status !== "operational" && (
+            {dashboard.loading ? (
+              <p className="text-sm text-muted-foreground">Chargement de l'état des services…</p>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {serviceRows.map((s) => (
+                  <div
+                    key={s.name}
+                    className="flex items-start justify-between gap-3 rounded-lg border border-border bg-card px-3.5 py-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="relative flex size-2.5">
+                          {s.status !== "operational" && (
+                            <span
+                              className={`absolute inline-flex size-full animate-ping rounded-full opacity-60 ${statusDot[s.status]}`}
+                            />
+                          )}
                           <span
-                            className={`absolute inline-flex size-full animate-ping rounded-full opacity-60 ${statusDot[s.status]}`}
+                            className={`relative inline-flex size-2.5 rounded-full ${statusDot[s.status]}`}
                           />
-                        )}
-                        <span
-                          className={`relative inline-flex size-2.5 rounded-full ${statusDot[s.status]}`}
-                        />
-                      </span>
-                      <p className="truncate text-sm font-medium text-foreground">
-                        {s.name}
+                        </span>
+                        <p className="truncate text-sm font-medium text-foreground">{s.name}</p>
+                      </div>
+                      <p className="mt-1 truncate text-xs text-muted-foreground">{s.detail}</p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className={`text-xs font-semibold ${statusText[s.status]}`}>
+                        {statusLabel[s.status]}
                       </p>
                     </div>
-                    <p className="mt-1 truncate text-xs text-muted-foreground">
-                      {s.note ?? s.category}
-                    </p>
                   </div>
-                  <div className="shrink-0 text-right">
-                    <p
-                      className={`text-xs font-semibold ${statusText[s.status]}`}
-                    >
-                      {statusLabel[s.status]}
-                    </p>
-                    <p className="mt-1 text-[11px] tabular-nums text-muted-foreground">
-                      {s.uptime} · {s.latency}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Activité récente */}
         <Card>
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -199,31 +254,42 @@ export default function AdminDashboardPage() {
             </Link>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-3.5">
-              {auditLog.slice(0, 6).map((e) => (
-                <li key={e.id} className="flex gap-3">
-                  <span
-                    className={`mt-1.5 size-2 shrink-0 rounded-full ${severityDot[e.severity]}`}
-                  />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-foreground">
-                      {e.action}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {e.target}
-                    </p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground/80">
-                      {e.actor} · {e.time}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {liveAudit.loading ? (
+              <p className="text-sm text-muted-foreground">Chargement de l'audit…</p>
+            ) : auditRows.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucune activité auditée pour le moment.</p>
+            ) : (
+              <ul className="space-y-3.5">
+                {auditRows.slice(0, 6).map((e: AuditEvent) => (
+                  <li key={String(e.id)} className="flex gap-3">
+                    <span
+                      className={`mt-1.5 size-2 shrink-0 rounded-full ${
+                        e.severity === "CRITICAL"
+                          ? severityDot.critical
+                          : e.severity === "WARNING"
+                            ? severityDot.warning
+                            : severityDot.info
+                      }`}
+                    />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {String(e.action_type || "Événement audit")}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {String(e.comment || e.module || "Action système")}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground/80">
+                        {String(e.module || "audit")} · {formatAuditDate(e.created_at)}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Accès rapides */}
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         {quickLinks.map((q) => (
           <Link
@@ -235,9 +301,7 @@ export default function AdminDashboardPage() {
               <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <q.icon className="size-5" />
               </span>
-              <span className="text-sm font-medium text-foreground">
-                {q.label}
-              </span>
+              <span className="text-sm font-medium text-foreground">{q.label}</span>
             </span>
             <ArrowUpRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
           </Link>

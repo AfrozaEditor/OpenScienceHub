@@ -1,6 +1,10 @@
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+
+from apps.accounts.models import RoleCode, ScopeType
+from apps.accounts.services import get_user_capabilities, user_has_role
 
 from .models import ScientificWork, WorkContributor, WorkStatus
 from .serializers import ScientificWorkSerializer, WorkContributorSerializer
@@ -17,12 +21,57 @@ class ScientificWorkViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = ScientificWork.objects.select_related("institution", "department").prefetch_related("contributors")
         user = self.request.user
-        if user.is_staff:
+        if user.is_superuser or user_has_role(user, RoleCode.SUPER_ADMIN):
             return qs
-        return qs.filter(created_by=user)
+        scoped = qs.filter(created_by=user)
+        assignments = user.role_assignments.select_related("role").all()
+        institution_ids = [
+            assignment.scope_id
+            for assignment in assignments
+            if assignment.scope_type == ScopeType.INSTITUTION
+            and assignment.scope_id
+            and assignment.role.code in {
+                RoleCode.INSTITUTION_ADMIN,
+                RoleCode.ARCHIVIST,
+                RoleCode.VALIDATOR,
+                RoleCode.SCIENTIFIC_COMMITTEE,
+                RoleCode.DOCTORAL_SCHOOL,
+                RoleCode.SCIENTIFIC_EDITOR,
+            }
+        ]
+        department_ids = [
+            assignment.scope_id
+            for assignment in assignments
+            if assignment.scope_type == ScopeType.DEPARTMENT
+            and assignment.scope_id
+            and assignment.role.code in {
+                RoleCode.DEPARTMENT_HEAD,
+                RoleCode.SUPERVISOR,
+                RoleCode.THESIS_DIRECTOR,
+                RoleCode.RAPPORTEUR,
+                RoleCode.REVIEWER,
+            }
+        ]
+        work_ids = [
+            assignment.scope_id
+            for assignment in assignments
+            if assignment.scope_type == ScopeType.SCIENTIFIC_WORK and assignment.scope_id
+        ]
+        assigned_work_ids = user.assignments.values_list("work_id", flat=True)
+        scoped = scoped | qs.filter(institution_id__in=institution_ids)
+        scoped = scoped | qs.filter(department_id__in=department_ids)
+        scoped = scoped | qs.filter(id__in=work_ids)
+        scoped = scoped | qs.filter(id__in=assigned_work_ids)
+        return scoped.distinct()
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        capabilities = get_user_capabilities(self.request.user)
+        if capabilities["is_platform_admin"]:
+            serializer.save(created_by=self.request.user)
+            return
+        if not self.request.user.institution_id:
+            raise ValidationError("Votre compte doit être rattaché à une institution avant de créer un dossier.")
+        serializer.save(created_by=self.request.user, institution=self.request.user.institution)
 
     @action(detail=True, methods=["post"])
     def submit(self, request, pk=None):

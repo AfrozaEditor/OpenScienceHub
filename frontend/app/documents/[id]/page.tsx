@@ -9,7 +9,6 @@ import {
   BookOpen,
   Check,
   ChevronRight,
-  Copy,
   Download,
   FileDown,
   FileText,
@@ -35,12 +34,23 @@ import { CitationBox } from "@/components/citation-box";
 import { SimilarDocuments } from "@/components/similar-documents";
 import { EmptyState } from "@/components/empty-state";
 import { formatNumber } from "@/components/document-card";
-import { getDocument, getSimilarDocuments } from "@/lib/mock-data";
+import { useApiResource } from "@/lib/api/hooks";
+import { catalogToDocument, similarToDocument } from "@/lib/api/mappers";
+import { getCatalogItem, getSimilarWorks } from "@/lib/api/resources";
 
 export default function DocumentDetailPage() {
   const params = useParams();
   const id = (Array.isArray(params.id) ? params.id[0] : params.id) ?? "";
-  const doc = getDocument(id);
+  const liveCatalog = useApiResource(() => getCatalogItem(id), [id], null);
+  const liveSimilar = useApiResource(
+    () =>
+      liveCatalog.data?.work_id
+        ? getSimilarWorks(liveCatalog.data.work_id)
+        : Promise.resolve({ results: [] }),
+    [liveCatalog.data?.work_id],
+    null,
+  );
+  const doc = liveCatalog.data ? catalogToDocument(liveCatalog.data) : undefined;
 
   const [copied, setCopied] = React.useState<string | null>(null);
 
@@ -84,7 +94,7 @@ export default function DocumentDetailPage() {
     flash("bibtex");
   }
 
-  if (!doc) {
+  if (!doc && !liveCatalog.loading) {
     return (
       <div className="flex flex-1 flex-col bg-background">
         <SiteHeader />
@@ -105,7 +115,25 @@ export default function DocumentDetailPage() {
     );
   }
 
-  const similar = getSimilarDocuments(doc);
+  if (!doc) {
+    return (
+      <div className="flex flex-1 flex-col bg-background">
+        <SiteHeader />
+        <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-20 sm:px-6">
+          <EmptyState
+            icon={FileText}
+            title="Chargement du document"
+            description="Récupération de la fiche depuis le catalogue."
+          />
+        </main>
+        <SiteFooter />
+      </div>
+    );
+  }
+
+  const similar = liveSimilar.data?.results?.map(similarToDocument) || [];
+  const canDownload = doc.access !== "Restreint" && Boolean(doc.downloadUrl);
+  const fileName = doc.fileName || `${doc.slug}.pdf`;
 
   const infoRows = [
     { label: "Auteur(s)", value: doc.authors.join(", ") },
@@ -156,10 +184,23 @@ export default function DocumentDetailPage() {
 
         {/* Actions */}
         <div className="mt-5 flex flex-wrap gap-2">
-          <Button size="lg" disabled={doc.access === "Restreint"}>
-            <Download className="size-4" />
-            Télécharger le PDF
-          </Button>
+          {canDownload ? (
+            <Button size="lg" asChild>
+              <a href={doc.downloadUrl} download={fileName}>
+                <Download className="size-4" />
+                Télécharger le PDF
+              </a>
+            </Button>
+          ) : (
+            <Button
+              size="lg"
+              disabled
+              title={doc.access === "Restreint" ? "Accès restreint" : "Fichier indisponible"}
+            >
+              <Download className="size-4" />
+              Télécharger le PDF
+            </Button>
+          )}
           <Button variant="outline" size="lg" onClick={copyCitation}>
             {copied === "citation" ? (
               <Check className="size-4 text-success" />
@@ -238,44 +279,62 @@ export default function DocumentDetailPage() {
               </h2>
               <div className="mt-3 overflow-hidden rounded-xl border border-border bg-muted/40">
                 <div className="flex items-center justify-between border-b border-border bg-card px-4 py-2.5 text-sm">
-                  <span className="font-medium text-foreground">
-                    {doc.slug}.pdf
+                  <span className="min-w-0 truncate font-medium text-foreground">
+                    {fileName}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {doc.pages} pages
+                    {doc.pages ? `${doc.pages} pages` : "Version archivée"}
                   </span>
                 </div>
-                <div className="flex justify-center p-6">
-                  <div className="aspect-[1/1.3] w-full max-w-sm rounded-md border border-border bg-white p-6 shadow-sm">
-                    <div className="h-2.5 w-1/3 rounded bg-primary/20" />
-                    <div className="mt-4 h-3.5 w-5/6 rounded bg-foreground/15" />
-                    <div className="mt-1.5 h-3.5 w-2/3 rounded bg-foreground/15" />
-                    <div className="mt-5 space-y-2">
-                      {Array.from({ length: 7 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="h-2 rounded bg-foreground/10"
-                          style={{ width: `${88 - (i % 3) * 12}%` }}
-                        />
-                      ))}
+                {doc.downloadUrl ? (
+                  <>
+                    <div className="flex min-h-[280px] items-center justify-center bg-muted/30 p-5 text-center sm:hidden">
+                      <div className="flex max-w-xs flex-col items-center gap-3">
+                        <FileText className="size-10 text-primary" />
+                        <div>
+                          <p className="text-sm font-medium text-foreground">PDF archivé disponible</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Ouvrez le fichier dans le lecteur du navigateur pour une lecture confortable.
+                          </p>
+                        </div>
+                        <Button size="sm" asChild>
+                          <a href={doc.downloadUrl} target="_blank" rel="noreferrer">
+                            Ouvrir le PDF
+                          </a>
+                        </Button>
+                      </div>
                     </div>
-                    <div className="mt-5 h-2.5 w-1/4 rounded bg-ai/30" />
-                    <div className="mt-3 space-y-2">
-                      {Array.from({ length: 4 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="h-2 rounded bg-foreground/10"
-                          style={{ width: `${82 - (i % 2) * 16}%` }}
-                        />
-                      ))}
+                    <iframe
+                      src={doc.downloadUrl}
+                      title={`Aperçu PDF - ${fileName}`}
+                      className="hidden h-[min(76vh,860px)] min-h-[620px] w-full border-0 bg-muted sm:block"
+                    />
+                  </>
+                ) : (
+                  <div className="flex min-h-[320px] items-center justify-center bg-muted/30 p-6 text-center">
+                    <div className="flex max-w-sm flex-col items-center gap-2 text-muted-foreground">
+                      <FileText className="size-10" />
+                      <p className="text-sm font-medium text-foreground">Aperçu PDF indisponible</p>
+                      <p className="text-xs">
+                        Le fichier archivé n'est pas publié ou son accès est restreint.
+                      </p>
                     </div>
                   </div>
-                </div>
+                )}
                 <div className="border-t border-border bg-card px-4 py-3 text-center">
-                  <Button variant="outline" size="sm" disabled={doc.access === "Restreint"}>
-                    <FileText className="size-3.5" />
-                    Ouvrir le document complet
-                  </Button>
+                  {canDownload ? (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={doc.downloadUrl} target="_blank" rel="noreferrer">
+                        <FileText className="size-3.5" />
+                        Ouvrir le document complet
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" disabled>
+                      <FileText className="size-3.5" />
+                      Document non consultable
+                    </Button>
+                  )}
                 </div>
               </div>
             </section>

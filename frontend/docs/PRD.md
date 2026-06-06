@@ -71,7 +71,7 @@ Parcours déposant : `Créer → Uploader → Analyser par IA → Corriger → S
 ## 6. Contraintes compétition
 
 - Prioriser les écrans à fort effet démo : Accueil public, Recherche à facettes, Fiche document, Nouveau dépôt, Analyse IA, Détail validation, Décision, Archivage + preuve, Vérification QR.
-- Pouvoir tourner avec une **API mockée** (MSW) si le backend n'est pas prêt.
+- Tourner contre l'API backend réelle ; si un service est indisponible, afficher l'état métier renvoyé par l'API plutôt qu'une donnée simulée.
 - Effet démo : *un document déposé → l'IA extrait → un validateur décide → archivage → recherchable → Assistant IA l'explore → QR vérifie l'authenticité.*
 
 ## 7. Scope

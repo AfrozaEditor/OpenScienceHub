@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -29,7 +32,9 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { SearchBar } from "@/components/search-bar";
 import { DocumentCard } from "@/components/document-card";
 import { AnimatedStats } from "@/components/animated-stats";
-import { documents, platformStats, popularDomains } from "@/lib/mock-data";
+import { useApiResource } from "@/lib/api/hooks";
+import { catalogToDocument } from "@/lib/api/mappers";
+import { listCatalog } from "@/lib/api/resources";
 
 const fr = new Intl.NumberFormat("fr-FR");
 
@@ -45,14 +50,6 @@ const suggestions = [
   "Hydrologie",
   "Cybersécurité",
   "Science ouverte",
-];
-
-const stats = [
-  { value: platformStats.documents, suffix: "+", label: "Documents archivés" },
-  { value: platformStats.authors, label: "Auteurs" },
-  { value: platformStats.departments, label: "Départements" },
-  { value: platformStats.domains, label: "Domaines scientifiques" },
-  { value: platformStats.downloads, label: "Téléchargements" },
 ];
 
 const steps = [
@@ -95,9 +92,31 @@ const domainIcons = {
 } as const;
 
 export default function Home() {
-  const recentDocs = [...documents]
+  const liveCatalog = useApiResource(() => listCatalog({ page_size: 4 }), [], null);
+  const catalogData = liveCatalog.data;
+  const liveDocs = React.useMemo(
+    () => catalogData?.results?.map(catalogToDocument) || [],
+    [catalogData],
+  );
+  const recentDocs = [...liveDocs]
     .sort((a, b) => +new Date(b.submittedAt) - +new Date(a.submittedAt))
     .slice(0, 4);
+  const domainCounts = liveDocs.reduce<Record<string, number>>((acc, doc) => {
+    const key = doc.domain || "Non renseigné";
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+  const liveDomains = Object.entries(domainCounts)
+    .map(([name, count]) => ({ name, count, icon: "atom" as const }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8);
+  const liveStats = [
+    { value: catalogData?.count || recentDocs.length, suffix: "", label: "Documents archivés" },
+    { value: new Set(liveDocs.flatMap((doc) => doc.authors)).size, label: "Auteurs" },
+    { value: new Set(liveDocs.map((doc) => doc.department).filter(Boolean)).size, label: "Départements" },
+    { value: liveDomains.length, label: "Domaines scientifiques" },
+    { value: liveDocs.reduce((total, doc) => total + doc.downloads, 0), label: "Téléchargements" },
+  ];
 
   return (
     <div className="flex flex-1 flex-col bg-background text-foreground">
@@ -211,7 +230,7 @@ export default function Home() {
 
           {/* Stats */}
           <div className="mx-auto w-full max-w-6xl px-4 pb-20 pt-4 sm:px-6 lg:px-8">
-            <AnimatedStats stats={stats} />
+            <AnimatedStats stats={liveStats} />
           </div>
         </section>
 
@@ -292,9 +311,13 @@ export default function Home() {
             </div>
 
             <div className="mt-10 grid gap-6 lg:grid-cols-2">
-              {recentDocs.map((doc) => (
-                <DocumentCard key={doc.id} doc={doc} />
-              ))}
+              {recentDocs.length > 0 ? (
+                recentDocs.map((doc) => <DocumentCard key={doc.id} doc={doc} />)
+              ) : (
+                <p className="col-span-full rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
+                  Aucun document archivé n'est disponible dans le catalogue pour le moment.
+                </p>
+              )}
             </div>
           </div>
         </section>
@@ -313,7 +336,7 @@ export default function Home() {
             </div>
 
             <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4">
-              {popularDomains.map((domain) => {
+              {liveDomains.map((domain) => {
                 const Icon = domainIcons[domain.icon];
                 return (
                   <Link

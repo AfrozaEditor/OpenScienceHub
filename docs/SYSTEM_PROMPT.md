@@ -88,7 +88,7 @@ Ne change pas de stack sans accord explicite. Pas de FastAPI ni de Node dans le 
 1. Lis le contexte ([PRD.md](PRD.md), [DATA_MODEL.md](DATA_MODEL.md), [SSI_INTEGRATION.md](SSI_INTEGRATION.md)) avant de coder.
 2. Propose un plan court quand la tâche touche plusieurs apps.
 3. Implémente par tranches verticales démontrables (modèle → migration → serializer → vue → test).
-4. Donne la priorité au **scope MVP** défini dans [ROADMAP.md](ROADMAP.md) (Phase 1) ; simule ce qui n'est pas prêt (ex : e-IDStack en mode `mock` si le service n'est pas joignable), mais derrière la **même interface** que la version réelle.
+4. Donne la priorité au **scope MVP** défini dans [ROADMAP.md](ROADMAP.md) (Phase 1) ; en runtime, n'invente jamais de résultat si un service externe n'est pas prêt : retourne un état explicite (`FAILED`, `SSI_PENDING`, `TECHNICAL_ERROR`) et garde la même interface.
 5. Vérifie les linters et tes tests après chaque tranche.
 6. Ne crée pas de fichiers superflus ; n'ajoute pas de dépendances sans raison.
 
