@@ -8,12 +8,12 @@
 
 Objectif : le parcours de démo complet, premium et fluide.
 
-- **Fondations** : setup React + TypeScript + **Vite** + **React Router**, Tailwind + thème (palette noir/rouge), client `lib/api` + TanStack Query, auth JWT + `accounts/me`, gardes de routes par rôle, composants `ui` de base (`Button`, `StatusBadge`, `Card`, `DataTable`, `Modal`, `EmptyState`, `ErrorState`, skeletons, `Toast`).
+- **Fondations** : setup Next.js + React + TypeScript, Tailwind + thème (palette noir/rouge), client `lib/api`, auth JWT + `accounts/me`, gardes de routes par rôle, composants `ui` de base (`Button`, `StatusBadge`, `Card`, `DataTable`, `Modal`, `EmptyState`, `ErrorState`, skeletons, `Toast`).
 - **Public** : Accueil, Catalogue + **recherche à facettes**, Fiche document, **Assistant IA** (sourcé), **Vérification QR**.
 - **Déposant** : Dashboard, Mes dossiers, **Wizard de dépôt (6 étapes)** dont upload PDF + Analyse IA + vérification métadonnées + soumission, Détail dossier, Preuve.
 - **Validation** : Inbox, Détail à valider (onglets), Décision finale (checklist), Archivage + preuve.
 - **Admin** : Dashboard minimal (KPIs + état services).
-- **Mock API (MSW)** pour tourner sans backend.
+- **API backend réelle** via rewrites Next ; états vide/chargement/erreur traités sans fixtures runtime.
 
 ### Critères de sortie Phase 1
 - Parcours démo bout en bout sans accroc.
@@ -57,5 +57,5 @@ Objectif : le parcours de démo complet, premium et fluide.
 7. Détail dossier déposant + Preuve
 8. Validation : inbox + détail + décision + archivage
 9. Dashboard admin minimal
-10. Mock API (MSW) + passes d'états vide/chargement/erreur
+10. Passes d'états vide/chargement/erreur sur API réelle
 ```

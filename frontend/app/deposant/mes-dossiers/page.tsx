@@ -17,12 +17,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DossierStatusBadge } from "@/components/dossier-status-badge";
 import { EmptyState } from "@/components/empty-state";
-import {
-  depositorStats,
-  myDossiers,
-  type DossierStatus,
-} from "@/lib/mock-data";
-import { listWorks, useApiResource, workToDossier } from "@/lib/api";
+import type { DossierStatus } from "@/lib/domain-types";
+import { useApiResource } from "@/lib/api/hooks";
+import { workToDossier } from "@/lib/api/mappers";
+import { listWorks } from "@/lib/api/resources";
 
 const dateFmt = new Intl.DateTimeFormat("fr-FR", {
   day: "numeric",
@@ -46,7 +44,7 @@ export default function MesDossiersPage() {
     () => works.data?.results?.map(workToDossier) || [],
     [works.data],
   );
-  const source = liveDossiers.length > 0 ? liveDossiers : myDossiers;
+  const source = liveDossiers;
   const liveFilters = React.useMemo(
     () => [
       { value: "Tous" as Filter, count: source.length },
@@ -210,7 +208,7 @@ export default function MesDossiersPage() {
         {filtered.length > 1 ? "s" : ""}
         {filter !== "Tous" ? ` · filtre : ${filter}` : ""}
         <Badge variant="secondary" className="ml-2 font-normal">
-        {source.length || depositorStats.total} au total
+          {source.length} au total
         </Badge>
       </p>
     </div>

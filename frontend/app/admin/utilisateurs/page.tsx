@@ -20,21 +20,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
-import {
-  adminUsers,
-  type AdminUser,
-  type UserRole,
-  type UserStatus,
-} from "@/lib/admin-data";
-import {
-  createAdminUser,
-  deleteAdminUser,
-  listAdminUsers,
-  messageForApiError,
-  updateAdminUser,
-  useApiResource,
-  type CurrentUser,
-} from "@/lib/api";
+import { messageForApiError } from "@/lib/api/errors";
+import { useApiResource } from "@/lib/api/hooks";
+import { createAdminUser, deleteAdminUser, listAdminUsers, listAdminUsersWithoutInstitution, listInstitutions, updateAdminUser } from "@/lib/api/resources";
+import type { CurrentUser, Institution } from "@/lib/api/types";
+
+type UserRole = "Administrateur" | "Gestionnaire" | "Validateur" | "Déposant" | "Lecteur";
+type UserStatus = "Actif" | "Suspendu" | "Invité";
+type AdminUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  structure: string;
+  institutionId: string;
+  status: UserStatus;
+  initials: string;
+  lastActive: string;
+};
 
 type BadgeVariant =
   | "default"
@@ -56,6 +59,14 @@ const ROLES: UserRole[] = [
 ];
 
 const STATUSES: UserStatus[] = ["Actif", "Suspendu", "Invité"];
+
+const roleCodeByRole: Record<UserRole, string> = {
+  Administrateur: "INSTITUTION_ADMIN",
+  Gestionnaire: "DEPARTMENT_HEAD",
+  Validateur: "VALIDATOR",
+  Déposant: "DEPOSANT",
+  Lecteur: "PUBLIC",
+};
 
 const roleVariant: Record<UserRole, BadgeVariant> = {
   Administrateur: "brand",
@@ -81,19 +92,36 @@ function initialsOf(name: string) {
     .join("");
 }
 
-function listFrom<T>(data: { results: T[] } | T[]) {
+function listFrom<T>(data: { results: T[] } | T[] | null | undefined) {
+  if (!data) return [];
   return Array.isArray(data) ? data : data.results;
 }
 
-function apiUserToAdminUser(user: CurrentUser): AdminUser {
-  const role = user.is_superuser || user.is_staff ? "Administrateur" : "Déposant";
+function statusToApi(status: UserStatus) {
+  if (status === "Suspendu") return "SUSPENDED";
+  if (status === "Invité") return "PENDING";
+  return "ACTIVE";
+}
+
+function apiUserToAdminUser(user: CurrentUser, institutionNames: Map<string, string>): AdminUser {
+  const roleCodes = user.capabilities?.roles || user.roles?.map((role) => role.role_code || role.role_label || "") || [];
+  const normalized = roleCodes.join(" ").toLowerCase();
+  const institutionId = String(user.institution || "");
+  const role: UserRole = user.is_superuser || user.capabilities?.is_platform_admin || user.capabilities?.is_institution_admin || normalized.includes("admin")
+    ? "Administrateur"
+    : normalized.includes("valid") || normalized.includes("review") || normalized.includes("rapporteur")
+      ? "Validateur"
+      : normalized.includes("deposant")
+        ? "Déposant"
+        : "Lecteur";
   return {
     id: user.id,
     name: user.full_name || user.email,
     email: user.email,
     role,
-    structure: String(user.institution || "OpenScience Hub"),
-    status: user.status === "SUSPENDED" ? "Suspendu" : "Actif",
+    structure: institutionNames.get(institutionId) || "OpenScience Hub",
+    institutionId,
+    status: user.status === "SUSPENDED" ? "Suspendu" : user.status === "PENDING" ? "Invité" : "Actif",
     initials: initialsOf(user.full_name || user.email) || "OS",
     lastActive: "—",
   };
@@ -102,14 +130,17 @@ function apiUserToAdminUser(user: CurrentUser): AdminUser {
 const emptyForm = {
   name: "",
   email: "",
+  password: "",
   role: "Déposant" as UserRole,
-  structure: "",
+  institutionId: "",
   status: "Actif" as UserStatus,
 };
 
 export default function AdminUsersPage() {
   const liveUsers = useApiResource(() => listAdminUsers(), [], null);
-  const [users, setUsers] = React.useState<AdminUser[]>(adminUsers);
+  const liveOrphans = useApiResource(() => listAdminUsersWithoutInstitution(), [], null);
+  const liveInstitutions = useApiResource(() => listInstitutions(), [], null);
+  const [users, setUsers] = React.useState<AdminUser[]>([]);
   const [query, setQuery] = React.useState("");
   const [roleFilter, setRoleFilter] = React.useState<string>("all");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
@@ -118,10 +149,25 @@ export default function AdminUsersPage() {
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [form, setForm] = React.useState(emptyForm);
   const [feedback, setFeedback] = React.useState<string | null>(null);
+  const institutions = React.useMemo(
+    () => listFrom<Institution>(liveInstitutions.data),
+    [liveInstitutions.data],
+  );
+  const institutionNames = React.useMemo(
+    () => new Map(institutions.map((institution) => [institution.id, institution.name])),
+    [institutions],
+  );
 
   React.useEffect(() => {
-    if (liveUsers.data) setUsers(listFrom(liveUsers.data).map(apiUserToAdminUser));
-  }, [liveUsers.data]);
+    if (liveUsers.data) {
+      setUsers(listFrom(liveUsers.data).map((user) => apiUserToAdminUser(user, institutionNames)));
+    }
+  }, [institutionNames, liveUsers.data]);
+
+  const orphanUsers = React.useMemo(
+    () => listFrom(liveOrphans.data).map((user) => apiUserToAdminUser(user, institutionNames)),
+    [institutionNames, liveOrphans.data],
+  );
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -151,45 +197,75 @@ export default function AdminUsersPage() {
     setForm({
       name: u.name,
       email: u.email,
+      password: "",
       role: u.role,
-      structure: u.structure,
+      institutionId: u.institutionId,
       status: u.status,
     });
     setEditingId(u.id);
     setShowForm(true);
   }
 
+  function openAttach(u: AdminUser) {
+    setForm({
+      name: u.name,
+      email: u.email,
+      password: "",
+      role: u.role === "Administrateur" ? "Déposant" : u.role,
+      institutionId: "",
+      status: u.status,
+    });
+    setEditingId(u.id);
+    setShowForm(true);
+    setFeedback("Sélectionnez l'institution et le rôle à appliquer pour rattacher ce compte.");
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    const password = form.password.trim();
     if (!form.name.trim() || !form.email.trim()) return;
+    if (!form.institutionId) {
+      setFeedback("Sélectionnez une institution pour ce compte.");
+      return;
+    }
+    if (!editingId && password.length < 8) {
+      setFeedback("Le mot de passe initial doit contenir au moins 8 caractères.");
+      return;
+    }
+
+    const payload = {
+      full_name: form.name,
+      email: form.email,
+      status: statusToApi(form.status),
+      institution: form.institutionId,
+      role_code: roleCodeByRole[form.role],
+      scope_type: "INSTITUTION",
+      scope_id: form.institutionId,
+      ...(password ? { password } : {}),
+    };
 
     if (editingId) {
       try {
-        await updateAdminUser(editingId, {
-          full_name: form.name,
-          email: form.email,
-          status: form.status === "Suspendu" ? "SUSPENDED" : "ACTIVE",
-        });
+        const updated = await updateAdminUser(editingId, payload);
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === editingId
+              ? apiUserToAdminUser(updated, institutionNames)
+              : u
+          )
+        );
+        void liveUsers.reload();
+        void liveOrphans.reload();
       } catch (err) {
         setFeedback(messageForApiError(err));
         return;
       }
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === editingId
-            ? { ...u, ...form, initials: initialsOf(form.name) }
-            : u
-        )
-      );
     } else {
       try {
-        const created = await createAdminUser({
-          full_name: form.name,
-          email: form.email,
-          password: crypto.randomUUID(),
-          status: form.status === "Suspendu" ? "SUSPENDED" : "ACTIVE",
-        });
-        setUsers((prev) => [apiUserToAdminUser(created), ...prev]);
+        const created = await createAdminUser(payload);
+        setUsers((prev) => [apiUserToAdminUser(created, institutionNames), ...prev]);
+        void liveUsers.reload();
+        void liveOrphans.reload();
       } catch (err) {
         setFeedback(messageForApiError(err));
         return;
@@ -263,7 +339,40 @@ export default function AdminUsersPage() {
         </span>
         <Badge variant="success">{activeCount} actifs</Badge>
         <Badge variant="destructive">{suspendedCount} suspendus</Badge>
+        {orphanUsers.length ? <Badge variant="warning">{orphanUsers.length} à rattacher</Badge> : null}
       </div>
+
+      {orphanUsers.length > 0 && (
+        <Card className="mb-5 border-warning/30 bg-warning/5">
+          <CardContent className="space-y-3 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="font-heading text-sm font-semibold text-foreground">Comptes à rattacher</p>
+                <p className="text-sm text-muted-foreground">
+                  Ces comptes actifs n'ont pas encore d'institution. Le rattachement reste manuel.
+                </p>
+              </div>
+              <Badge variant="warning">{orphanUsers.length}</Badge>
+            </div>
+            <div className="grid gap-2">
+              {orphanUsers.map((user) => (
+                <div
+                  key={user.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">{user.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                  <Button type="button" variant="outline" size="sm" onClick={() => openAttach(user)}>
+                    Rattacher
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Formulaire création / édition */}
       {showForm && (
@@ -311,6 +420,21 @@ export default function AdminUsersPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
+                  <Label htmlFor="u-password">
+                    {editingId ? "Nouveau mot de passe" : "Mot de passe initial"}
+                  </Label>
+                  <Input
+                    id="u-password"
+                    type="password"
+                    value={form.password}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, password: e.target.value }))
+                    }
+                    minLength={8}
+                    required={!editingId}
+                  />
+                </div>
+                <div className="space-y-1.5">
                   <Label htmlFor="u-role">Rôle</Label>
                   <Select
                     id="u-role"
@@ -330,15 +454,22 @@ export default function AdminUsersPage() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="u-structure">Structure</Label>
-                  <Input
-                    id="u-structure"
-                    value={form.structure}
+                  <Label htmlFor="u-institution">Institution</Label>
+                  <Select
+                    id="u-institution"
+                    value={form.institutionId}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, structure: e.target.value }))
+                      setForm((f) => ({ ...f, institutionId: e.target.value }))
                     }
-                    placeholder="Ex. Faculté des Sciences"
-                  />
+                    required
+                  >
+                    <option value="">Sélectionner une institution</option>
+                    {institutions.map((institution) => (
+                      <option key={institution.id} value={institution.id}>
+                        {institution.name}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="u-status">Statut</Label>

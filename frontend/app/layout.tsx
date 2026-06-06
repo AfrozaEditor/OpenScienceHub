@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AiAssistant } from "@/components/ai-assistant";
 import { AuthProvider } from "@/components/auth-provider";
@@ -14,11 +13,6 @@ const marianne = localFont({
     { path: "./fonts/Marianne-Medium.woff2", weight: "500", style: "normal" },
     { path: "./fonts/Marianne-Bold.woff2", weight: "700", style: "normal" },
   ],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
@@ -35,7 +29,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${marianne.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${marianne.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <AuthProvider>

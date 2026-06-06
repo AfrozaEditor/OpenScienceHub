@@ -3,6 +3,7 @@ import { endpoints } from "./endpoints";
 import { setStoredTokens } from "./session";
 import type {
   AdminDashboard,
+  AdminProof,
   AuditEvent,
   AssistantResponse,
   AuthTokens,
@@ -19,6 +20,7 @@ import type {
   VerifyResult,
   Work,
   Contributor,
+  UserCapabilities,
 } from "./types";
 
 export async function login(email: string, password: string) {
@@ -35,7 +37,7 @@ export function register(payload: {
   email: string;
   full_name: string;
   password: string;
-  institution?: string;
+  institution: string;
   preferred_language?: string;
 }) {
   return apiRequest<CurrentUser>(endpoints.auth.register, {
@@ -49,8 +51,32 @@ export function getMe() {
   return apiRequest<CurrentUser>(endpoints.auth.me);
 }
 
+export function getMyCapabilities() {
+  return apiRequest<UserCapabilities>(endpoints.auth.capabilities);
+}
+
 export function listInstitutions() {
   return apiRequest<Paginated<Institution> | Institution[]>(endpoints.institutions, { auth: false });
+}
+
+export function createInstitution(payload: Partial<Institution>) {
+  return apiRequest<Institution>(endpoints.institutions, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateInstitution(id: string, payload: Partial<Institution>) {
+  return apiRequest<Institution>(`${endpoints.institutions}/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteInstitution(id: string) {
+  return apiRequest<void>(`${endpoints.institutions}/${id}`, {
+    method: "DELETE",
+  });
 }
 
 export function listFaculties(institution?: string) {
@@ -247,8 +273,24 @@ export function getValidationInbox(params: Record<string, string | number | bool
   return apiRequest<Paginated<Work>>(`${endpoints.validation.inbox}${toQuery(params)}`);
 }
 
+export function getMyAssignments() {
+  return apiRequest<Paginated<Record<string, unknown>> | Record<string, unknown>[]>(
+    endpoints.validation.myAssignments,
+  );
+}
+
 export function getAdminDashboard() {
   return apiRequest<AdminDashboard>(endpoints.admin.dashboard);
+}
+
+export function getAdminProofs(params: Record<string, string | number | boolean | undefined> = {}) {
+  return apiRequest<{ count: number; results: AdminProof[] }>(
+    `${endpoints.admin.proofs}${toQuery(params)}`,
+  );
+}
+
+export function getAdminScopeSummary() {
+  return apiRequest<Record<string, unknown>>(endpoints.admin.scopeSummary);
 }
 
 export function getAdminStats() {
@@ -259,8 +301,17 @@ export function getAdminAudit() {
   return apiRequest<Paginated<AuditEvent> | AuditEvent[]>(endpoints.admin.audit);
 }
 
-export function getAdminAiSettings() {
-  return apiRequest<Record<string, unknown>>(endpoints.admin.aiSettings);
+export function getAdminAiSettings(institution?: string) {
+  return apiRequest<Record<string, unknown>>(
+    `${endpoints.admin.aiSettings}${toQuery({ institution })}`,
+  );
+}
+
+export function updateAdminAiSettings(payload: Record<string, unknown>) {
+  return apiRequest<Record<string, unknown>>(endpoints.admin.aiSettings, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
 }
 
 export function getAdminSearchSettings() {
@@ -277,6 +328,37 @@ export function listWorkflows(params: Record<string, string | number | boolean |
   return apiRequest<Paginated<Record<string, unknown>> | Record<string, unknown>[]>(
     `${endpoints.admin.workflows}${toQuery(params)}`,
   );
+}
+
+export function getWorkflowTemplates() {
+  return apiRequest<Record<string, Record<string, unknown>>>(endpoints.admin.workflowTemplates);
+}
+
+export function applyWorkflowTemplate(template: string, institution?: string) {
+  return apiRequest<Record<string, unknown>>(endpoints.admin.workflowApplyTemplate, {
+    method: "POST",
+    body: JSON.stringify({ template, institution }),
+  });
+}
+
+export function createWorkflow(payload: Record<string, unknown>) {
+  return apiRequest<Record<string, unknown>>(endpoints.admin.workflows, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateWorkflow(id: string, payload: Record<string, unknown>) {
+  return apiRequest<Record<string, unknown>>(`${endpoints.admin.workflows}/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteWorkflow(id: string) {
+  return apiRequest<void>(`${endpoints.admin.workflows}/${id}`, {
+    method: "DELETE",
+  });
 }
 
 export function listWorkflowSteps(workflow?: string) {
@@ -324,6 +406,10 @@ export function reissueProof(id: string) {
 
 export function listAdminUsers() {
   return apiRequest<Paginated<CurrentUser> | CurrentUser[]>(endpoints.accounts.users);
+}
+
+export function listAdminUsersWithoutInstitution() {
+  return apiRequest<Paginated<CurrentUser> | CurrentUser[]>(endpoints.accounts.usersWithoutInstitution);
 }
 
 export function listRoles() {

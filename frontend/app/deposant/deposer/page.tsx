@@ -24,19 +24,9 @@ import { UploadDropzone } from "@/components/upload-dropzone";
 import { StepperUpload } from "@/components/stepper-upload";
 import { AiMetadataPanel } from "@/components/ai-metadata-panel";
 import { useAuth } from "@/components/auth-provider";
-import {
-  acceptMetadata,
-  addContributor,
-  createWork,
-  extractMetadata,
-  listInstitutions,
-  messageForApiError,
-  submitWork,
-  updateWork,
-  uploadDocument,
-  type Institution,
-  type Paginated,
-} from "@/lib/api";
+import { messageForApiError } from "@/lib/api/errors";
+import { acceptMetadata, addContributor, createWork, extractMetadata, listInstitutions, submitWork, updateWork, uploadDocument } from "@/lib/api/resources";
+import type { Institution, Paginated } from "@/lib/api/types";
 
 const steps = [
   { label: "Téléversement" },

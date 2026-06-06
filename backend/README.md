@@ -9,7 +9,7 @@ Python 3.11+ · Django 5 · Django REST Framework · PostgreSQL · JWT · drf-sp
 
 ## Architecture orientée services
 
-Le backend est le **chef d'orchestre** ; il appelle deux services externes via des clients dédiés (avec mode `mock` pour tourner hors-ligne) :
+Le backend est le **chef d'orchestre** ; il appelle deux services externes via des clients dédiés, sans réponse simulée en runtime :
 - **`apps/ai/client.py` → `simba_ia`** : `extract`, `index`, `assistant_query`, `similar`, `summarize`.
 - **`apps/ssi/client.py` → `e-IDStack de IDS`** : `get_issuer_did`, `offer_credential`, `verify_credential`. SSI **sans wallet** (plateforme dépositaire, vérification web).
 
@@ -51,7 +51,7 @@ docker compose up --build
 
 Au démarrage, le conteneur `web` :
 1. attend PostgreSQL,
-2. applique les migrations (`makemigrations` + `migrate`),
+2. applique les migrations existantes (`migrate` uniquement),
 3. collecte les fichiers statiques,
 4. crée un superuser (`admin@openscience.local` / `adminpass`),
 5. lance Gunicorn sur le port 8000.
@@ -104,10 +104,10 @@ python manage.py runserver
 | Admin : paramètres IA / recherche | `GET /api/v1/admin/ai-settings|search-settings` |
 
 ## Intégrations
-- **simba_ia** (IA) : `SIMBA_MODE=mock|live`, `SIMBA_IA_URL`, `SIMBA_API_KEY`.
-- **e-IDStack de IDS** (SSI) : `SSI_MODE=mock|live`, `EIDSTACK_BASE_URL`, `EIDSTACK_API_KEY`. Modèle **sans wallet** (plateforme dépositaire, vérification web).
+- **simba_ia** (IA) : `SIMBA_MODE=live`, `SIMBA_IA_URL`, `SIMBA_API_KEY`.
+- **e-IDStack de IDS** (SSI) : `SSI_MODE=live`, `EIDSTACK_BASE_URL`, `EIDSTACK_API_KEY`. Modèle **sans wallet** (plateforme dépositaire, vérification web).
 
-En mode `mock`, l'extraction IA et l'émission de preuve fonctionnent **sans services externes** (idéal démo).
+Si `SIMBA_MODE` ou `SSI_MODE` n'est pas `live`, les clients refusent l'opération avec une erreur explicite. Les indisponibilités de service sont traitées par les workflows (`FAILED` pour l'index IA, `SSI_PENDING` pour la preuve) sans inventer de résultat.
 
 ## Structure
 Voir `AGENTS.md` (apps : common, accounts, institutions, works, documents, validation, archive, search, ai, ssi, audit).

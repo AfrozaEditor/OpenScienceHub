@@ -1,10 +1,20 @@
 import type { NextConfig } from "next";
 import { networkInterfaces } from "node:os";
 
-const localNetworkOrigins = Object.values(networkInterfaces())
-  .flat()
-  .filter((details) => details?.family === "IPv4" && !details.internal)
-  .map((details) => details.address);
+function getLocalNetworkOrigins() {
+  try {
+    return Object.values(networkInterfaces())
+      .flatMap((details) =>
+        (details ?? [])
+          .filter((item) => item.family === "IPv4" && !item.internal)
+          .map((item) => item.address),
+      );
+  } catch {
+    return [];
+  }
+}
+
+const localNetworkOrigins = getLocalNetworkOrigins();
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: [
@@ -13,6 +23,18 @@ const nextConfig: NextConfig = {
     "0.0.0.0",
     ...localNetworkOrigins,
   ],
+  async rewrites() {
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: `${process.env.BACKEND_INTERNAL_API_BASE_URL || "http://backend:8000/api/v1"}/:path*`,
+      },
+      {
+        source: "/media/:path*",
+        destination: `${process.env.BACKEND_INTERNAL_MEDIA_BASE_URL || "http://backend:8000/media"}/:path*`,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

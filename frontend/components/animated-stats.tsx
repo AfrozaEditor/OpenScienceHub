@@ -24,10 +24,13 @@ function AnimatedNumber({
   active: boolean;
   durationRef: React.RefObject<number>;
 }) {
-  const [display, setDisplay] = React.useState(0);
+  const [display, setDisplay] = React.useState(value);
 
   React.useEffect(() => {
-    if (!active) return;
+    if (!active) {
+      setDisplay(value);
+      return;
+    }
 
     const duration = durationRef.current;
     let frame = 0;

@@ -29,7 +29,7 @@ Services exposés :
 - backend : `http://localhost:8000`
 - frontend : `http://localhost:3000`
 - `simba_ia` : `http://localhost:8001`
-- e-IDStack de IDS API : `http://localhost:4000` (`IDS_API_PORT=4001` si le port 4000 est déjà occupé)
+- e-IDStack de IDS API : `http://localhost:4001` (le conteneur écoute toujours `4000` en interne)
 - agent e-IDStack : `http://localhost:3021`
 
 Healthchecks :
@@ -38,7 +38,7 @@ Healthchecks :
 docker compose ps
 curl http://localhost:8000/api/schema/
 curl http://localhost:8001/health
-curl http://localhost:4000/api/docs-yaml
+curl http://localhost:4001/api/docs-yaml
 ```
 
 ## Test Full Stack
@@ -124,7 +124,8 @@ PUBLIC_VERIFY_BASE_URL=http://localhost:3000/verify
 Frontend :
 
 ```text
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_API_BASE_URL=/api/v1
+BACKEND_INTERNAL_API_BASE_URL=http://backend:8000/api/v1
 NEXT_PUBLIC_FRONTEND_VERIFY_BASE_URL=http://localhost:3000/verify
 ```
 
@@ -143,7 +144,7 @@ LAN_HOST_IP=192.168.1.20 docker compose up -d --build
 http://192.168.1.20:3000
 ```
 
-Le frontend appelle alors `http://192.168.1.20:8000/api/v1`. Les QR codes doivent pointer vers `http://192.168.1.20:3000/verify/{proofCode}` afin que le scan mobile affiche la page publique, puis que cette page interroge le backend pour vérifier la preuve et le hash.
+Le navigateur appelle alors le frontend sur `http://192.168.1.20:3000`, puis Next.js relaie `/api/v1/*` vers le backend. Les QR codes doivent pointer vers `http://192.168.1.20:3000/verify/{proofCode}` afin que le scan mobile affiche la page publique, puis que cette page interroge le backend pour vérifier la preuve et le hash.
 
 IDS :
 

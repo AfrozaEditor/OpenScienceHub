@@ -1,5 +1,5 @@
 import type { CatalogItem, SimilarWork, Work } from "./types";
-import type { DossierStatus, ScientificDocument } from "@/lib/mock-data";
+import type { Dossier, DossierStatus, ScientificDocument } from "@/lib/domain-types";
 
 function firstContributorName(work?: Work | CatalogItem) {
   const contributors = "contributors" in (work || {}) ? (work as Work).contributors : undefined;
@@ -50,14 +50,35 @@ export function catalogToDocument(item: CatalogItem): ScientificDocument {
   };
 }
 
-export function workToDossier(work: Work) {
+export function workToDossier(work: Work): Dossier {
   const statusMap: Record<string, DossierStatus> = {
     DRAFT: "Brouillon",
+    BROUILLON: "Brouillon",
     SUBMITTED: "En attente",
+    SOUMIS: "En attente",
+    EN_PRE_INSTRUCTION: "En attente",
+    EN_INSTRUCTION: "En attente",
+    EN_EXPERTISE: "En attente",
+    AVIS_EN_ATTENTE: "En attente",
+    DECISION_REQUISE: "En attente",
     UNDER_REVIEW: "En attente",
+    SCREENING: "En attente",
+    REVISION_REQUESTED: "En attente",
+    RESUBMITTED: "En attente",
+    CORRECTION_DEMANDEE: "En attente",
+    RE_SOUMIS: "En attente",
+    CORRECTION_POST_SOUTENANCE: "En attente",
     APPROVED: "Validé",
+    VALIDE: "Validé",
+    VALIDE_APRES_SOUTENANCE: "Validé",
+    DEPOT_FINAL_ACCEPTE: "Validé",
+    ACCEPTED: "Validé",
+    PUBLISHED: "Validé",
+    ARCHIVABLE: "Validé",
     ARCHIVED: "Validé",
+    ARCHIVE: "Validé",
     REJECTED: "Rejeté",
+    REJETE: "Rejeté",
   };
   return {
     id: work.id,
@@ -66,8 +87,20 @@ export function workToDossier(work: Work) {
     type: coerceType(work.type),
     status: statusMap[work.status] || "En attente",
     domain: work.scientific_domain || "Non renseigné",
+    faculty: String(work.faculty || "—"),
+    department: String(work.department || "—"),
+    level: work.type || "—",
+    language: work.language || "FR",
+    abstract: work.abstract_text || "Résumé non renseigné.",
     updatedAt: work.updated_at || work.created_at || "",
+    submittedAt: work.submitted_at || work.updated_at || work.created_at || "",
     keywords: work.keywords || [],
+    pages: 0,
+    fileSize: "—",
+    views: 0,
+    downloads: 0,
+    aiConfidence: 0,
+    timeline: [],
     proof: undefined,
   };
 }
@@ -78,7 +111,9 @@ export function workToScientificDocument(work: Work): ScientificDocument {
     slug: work.id,
     title: work.title,
     type: coerceType(work.type),
-    status: ["VALIDATED", "ARCHIVED"].includes(work.status) ? "Validé" : "En attente",
+    status: ["VALIDE", "VALIDE_APRES_SOUTENANCE", "ACCEPTED", "PUBLISHED", "ARCHIVABLE", "ARCHIVE", "VALIDATED", "ARCHIVED"].includes(work.status)
+      ? "Validé"
+      : "En attente",
     access: work.visibility === "RESTRICTED" ? "Restreint" : "Public",
     authors: work.contributors?.filter((c) => c.contributor_type === "AUTHOR").map((c) => c.display_name) || [
       "Auteur non renseigné",

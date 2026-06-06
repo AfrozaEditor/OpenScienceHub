@@ -7,12 +7,12 @@ import { usePathname } from "next/navigation";
 import { ArrowLeft, ExternalLink, LogOut, Menu, ShieldCheck, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { INSTITUTION } from "@/lib/mock-data";
 import {
   openDossiersCount,
   validationNav,
 } from "@/lib/validation-data";
 import { useAuth } from "@/components/auth-provider";
+import { MissionSwitcher } from "@/components/mission-switcher";
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -177,12 +177,13 @@ export function ValidationShell({ children }: { children: React.ReactNode }) {
                 {currentLabel}
               </p>
               <p className="truncate text-xs text-muted-foreground">
-                {INSTITUTION}
+                File de mission selon vos rôles et périmètres
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
+            <MissionSwitcher current="validation" />
             <Link
               href="/"
               className="hidden items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex"

@@ -124,7 +124,7 @@ Facettes : `type, institution, faculty, department, program, scientificDomain, a
 | PUT | `/admin/ssi/connection` | admin SSI | Mettre à jour config (audité) |
 | POST | `/admin/ssi/test-connection` | admin SSI | Tester la connexion |
 
-Voir [SSI_INTEGRATION.md](SSI_INTEGRATION.md) pour le mapping des claims et le mode `mock`.
+Voir [SSI_INTEGRATION.md](SSI_INTEGRATION.md) pour le mapping des claims, le flux e-IDStack de IDS et les états `SSI_PENDING` / `TECHNICAL_ERROR`.
 
 ## 10. Administration & audit (`/admin`)
 

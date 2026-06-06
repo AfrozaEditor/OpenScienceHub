@@ -3,6 +3,7 @@ export const endpoints = {
     login: "/auth/login",
     register: "/auth/register",
     me: "/accounts/me",
+    capabilities: "/accounts/me/capabilities",
   },
   works: {
     list: "/works",
@@ -40,15 +41,20 @@ export const endpoints = {
   programs: "/programs",
   validation: {
     inbox: "/validation/inbox",
+    myAssignments: "/validation/my-assignments",
   },
   admin: {
     dashboard: "/admin/dashboard",
+    proofs: "/admin/proofs",
+    scopeSummary: "/admin/scope-summary",
     stats: "/admin/stats",
     audit: "/admin/audit",
     aiSettings: "/admin/ai-settings",
     searchSettings: "/admin/search-settings",
     documentTypes: "/admin/document-types",
     workflows: "/admin/workflows",
+    workflowApplyTemplate: "/admin/workflows/apply-template",
+    workflowTemplates: "/admin/workflows/templates",
     workflowSteps: "/admin/workflow-steps",
     workflowTransitions: "/admin/workflow-transitions",
     ssiConnection: "/admin/ssi/connection",
@@ -56,6 +62,7 @@ export const endpoints = {
   },
   accounts: {
     users: "/accounts/users",
+    usersWithoutInstitution: "/accounts/users/without-institution",
     roles: "/accounts/roles",
     permissions: "/accounts/permissions",
     userRoles: (id: string) => `/accounts/users/${id}/roles`,

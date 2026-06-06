@@ -11,7 +11,7 @@ import {
   MetadataBadge,
 } from "@/components/metadata-badge";
 import { StatusBadge } from "@/components/status-badge";
-import type { ScientificDocument } from "@/lib/mock-data";
+import type { ScientificDocument } from "@/lib/domain-types";
 
 function formatNumber(n: number) {
   return new Intl.NumberFormat("fr-FR").format(n);

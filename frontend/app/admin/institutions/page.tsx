@@ -20,10 +20,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
-import { institutions, type Institution } from "@/lib/admin-data";
-import { listInstitutions, useApiResource, type Institution as ApiInstitution } from "@/lib/api";
+import { messageForApiError } from "@/lib/api/errors";
+import { useApiResource } from "@/lib/api/hooks";
+import { createInstitution, deleteInstitution, listInstitutions, updateInstitution } from "@/lib/api/resources";
+import type { Institution as ApiInstitution } from "@/lib/api/types";
 
 const fr = new Intl.NumberFormat("fr-FR");
+type Institution = {
+  id: string;
+  name: string;
+  acronym: string;
+  type: "Université" | "Grande École" | "Institut";
+  city: string;
+  emailDomain: string;
+  license: string;
+  status: "Active" | "Inactive";
+  documents: number | null;
+};
 const TYPES: Institution["type"][] = ["Université", "Grande École", "Institut"];
 
 const emptyForm = {
@@ -38,10 +51,12 @@ const emptyForm = {
 
 export default function AdminInstitutionsPage() {
   const liveInstitutions = useApiResource(() => listInstitutions(), [], null);
-  const [items, setItems] = React.useState<Institution[]>(institutions);
+  const [items, setItems] = React.useState<Institution[]>([]);
   const [showForm, setShowForm] = React.useState(false);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [form, setForm] = React.useState(emptyForm);
+  const [busyId, setBusyId] = React.useState<string | null>(null);
+  const [feedback, setFeedback] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!liveInstitutions.data) return;
@@ -50,6 +65,12 @@ export default function AdminInstitutionsPage() {
       : liveInstitutions.data.results;
     setItems(rows.map(apiInstitutionToAdmin));
   }, [liveInstitutions.data]);
+
+  React.useEffect(() => {
+    if (!feedback) return;
+    const timer = setTimeout(() => setFeedback(null), 3500);
+    return () => clearTimeout(timer);
+  }, [feedback]);
 
   function openCreate() {
     setForm(emptyForm);
@@ -71,38 +92,63 @@ export default function AdminInstitutionsPage() {
     setShowForm(true);
   }
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim() || !form.acronym.trim()) return;
-    if (editingId) {
-      setItems((prev) =>
-        prev.map((i) => (i.id === editingId ? { ...i, ...form } : i))
-      );
-    } else {
-      setItems((prev) => [
-        { id: `inst-${Date.now()}`, documents: 0, ...form },
-        ...prev,
-      ]);
+    setBusyId(editingId || "create");
+    setFeedback(null);
+    try {
+      if (editingId) {
+        const updated = await updateInstitution(editingId, formToApiInstitution(form));
+        setItems((prev) =>
+          prev.map((i) => (i.id === editingId ? apiInstitutionToAdmin(updated) : i))
+        );
+        setFeedback("Institution mise à jour.");
+      } else {
+        const created = await createInstitution(formToApiInstitution(form));
+        setItems((prev) => [apiInstitutionToAdmin(created), ...prev]);
+        setFeedback("Institution créée.");
+      }
+    } catch (err) {
+      setFeedback(messageForApiError(err));
+      return;
+    } finally {
+      setBusyId(null);
     }
     setShowForm(false);
     setEditingId(null);
     setForm(emptyForm);
   }
 
-  function toggleStatus(id: string) {
-    setItems((prev) =>
-      prev.map((i) =>
-        i.id === id
-          ? { ...i, status: i.status === "Active" ? "Inactive" : "Active" }
-          : i
-      )
-    );
+  async function toggleStatus(item: Institution) {
+    const nextStatus = item.status === "Active" ? "INACTIVE" : "ACTIVE";
+    setBusyId(item.id);
+    setFeedback(null);
+    try {
+      const updated = await updateInstitution(item.id, { status: nextStatus });
+      setItems((prev) => prev.map((i) => (i.id === item.id ? apiInstitutionToAdmin(updated) : i)));
+      setFeedback(nextStatus === "ACTIVE" ? "Institution activée." : "Institution désactivée.");
+    } catch (err) {
+      setFeedback(messageForApiError(err));
+    } finally {
+      setBusyId(null);
+    }
   }
 
-  function remove(id: string) {
+  async function remove(id: string) {
     if (typeof window !== "undefined" && !window.confirm("Supprimer cette institution ?"))
       return;
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    setBusyId(id);
+    setFeedback(null);
+    try {
+      await deleteInstitution(id);
+      setItems((prev) => prev.filter((i) => i.id !== id));
+      setFeedback("Institution supprimée.");
+    } catch (err) {
+      setFeedback(messageForApiError(err));
+    } finally {
+      setBusyId(null);
+    }
   }
 
   return (
@@ -116,6 +162,12 @@ export default function AdminInstitutionsPage() {
           Nouvelle institution
         </Button>
       </AdminPageHeader>
+
+      {feedback && (
+        <div className="mb-5 rounded-lg border border-border bg-card px-4 py-2.5 text-sm text-foreground">
+          {feedback}
+        </div>
+      )}
 
       {showForm && (
         <Card className="mb-5 border-primary/30">
@@ -142,7 +194,7 @@ export default function AdminInstitutionsPage() {
                     id="i-name"
                     value={form.name}
                     onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                    placeholder="Ex. Université de Yaoundé I"
+                    placeholder="Ex. Nom officiel de l'établissement"
                     required
                   />
                 </div>
@@ -214,9 +266,9 @@ export default function AdminInstitutionsPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button type="submit">
+                <Button type="submit" disabled={busyId !== null}>
                   <Check className="size-4" />
-                  {editingId ? "Enregistrer" : "Créer"}
+                  {busyId ? "Enregistrement..." : editingId ? "Enregistrer" : "Créer"}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
                   Annuler
@@ -255,7 +307,7 @@ export default function AdminInstitutionsPage() {
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <FileText className="size-3.5" />
-                  {fr.format(i.documents)} documents
+                  {i.documents === null ? "Documents associés : —" : `${fr.format(i.documents)} documents`}
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Building2 className="size-3.5" />
@@ -264,14 +316,15 @@ export default function AdminInstitutionsPage() {
               </dl>
 
               <div className="mt-auto flex items-center gap-1 border-t border-border pt-3">
-                <Button variant="outline" size="sm" onClick={() => openEdit(i)}>
+                <Button variant="outline" size="sm" onClick={() => openEdit(i)} disabled={busyId !== null}>
                   <Pencil className="size-3.5" />
                   Configurer
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => toggleStatus(i.id)}
+                  onClick={() => toggleStatus(i)}
+                  disabled={busyId !== null}
                   title={i.status === "Active" ? "Désactiver" : "Activer"}
                 >
                   <Power
@@ -282,6 +335,7 @@ export default function AdminInstitutionsPage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => remove(i.id)}
+                  disabled={busyId !== null}
                   title="Supprimer"
                   className="ml-auto"
                 >
@@ -311,6 +365,28 @@ function apiInstitutionToAdmin(item: ApiInstitution): Institution {
     emailDomain: item.official_email?.split("@")[1] || "—",
     license: "Standard",
     status: item.status === "INACTIVE" ? "Inactive" : "Active",
-    documents: 0,
+    documents: null,
+  };
+}
+
+function formToApiInstitution(form: typeof emptyForm): Partial<ApiInstitution> {
+  const officialEmail = form.emailDomain.includes("@")
+    ? form.emailDomain
+    : form.emailDomain
+      ? `contact@${form.emailDomain.replace(/^@/, "")}`
+      : "";
+
+  return {
+    name: form.name.trim(),
+    short_name: form.acronym.trim(),
+    type:
+      form.type === "Grande École"
+        ? "SCHOOL"
+        : form.type === "Institut"
+          ? "INSTITUTE"
+          : "UNIVERSITY",
+    city: form.city.trim(),
+    official_email: officialEmail,
+    status: form.status === "Inactive" ? "INACTIVE" : "ACTIVE",
   };
 }

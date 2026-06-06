@@ -16,7 +16,9 @@ import {
 
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { askAssistant, messageForApiError, type AssistantSource } from "@/lib/api";
+import { messageForApiError } from "@/lib/api/errors";
+import { askAssistant } from "@/lib/api/resources";
+import type { AssistantSource } from "@/lib/api/types";
 
 interface UseAutoResizeTextareaProps {
   minHeight: number;

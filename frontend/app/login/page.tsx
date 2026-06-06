@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, BadgeCheck, Database, Sparkles } from "lucide-react";
 
 import { roleRedirect, useAuth } from "@/components/auth-provider";
-import { messageForApiError } from "@/lib/api";
+import { messageForApiError } from "@/lib/api/errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -94,7 +94,7 @@ function LoginContent() {
         </div>
 
         <p className="relative text-sm text-white/60">
-          © 2026 OpenScience Hub — Université de Yaoundé I
+          © 2026 OpenScience Hub
         </p>
       </div>
 

@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/empty-state";
-import { useApiResource, verifyProof } from "@/lib/api";
+import { useApiResource } from "@/lib/api/hooks";
+import { verifyProof } from "@/lib/api/resources";
 
 export default function VerifyProofPage() {
   const params = useParams<{ proofCode: string }>();
@@ -95,6 +96,8 @@ export default function VerifyProofPage() {
                   {result.result}
                 </Badge>
                 {result.proof_status && <Badge variant="secondary">{result.proof_status}</Badge>}
+                {result.hashes_match === false && <Badge variant="destructive">INVALID_HASH</Badge>}
+                {result.is_mock && <Badge variant="secondary">À réémettre</Badge>}
               </div>
 
               <dl className="divide-y divide-border rounded-xl border border-border">
@@ -106,6 +109,9 @@ export default function VerifyProofPage() {
                   ["Type", result.work_type],
                   ["Archivé le", result.archived_at],
                   ["Empreinte SHA-256", result.document_hash],
+                  ["Credential", result.credential_id],
+                  ["Issuer DID", result.issuer_did],
+                  ["Schéma", result.schema],
                 ]
                   .filter(([, value]) => value)
                   .map(([label, value]) => (

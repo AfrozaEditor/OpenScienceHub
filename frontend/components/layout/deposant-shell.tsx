@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth-provider";
+import { MissionSwitcher } from "@/components/mission-switcher";
 
 type NavItem = {
   label: string;
@@ -183,7 +184,8 @@ export function DeposantShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const { user, logout } = useAuth();
   const userName = user?.full_name || user?.email || "Utilisateur";
-  const userRole = user?.roles?.[0]?.label || user?.roles?.[0]?.role || "Espace déposant";
+  const userRole =
+    user?.roles?.[0]?.role_label || user?.roles?.[0]?.label || "Espace déposant";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -232,6 +234,7 @@ export function DeposantShell({ children }: { children: React.ReactNode }) {
           <p className="min-w-0 flex-1 truncate font-heading text-sm font-semibold text-foreground">
             {sectionTitle(pathname)}
           </p>
+          <MissionSwitcher current="deposant" />
           <Button asChild size="lg" className="hidden sm:inline-flex">
             <Link href="/deposant/deposer">
               <UploadCloud className="size-4" />

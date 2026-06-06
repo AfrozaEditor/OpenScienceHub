@@ -6,7 +6,7 @@
 
 ## 1. Principes
 
-- **Base** : `VITE_API_BASE_URL` (ex. `http://localhost:8000/api/v1`).
+- **Base** : `NEXT_PUBLIC_API_BASE_URL=/api/v1` en Docker/dev. Next relaie ensuite vers `BACKEND_INTERNAL_API_BASE_URL` (`http://backend:8000/api/v1` en compose).
 - **Auth** : JWT `Authorization: Bearer <access>`. Endpoints publics sans token.
 - **Client centralisé** : `lib/api` (un wrapper `fetch`/`axios` + intercepteurs). Types alignés sur l'OpenAPI backend (`/api/schema`) — **génération de types recommandée** (`openapi-typescript`).
 - **Cache & états** : TanStack Query (clé par ressource + filtres) ; mutations invalident les requêtes liées.
@@ -111,10 +111,10 @@ GET /verify/{proofCode}
 
 Certaines réponses renvoient un statut « métier » en 200 (ex. extraction `FAILED`, Assistant `NO_CONTEXT_FOUND`, preuve `SSI_PENDING`). L'UI doit les traiter explicitement (message + action), pas comme des erreurs réseau.
 
-## 8. Mock API (démo / dev sans backend)
+## 8. Politique API live
 
-- **MSW** (Mock Service Worker) : intercepte les appels `lib/api` et renvoie des fixtures typées.
-- Activé par `VITE_API_MODE=mock`. Permet de développer/démontrer le frontend sans backend, derrière les **mêmes types**.
+- Le frontend consomme le backend réel via `NEXT_PUBLIC_API_BASE_URL=/api/v1` et les rewrites Next.
+- Les indisponibilités remontent comme statuts métier ou erreurs API explicites ; l'UI ne crée pas de fixtures de remplacement en runtime.
 
 ## 9. Types partagés
 

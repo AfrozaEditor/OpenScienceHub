@@ -5,7 +5,7 @@ import { DeposantShell } from "@/components/layout/deposant-shell";
 
 export default function DeposantLayout({ children }: { children: ReactNode }) {
   return (
-    <AuthGuard roles={["deposant", "admin"]}>
+    <AuthGuard roles={["deposant"]}>
       <DeposantShell>{children}</DeposantShell>
     </AuthGuard>
   );

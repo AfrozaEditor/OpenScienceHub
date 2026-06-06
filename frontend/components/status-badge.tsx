@@ -1,7 +1,7 @@
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import type { DocumentStatus } from "@/lib/mock-data";
+import type { DocumentStatus } from "@/lib/domain-types";
 
 const config: Record<
   DocumentStatus,

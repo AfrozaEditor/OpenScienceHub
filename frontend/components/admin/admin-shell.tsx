@@ -7,9 +7,9 @@ import { usePathname } from "next/navigation";
 import { ArrowLeft, ExternalLink, LogOut, Menu, ShieldCheck, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { INSTITUTION } from "@/lib/mock-data";
-import { adminNav } from "@/lib/admin-data";
+import { adminNav } from "@/lib/admin-nav";
 import { useAuth } from "@/components/auth-provider";
+import { MissionSwitcher } from "@/components/mission-switcher";
 
 function useActive() {
   const pathname = usePathname();
@@ -99,6 +99,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
   const { user, logout } = useAuth();
   const displayName = user?.full_name || user?.email || "Administrateur";
+  const scopeLabel = user?.capabilities?.is_platform_admin
+    ? "Administration plateforme"
+    : "Administration institutionnelle";
   const initials =
     displayName
       .split(/\s+/)
@@ -166,12 +169,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 {currentLabel}
               </p>
               <p className="truncate text-xs text-muted-foreground">
-                {INSTITUTION}
+                {scopeLabel}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
+            <MissionSwitcher current="admin" />
             <Link
               href="/"
               className="hidden items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex"
@@ -188,7 +192,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                   {displayName}
                 </span>
                 <span className="text-[11px] text-muted-foreground">
-                  Administration
+                  {scopeLabel}
                 </span>
               </span>
               <button

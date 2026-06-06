@@ -3,12 +3,9 @@
 import * as React from "react";
 import {
   BadgeCheck,
-  Eye,
-  EyeOff,
   FileBadge2,
   KeyRound,
   PlugZap,
-  RefreshCw,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -18,23 +15,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminToggle } from "@/components/admin/admin-toggle";
-import { ssiConfig, type SsiEmission } from "@/lib/admin-data";
-import { getSsiConnection, messageForApiError, testSsiConnection, useApiResource } from "@/lib/api";
-
-type BadgeVariant = "success" | "warning" | "destructive";
-const emissionVariant: Record<SsiEmission["status"], BadgeVariant> = {
-  Émise: "success",
-  "En cours": "warning",
-  Échec: "destructive",
-};
+import { messageForApiError } from "@/lib/api/errors";
+import { useApiResource } from "@/lib/api/hooks";
+import { getSsiConnection, testSsiConnection } from "@/lib/api/resources";
 
 export default function AdminSsiPage() {
   const connection = useApiResource(() => getSsiConnection(), [], null);
-  const [endpoint, setEndpoint] = React.useState(ssiConfig.endpoint);
-  const [clientId, setClientId] = React.useState(ssiConfig.clientId);
-  const [secret, setSecret] = React.useState("secret géré par variables d'environnement");
-  const [reveal, setReveal] = React.useState(false);
-  const [autoEmit, setAutoEmit] = React.useState(ssiConfig.autoEmit);
+  const [endpoint, setEndpoint] = React.useState("");
+  const [clientId, setClientId] = React.useState("");
+  const [autoEmit, setAutoEmit] = React.useState(true);
   const [feedback, setFeedback] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -49,15 +38,6 @@ export default function AdminSsiPage() {
     setEndpoint(String(data.base_url || data.endpoint || endpoint));
     setClientId(String(data.mode || data.status || clientId));
   }, [clientId, connection.data, endpoint]);
-
-  function regenerate() {
-    const hex = Array.from({ length: 24 }, () =>
-      Math.floor(Math.random() * 16).toString(16)
-    ).join("");
-    setSecret(`secret-${hex}`);
-    setReveal(false);
-    setFeedback("Secret régénéré. Pensez à mettre à jour vos intégrations.");
-  }
 
   return (
     <>
@@ -98,7 +78,7 @@ export default function AdminSsiPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ssi-client">Identifiant client</Label>
+              <Label htmlFor="ssi-client">Statut / mode</Label>
               <Input
                 id="ssi-client"
                 value={clientId}
@@ -107,43 +87,22 @@ export default function AdminSsiPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ssi-secret">Clé secrète</Label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Input
-                    id="ssi-secret"
-                    readOnly
-                    value={reveal ? secret : "•".repeat(Math.min(secret.length, 28))}
-                    className="pr-9 font-mono text-xs"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setReveal((v) => !v)}
-                    aria-label={reveal ? "Masquer" : "Révéler"}
-                    className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {reveal ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                  </button>
-                </div>
-                <Button type="button" variant="outline" onClick={regenerate}>
-                  <RefreshCw className="size-4" />
-                  Régénérer
-                </Button>
-              </div>
+              <Input id="ssi-secret" readOnly value="Masqué côté serveur" className="font-mono text-xs" />
               <p className="text-xs text-muted-foreground">
-                Le secret n'est jamais transmis en clair. Régénérer invalide
-                l'ancienne clé.
+                Les secrets e-IDStack restent côté serveur et ne sont jamais affichés ici.
               </p>
             </div>
             <dl className="grid grid-cols-1 gap-2 rounded-lg border border-border bg-muted/30 p-3 text-sm sm:grid-cols-2">
               <div>
-                <dt className="text-xs text-muted-foreground">Algorithme</dt>
-                <dd className="font-medium text-foreground">{ssiConfig.algorithm}</dd>
+                <dt className="text-xs text-muted-foreground">Statut connexion</dt>
+                <dd className="font-medium text-foreground">
+                  {String((connection.data as Record<string, unknown> | null)?.connection_status || "Non configuré")}
+                </dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Autorité d'horodatage</dt>
+                <dt className="text-xs text-muted-foreground">Identifiants configurés</dt>
                 <dd className="font-medium text-foreground">
-                  {ssiConfig.timestampAuthority}
+                  {(connection.data as Record<string, unknown> | null)?.has_credentials ? "Oui" : "Non"}
                 </dd>
               </div>
             </dl>
@@ -183,14 +142,16 @@ export default function AdminSsiPage() {
               />
               <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-sm">
                 <span className="text-muted-foreground">Dernière synchronisation</span>
-                <span className="font-medium text-foreground">{ssiConfig.lastSync}</span>
+                <span className="font-medium text-foreground">
+                  {String((connection.data as Record<string, unknown> | null)?.last_sync_at || "—")}
+                </span>
               </div>
               <Button
                 className="w-full"
-                onClick={() => setFeedback("Preuve émise et horodatée avec succès.")}
+                disabled
               >
                 <FileBadge2 className="size-4" />
-                Émettre une preuve maintenant
+                Émission uniquement après archivage
               </Button>
             </CardContent>
           </Card>
@@ -200,20 +161,9 @@ export default function AdminSsiPage() {
               <CardTitle className="text-base">Émissions récentes</CardTitle>
             </CardHeader>
             <CardContent className="px-0 pb-2">
-              <ul>
-                {ssiConfig.emissions.map((em) => (
-                  <li
-                    key={em.id}
-                    className="flex items-center justify-between gap-3 border-t border-border px-5 py-2.5"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm text-foreground">{em.document}</p>
-                      <p className="text-xs text-muted-foreground">{em.date}</p>
-                    </div>
-                    <Badge variant={emissionVariant[em.status]}>{em.status}</Badge>
-                  </li>
-                ))}
-              </ul>
+              <p className="border-t border-border px-5 py-4 text-sm text-muted-foreground">
+                Consultez les preuves réelles dans “Preuves & vérifications”.
+              </p>
             </CardContent>
           </Card>
         </div>

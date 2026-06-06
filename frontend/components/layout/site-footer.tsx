@@ -48,7 +48,7 @@ export function SiteFooter() {
             <div className="mt-5 flex flex-col gap-2 text-sm text-muted-foreground">
               <span className="flex items-center gap-2">
                 <MapPin className="size-4 text-primary" />
-                Université de Yaoundé I, Cameroun
+                Institutions partenaires configurées dans OpenScience Hub
               </span>
               <span className="flex items-center gap-2">
                 <Mail className="size-4 text-primary" />

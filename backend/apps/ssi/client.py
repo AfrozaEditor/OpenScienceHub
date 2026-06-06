@@ -1,7 +1,5 @@
-"""Client e-IDStack de IDS. Mode `mock` pour démo hors-ligne (même interface)."""
+"""Client e-IDStack de IDS live-only. Les credentials simulés sont interdits en runtime."""
 from __future__ import annotations
-
-import uuid
 
 import requests
 from django.conf import settings
@@ -15,12 +13,16 @@ class EidStackClient:
     def __init__(self):
         self.base_url = settings.EIDSTACK_BASE_URL.rstrip("/")
         self.api_key = settings.EIDSTACK_API_KEY
-        self.mode = settings.SSI_MODE  # mock | live
+        self.mode = settings.SSI_MODE
         self.timeout = 20
 
     @property
     def is_mock(self) -> bool:
         return self.mode != "live"
+
+    def _ensure_live(self):
+        if self.is_mock:
+            raise EidStackError("SSI_MODE doit être 'live' : les credentials simulés sont désactivés.")
 
     def _headers(self):
         return {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
@@ -32,8 +34,7 @@ class EidStackClient:
         return payload
 
     def get_issuer_did(self) -> str:
-        if self.is_mock:
-            return "did:web:openscience.local"
+        self._ensure_live()
         try:
             r = requests.get(f"{self.base_url}/credo-agent/getIssuerDid", headers=self._headers(), timeout=self.timeout)
             r.raise_for_status()
@@ -43,13 +44,7 @@ class EidStackClient:
             raise EidStackError(str(exc)) from exc
 
     def bootstrap_openscience(self) -> dict:
-        if self.is_mock:
-            return {
-                "issuerDid": self.get_issuer_did(),
-                "schemaId": "mock-schema-scientific-work-archive",
-                "credentialDefinitionId": "mock-cred-def-scientific-work-archive",
-                "mock": True,
-            }
+        self._ensure_live()
         payload = {
             "walletId": getattr(settings, "EIDSTACK_WALLET_ID", "openscience-hub-issuer-local"),
             "walletKey": getattr(settings, "EIDSTACK_WALLET_KEY", "openscience-hub-wallet-key"),
@@ -76,15 +71,7 @@ class EidStackClient:
         attributes: list[dict],
         comment: str = "",
     ) -> dict:
-        if self.is_mock:
-            return {
-                "credentialId": f"OSH-VC-{uuid.uuid4().hex[:12]}",
-                "issuerDid": self.get_issuer_did(),
-                "credentialDefinitionId": credential_definition_id,
-                "state": "done",
-                "credentialAttributes": attributes,
-                "mock": True,
-            }
+        self._ensure_live()
         try:
             r = requests.post(
                 f"{self.base_url}/openscience/credentials",
@@ -102,14 +89,8 @@ class EidStackClient:
             raise EidStackError(str(exc)) from exc
 
     def offer_credential(self, attributes: list[dict], comment: str = "") -> dict:
-        """Émet/prépare un credential. En mock : credential factice cohérent."""
-        if self.is_mock:
-            return {
-                "credentialId": f"OSH-VC-{uuid.uuid4().hex[:12]}",
-                "issuerDid": self.get_issuer_did(),
-                "attributes": attributes,
-                "mock": True,
-            }
+        """Émet/prépare un credential via e-IDStack de IDS."""
+        self._ensure_live()
 
         bootstrap = self.bootstrap_openscience()
         credential_definition_id = (
@@ -131,8 +112,7 @@ class EidStackClient:
         }
 
     def verify_credential(self, credential_id: str) -> dict:
-        if self.is_mock:
-            return {"credentialId": credential_id, "status": "ACTIVE", "valid": True, "mock": True}
+        self._ensure_live()
         try:
             r = requests.get(
                 f"{self.base_url}/openscience/credentials/{credential_id}/status",

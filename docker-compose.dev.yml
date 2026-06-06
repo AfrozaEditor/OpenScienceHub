@@ -7,6 +7,10 @@ services:
     command: "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
 
   simba_ia:
+    build:
+      context: ./simba_ia
+      dockerfile: Dockerfile
+      target: dev
     volumes:
       - ./simba_ia:/app
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
@@ -35,7 +39,9 @@ services:
       - osh_frontend_node_modules:/app/node_modules
     command: ["npm", "run", "dev", "--", "--hostname", "0.0.0.0"]
     environment:
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000/api/v1
+      NEXT_PUBLIC_API_BASE_URL: /api/v1
+      BACKEND_INTERNAL_API_BASE_URL: http://backend:8000/api/v1
+      BACKEND_INTERNAL_MEDIA_BASE_URL: http://backend:8000/media
       NEXT_PUBLIC_FRONTEND_VERIFY_BASE_URL: http://localhost:3000/verify
 
 volumes:

@@ -4,13 +4,17 @@ import type { AuthTokens } from "./types";
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
-  "http://localhost:8000/api/v1";
+  "/api/v1";
 
 function browserAwareApiBaseUrl() {
+  if (API_BASE_URL.startsWith("/")) return API_BASE_URL;
   if (typeof window === "undefined") return API_BASE_URL;
   try {
     const configured = new URL(API_BASE_URL);
     const current = window.location;
+    if (current.port === "3000" && configured.port === "8000") {
+      return "/api/v1";
+    }
     const configuredIsLocal =
       configured.hostname === "localhost" || configured.hostname === "127.0.0.1";
     const currentIsLan =

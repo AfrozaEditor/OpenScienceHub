@@ -18,21 +18,21 @@ Le frontend **ne parle qu'au backend**. Auth, droits, IA et SSI sont orchestrés
 
 ## 2. Stack
 
-- **React 18 + TypeScript** (strict).
-- **Vite** (build/dev rapide) + **React Router** (SPA). Pas de Next.js / SSR : application monopage.
+- **Next.js + React + TypeScript** (strict).
+- **App Router** avec routes publiques et portails authentifiés ; rewrites `/api/v1/*` et `/media/*` vers le backend.
 - **Tailwind CSS** + thème palette officielle (voir [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)).
 - **Composants** : Radix UI / style shadcn/ui.
-- **Données serveur** : TanStack Query.
-- **État client** : Zustand (léger) + Context pour la session.
+- **Données serveur** : client `lib/api/*` + hooks de ressources.
+- **État client** : Context pour la session et état local par écran.
 - **Formulaires** : react-hook-form + zod.
 - **HTTP** : client encapsulé (`lib/api`) avec intercepteur JWT.
-- **Tests** : Vitest + Testing Library ; Playwright (roadmap). **Mock API** : MSW.
+- **Tests** : lint/typecheck/build Next ; Playwright pour les parcours navigateur.
 
 ## 3. Diagramme de contexte
 
 ```mermaid
 flowchart LR
-    subgraph fe [Frontend React + Vite SPA]
+    subgraph fe [Frontend Next.js]
         PUBLICUI["Portail Archive publique"]
         APPUI["Portails internes (Deposant / Validation / Admin)"]
         APICLIENT["lib/api (fetch + JWT)"]
@@ -108,9 +108,10 @@ frontend/
 ## 10. Configuration
 
 ```text
-VITE_API_BASE_URL=http://localhost:8000/api/v1
-VITE_APP_NAME=OpenScience Hub
-VITE_API_MODE=mock        # mock (MSW) | live
+NEXT_PUBLIC_API_BASE_URL=/api/v1
+BACKEND_INTERNAL_API_BASE_URL=http://backend:8000/api/v1
+BACKEND_INTERNAL_MEDIA_BASE_URL=http://backend:8000/media
+NEXT_PUBLIC_FRONTEND_VERIFY_BASE_URL=http://localhost:3000/verify
 # Aucune clé IA/SSI côté frontend.
 ```
 

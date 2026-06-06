@@ -22,13 +22,12 @@ import {
 } from "@/components/ui/card";
 import { ValidationPageHeader } from "@/components/validation/validation-page-header";
 import {
-  dossiers,
-  getDossierWork,
-  priorityQueue,
   type DossierState,
   type Priority,
 } from "@/lib/validation-data";
-import { getValidationInbox, useApiResource, workToScientificDocument } from "@/lib/api";
+import { useApiResource } from "@/lib/api/hooks";
+import { workToScientificDocument } from "@/lib/api/mappers";
+import { getValidationInbox } from "@/lib/api/resources";
 
 const priorityVariant: Record<Priority, "destructive" | "default" | "secondary"> = {
   Haute: "destructive",
@@ -37,41 +36,6 @@ const priorityVariant: Record<Priority, "destructive" | "default" | "secondary">
 };
 
 const DOC_TYPES = ["Mémoire", "Thèse", "Article", "Rapport"] as const;
-
-function countState(state: DossierState) {
-  return dossiers.filter((d) => d.state === state).length;
-}
-
-const stats = [
-  {
-    label: "À traiter",
-    value: countState("À traiter"),
-    icon: Inbox,
-    cls: "bg-warning/15 text-[#b45309]",
-    href: "/validation/a-traiter?state=" + encodeURIComponent("À traiter"),
-  },
-  {
-    label: "En cours",
-    value: countState("En cours"),
-    icon: Loader,
-    cls: "bg-primary/10 text-primary",
-    href: "/validation/a-traiter?state=" + encodeURIComponent("En cours"),
-  },
-  {
-    label: "En correction",
-    value: countState("En correction"),
-    icon: Wrench,
-    cls: "bg-ai/10 text-ai",
-    href: "/validation/a-traiter?state=" + encodeURIComponent("En correction"),
-  },
-  {
-    label: "Validés",
-    value: countState("Validé"),
-    icon: BadgeCheck,
-    cls: "bg-success/12 text-success",
-    href: "/validation/a-traiter?state=" + encodeURIComponent("Validé"),
-  },
-];
 
 export default function ValidationDashboardPage() {
   const inbox = useApiResource(() => getValidationInbox({ ordering: "-submitted_at" }), [], null);
@@ -92,28 +56,44 @@ export default function ValidationDashboardPage() {
       })) || [],
     [inbox.data],
   );
-  const queue = (liveQueue.length > 0
-    ? liveQueue
-    : priorityQueue()
-        .map((d) => ({ d, doc: getDossierWork(d) }))
-        .filter((x) => x.doc))
-    .filter((x) => x.doc)
-    .slice(0, 6);
+  const queue = liveQueue.filter((x) => x.doc).slice(0, 6);
 
   const typeSource = queue.map((row) => row.doc!);
   const typeSummary = DOC_TYPES.map((type) => ({
     type,
-    count:
-      typeSource.length > 0
-        ? typeSource.filter((doc) => doc.type === type).length
-        : dossiers.filter((d) => getDossierWork(d)?.type === type).length,
+    count: typeSource.filter((doc) => doc.type === type).length,
   }));
   const maxType = Math.max(1, ...typeSummary.map((t) => t.count));
-  const renderedStats = stats.map((stat) =>
-    stat.label === "À traiter" && inbox.data
-      ? { ...stat, value: inbox.data.count || inbox.data.results.length }
-      : stat,
-  );
+  const renderedStats = [
+    {
+      label: "À traiter",
+      value: inbox.data?.count || inbox.data?.results.length || 0,
+      icon: Inbox,
+      cls: "bg-warning/15 text-[#b45309]",
+      href: "/validation/a-traiter?state=" + encodeURIComponent("À traiter"),
+    },
+    {
+      label: "En cours",
+      value: 0,
+      icon: Loader,
+      cls: "bg-primary/10 text-primary",
+      href: "/validation/a-traiter?state=" + encodeURIComponent("En cours"),
+    },
+    {
+      label: "En correction",
+      value: queue.filter(({ d }) => d.state === "En correction").length,
+      icon: Wrench,
+      cls: "bg-ai/10 text-ai",
+      href: "/validation/a-traiter?state=" + encodeURIComponent("En correction"),
+    },
+    {
+      label: "Validés",
+      value: queue.filter(({ d }) => d.state === "Validé").length,
+      icon: BadgeCheck,
+      cls: "bg-success/12 text-success",
+      href: "/validation/a-traiter?state=" + encodeURIComponent("Validé"),
+    },
+  ];
 
   return (
     <>

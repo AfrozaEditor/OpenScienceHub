@@ -8,12 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
-import {
-  auditLog,
-  type AuditSeverity,
-  type UserRole,
-} from "@/lib/admin-data";
-import { getAdminAudit, useApiResource } from "@/lib/api";
+import { useApiResource } from "@/lib/api/hooks";
+import { getAdminAudit } from "@/lib/api/resources";
+
+type AuditSeverity = "info" | "warning" | "critical";
+type UserRole = "Administrateur";
 
 type BadgeVariant =
   | "default"
@@ -39,10 +38,6 @@ const severityLabel: Record<AuditSeverity, string> = {
 
 const roleVariant: Record<UserRole, BadgeVariant> = {
   Administrateur: "brand",
-  Gestionnaire: "default",
-  Validateur: "ai",
-  Déposant: "success",
-  Lecteur: "secondary",
 };
 
 export default function AdminAuditPage() {
@@ -68,7 +63,7 @@ export default function AdminAuditPage() {
       })) || [],
     [audit.data],
   );
-  const source = liveRows.length > 0 ? liveRows : auditLog;
+  const source = liveRows;
 
   const filtered = React.useMemo(() => {
     const q = query.trim().toLowerCase();

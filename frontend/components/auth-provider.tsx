@@ -1,16 +1,16 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 
-import { clearStoredTokens, getMe, getStoredTokens, login as apiLogin, register as apiRegister } from "@/lib/api";
-import type { CurrentUser } from "@/lib/api";
+import { getMe, login as apiLogin, register as apiRegister } from "@/lib/api/resources";
+import { clearStoredTokens, getStoredTokens } from "@/lib/api/session";
+import type { CurrentUser } from "@/lib/api/types";
 
 type RegisterPayload = {
   email: string;
   full_name: string;
   password: string;
-  institution?: string;
+  institution: string;
   preferred_language?: string;
 };
 
@@ -28,11 +28,19 @@ const AuthContext = React.createContext<AuthContextValue | null>(null);
 
 export function roleRedirect(user: CurrentUser | null) {
   if (!user) return "/login";
+  const defaultPortal = user.capabilities?.default_portal;
+  if (defaultPortal === "admin") return "/admin/dashboard";
+  if (defaultPortal === "validation") return "/validation/dashboard";
+  if (defaultPortal === "deposant") return "/deposant/dashboard";
+  const portals = user.capabilities?.portals || [];
+  if (portals.includes("admin")) return "/admin/dashboard";
+  if (portals.includes("validation")) return "/validation/dashboard";
+  if (portals.includes("deposant")) return "/deposant/dashboard";
   const roleCodes = (user.roles || [])
-    .flatMap((r) => [r.role_code, r.code, r.role, r.label])
+    .flatMap((r) => [r.role_code, r.code, r.role_label, r.label])
     .filter(Boolean)
     .map((role) => String(role).toLowerCase());
-  if (user.is_staff || user.is_superuser || roleCodes.some((role) => role.includes("admin"))) {
+  if (user.is_superuser || roleCodes.some((role) => role.includes("admin"))) {
     return "/admin/dashboard";
   }
   if (roleCodes.some((role) => role.includes("valid") || role.includes("review"))) {
@@ -42,7 +50,6 @@ export function roleRedirect(user: CurrentUser | null) {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const [user, setUser] = React.useState<CurrentUser | null>(null);
   const [loading, setLoading] = React.useState(true);
 
@@ -84,15 +91,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout() {
         clearStoredTokens();
         setUser(null);
-        router.replace("/login");
+        if (typeof window !== "undefined") window.location.assign("/login");
       },
       reload,
       hasRole(roles) {
         if (!user) return false;
-        if (user.is_staff || user.is_superuser) return roles.includes("admin");
         const wanted = roles.map((role) => role.toLowerCase());
+        const portals = user.capabilities?.portals?.map((role) => role.toLowerCase()) || [];
+        if (wanted.some((role) => portals.includes(role))) return true;
+        if (roles.includes("admin") && user.capabilities?.is_platform_admin) return true;
+        if (roles.includes("admin") && user.capabilities?.is_institution_admin) return true;
+        if (user.is_superuser) return roles.includes("admin");
         return (user.roles || []).some((role) =>
-          [role.role_code, role.code, role.role, role.label]
+          [role.role_code, role.code, role.role_label, role.label]
             .filter(Boolean)
             .some((value) =>
               wanted.some((wantedRole) => String(value).toLowerCase().includes(wantedRole)),
@@ -100,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
       },
     }),
-    [loading, reload, router, user],
+    [loading, reload, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

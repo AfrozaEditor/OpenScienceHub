@@ -4,7 +4,7 @@ import * as React from "react";
 import { Check, ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import type { FacetOption } from "@/lib/mock-data";
+import type { FacetOption } from "@/lib/domain-types";
 
 export function FacetFilter({
   title,

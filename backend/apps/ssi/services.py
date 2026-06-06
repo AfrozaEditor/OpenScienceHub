@@ -11,7 +11,11 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
+from rest_framework.exceptions import ValidationError
 from PIL import Image, ImageDraw
+
+from apps.documents.models import VersionStatus
+from apps.works.models import WorkStatus
 
 from .client import EidStackClient, EidStackError
 from .models import (
@@ -127,6 +131,14 @@ def issue_proof_for_archive(archive_record, actor=None) -> VerificationProof:
     """Émet la preuve après archivage. Statut PENDING si e-IDStack échoue."""
     work = archive_record.work
     final_version = archive_record.document_version
+    if work.status != WorkStatus.ARCHIVE:
+        raise ValidationError("La preuve ne peut être émise qu'après archivage.")
+    if final_version.status != VersionStatus.ARCHIVED or not final_version.is_final:
+        raise ValidationError("La preuve doit pointer vers une version finale archivée.")
+    if archive_record.document_hash != final_version.sha256_hash:
+        raise ValidationError("Le hash de l'archive ne correspond pas à la version finale.")
+    if hasattr(archive_record, "verification_proof"):
+        return archive_record.verification_proof
     proof_code = f"OSH-VC-{timezone.now():%Y}-{uuid.uuid4().hex[:8].upper()}"
     verification_url = f"{settings.PUBLIC_VERIFY_BASE_URL.rstrip('/')}/{proof_code}"
 
@@ -242,15 +254,31 @@ def _audit(action, actor, proof, severity="IMPORTANT", comment=""):
 def verify_proof(proof_code: str, source: str = VerificationSource.QR_CODE) -> dict:
     """Vérifie une preuve publique (hash + statut + credential)."""
     try:
-        proof = VerificationProof.objects.select_related("credential", "archive_record__work").get(proof_code=proof_code)
+        proof = VerificationProof.objects.select_related(
+            "credential__schema",
+            "archive_record__work__institution",
+            "archive_record__document_version",
+        ).get(proof_code=proof_code)
     except VerificationProof.DoesNotExist:
         return {"result": VerificationResult.NOT_FOUND}
 
-    if proof.status == ProofStatus.REVOKED:
+    archive_record = proof.archive_record
+    final_version = archive_record.document_version
+    hashes_match = (
+        bool(proof.document_hash)
+        and proof.document_hash == archive_record.document_hash
+        and proof.document_hash == final_version.sha256_hash
+    )
+
+    if not hashes_match or archive_record.work.status != WorkStatus.ARCHIVE:
+        result = VerificationResult.INVALID_HASH
+    elif proof.status == ProofStatus.REVOKED:
         result = VerificationResult.REVOKED
     elif proof.status in (ProofStatus.EXPIRED,):
         result = VerificationResult.EXPIRED
     elif proof.status in (ProofStatus.PENDING, ProofStatus.ERROR):
+        result = VerificationResult.TECHNICAL_ERROR
+    elif proof.credential and proof.credential.is_mock:
         result = VerificationResult.TECHNICAL_ERROR
     else:
         result = VerificationResult.VALID
@@ -265,6 +293,7 @@ def verify_proof(proof_code: str, source: str = VerificationSource.QR_CODE) -> d
     VerificationCheck.objects.create(proof=proof, result=result, source=source)
 
     work = proof.archive_record.work
+    schema = proof.credential.schema if proof.credential and proof.credential.schema else None
     return {
         "result": result,
         "proof_code": proof.proof_code,
@@ -274,7 +303,16 @@ def verify_proof(proof_code: str, source: str = VerificationSource.QR_CODE) -> d
         "institution": work.institution.name,
         "work_type": work.type,
         "document_hash": proof.document_hash,
+        "archive_hash": archive_record.document_hash,
+        "version_hash": final_version.sha256_hash,
+        "hashes_match": hashes_match,
         "archived_at": proof.archive_record.archived_at,
         "proof_status": proof.status,
+        "credential_id": proof.credential.credential_id if proof.credential else "",
+        "credential_status": proof.credential.status if proof.credential else "",
+        "issuer_did": proof.credential.issuer_did if proof.credential else "",
+        "schema": f"{schema.schema_name} v{schema.version}" if schema else "ScientificWorkArchiveCredential",
+        "is_mock": bool(proof.credential.is_mock) if proof.credential else False,
+        "proof_type": proof.proof_type,
         "verification_url": proof.verification_url,
     }

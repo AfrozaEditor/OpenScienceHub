@@ -45,7 +45,6 @@
 |---|---|
 | **lib/api** | Client HTTP centralisé (JWT, endpoints typés) — seul point d'accès au backend. |
 | **TanStack Query** | Cache et états des données serveur (loading/error/invalidations). |
-| **MSW** | Mock Service Worker : API simulée pour dev/démo hors-ligne. |
 | **OpenAPI types** | Types TS générés depuis le schéma backend. |
 
 ## Produit (rappel)

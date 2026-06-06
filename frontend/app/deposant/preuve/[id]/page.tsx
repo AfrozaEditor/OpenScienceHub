@@ -24,8 +24,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/empty-state";
-import { getDossier } from "@/lib/mock-data";
-import { getWorkProof, useApiResource } from "@/lib/api";
+import { useApiResource } from "@/lib/api/hooks";
+import { getWork, getWorkProof } from "@/lib/api/resources";
 
 const QR_SIZE = 25;
 
@@ -87,28 +87,31 @@ function buildQr(seed: string, size = QR_SIZE): boolean[][] {
 
 export default function PreuvePage() {
   const params = useParams<{ id: string }>();
-  const dossier = getDossier(params.id);
+  const work = useApiResource(() => getWork(params.id), [params.id], null);
   const liveProof = useApiResource(() => getWorkProof(params.id), [params.id], null);
-  const proof = liveProof.data
+  const proof = liveProof.data?.proof_code
     ? {
         reference: liveProof.data.proof_code || liveProof.data.id || params.id,
         status:
-          liveProof.data.status === "REVOKED"
+          liveProof.data.hashes_match === false
+            ? "Hash incohérent"
+            : liveProof.data.status === "REVOKED"
             ? "Révoquée"
             : liveProof.data.status === "PENDING"
               ? "En attente"
-              : "Vérifiée",
+              : "Active",
         documentHash: liveProof.data.document_hash || "—",
         algorithm: "SHA-256",
-        issuedAt: liveProof.data.issued_at || new Date().toISOString(),
-        schema: "OpenScienceProof",
-        credentialId: liveProof.data.id || liveProof.data.proof_code || params.id,
-        issuerDid: "e-IDStack de IDS",
-        holderDid: "OpenScience Hub",
-        registry: "SSI / backend",
-        anchor: liveProof.data.verification_url || liveProof.data.proof_code || "—",
+        issuedAt: liveProof.data.issued_at || "",
+        schema: liveProof.data.schema || "ScientificWorkArchiveCredential",
+        credentialId: liveProof.data.credential_id || liveProof.data.proof_code || params.id,
+        issuerDid: liveProof.data.issuer_did || "Non renseigné",
+        registry: liveProof.data.is_mock ? "Preuve à réémettre" : "e-IDStack de IDS",
+        verificationUrl: liveProof.data.proof_code
+          ? `/verify/${encodeURIComponent(liveProof.data.proof_code)}`
+          : liveProof.data.verification_url || "",
       }
-    : dossier?.proof;
+    : null;
   const qrCodeUrl = liveProof.data?.qr_code_url;
 
   const [copied, setCopied] = React.useState<string | null>(null);
@@ -118,7 +121,7 @@ export default function PreuvePage() {
     [proof]
   );
 
-  if ((!dossier && !liveProof.data) || (!proof && !liveProof.loading)) {
+  if (!proof && !liveProof.loading) {
     return (
       <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
         <EmptyState
@@ -156,23 +159,29 @@ export default function PreuvePage() {
     setTimeout(() => setCopied((c) => (c === key ? null : c)), 1800);
   }
 
+  function absoluteVerificationUrl(verificationUrl: string) {
+    if (!verificationUrl) return "";
+    if (verificationUrl.startsWith("http")) return verificationUrl;
+    if (typeof window === "undefined") return verificationUrl;
+    return new URL(verificationUrl, window.location.origin).toString();
+  }
+
   const statusVariant =
-    proof.status === "Vérifiée"
+    proof.status === "Active"
       ? "success"
-      : proof.status === "Révoquée"
-        ? "destructive"
-        : "warning";
+      : proof.status === "En attente"
+        ? "warning"
+        : "destructive";
 
   const details: { label: string; value: string; mono?: boolean }[] = [
     { label: "Référence", value: proof.reference, mono: true },
     { label: "Algorithme d'empreinte", value: proof.algorithm },
     { label: "Identifiant du justificatif", value: proof.credentialId, mono: true },
     { label: "DID émetteur", value: proof.issuerDid, mono: true },
-    { label: "DID détenteur", value: proof.holderDid, mono: true },
-    { label: "Schéma (AnonCreds)", value: proof.schema, mono: true },
+    { label: "Schéma", value: proof.schema, mono: true },
     { label: "Registre", value: proof.registry },
-    { label: "Ancrage registre", value: proof.anchor, mono: true },
-    { label: "Émise le", value: fmtDateTime(proof.issuedAt) },
+    { label: "Lien public", value: absoluteVerificationUrl(proof.verificationUrl) || "—", mono: true },
+    { label: "Émise le", value: proof.issuedAt ? fmtDateTime(proof.issuedAt) : "—" },
   ];
 
   const guarantees = [
@@ -185,7 +194,7 @@ export default function PreuvePage() {
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       <Button variant="ghost" size="sm" asChild className="mb-4 -ml-2">
-        <Link href={`/deposant/dossier/${dossier?.id || params.id}`}>
+        <Link href={`/deposant/dossier/${params.id}`}>
           <ArrowLeft className="size-4" />
           Retour au dossier
         </Link>
@@ -206,7 +215,7 @@ export default function PreuvePage() {
                 {proof.reference}
               </h1>
               <p className="truncate text-sm text-muted-foreground">
-                {dossier?.title || "Dossier archivé"}
+                {work.data?.title || "Dossier archivé"}
               </p>
             </div>
           </div>
@@ -346,19 +355,14 @@ export default function PreuvePage() {
                   Télécharger l&apos;attestation
                 </Button>
                 <Button variant="outline" asChild>
-                  <Link href="#">
+                  <Link href={proof.verificationUrl || "#"}>
                     <ExternalLink className="size-4" />
-                    Vérifier sur le registre
+                    Vérifier publiquement
                   </Link>
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() =>
-                    copy(
-                      `https://openscience-hub.cm/verifier/${proof.reference}`,
-                      "link"
-                    )
-                  }
+                  onClick={() => copy(absoluteVerificationUrl(proof.verificationUrl), "link")}
                 >
                   {copied === "link" ? (
                     <Check className="size-4 text-success" />
@@ -368,7 +372,7 @@ export default function PreuvePage() {
                   Copier le lien de vérification
                 </Button>
                 <Button variant="ghost" asChild>
-                  <Link href={`/deposant/dossier/${dossier?.id || params.id}`}>
+                  <Link href={`/deposant/dossier/${params.id}`}>
                     <FileText className="size-4" />
                     Voir le dossier
                   </Link>
@@ -378,7 +382,7 @@ export default function PreuvePage() {
 
             <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
               <CalendarClock className="size-4 shrink-0 text-muted-foreground" />
-              Émise le {fmtDateTime(proof.issuedAt)}
+              Émise le {proof.issuedAt ? fmtDateTime(proof.issuedAt) : "—"}
             </div>
           </div>
         </div>

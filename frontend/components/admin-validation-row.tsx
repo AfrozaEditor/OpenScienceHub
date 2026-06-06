@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DocumentTypeBadge } from "@/components/metadata-badge";
 import { StatusBadge } from "@/components/status-badge";
-import type { ScientificDocument } from "@/lib/mock-data";
+import type { ScientificDocument } from "@/lib/domain-types";
 
 export function AdminValidationRow({ doc }: { doc: ScientificDocument }) {
   const [resolution, setResolution] = React.useState<

@@ -8,11 +8,13 @@ from .views import (
     DefenseView,
     InboxView,
     MetadataValidateView,
+    MyAssignmentsView,
     ReviewListCreateView,
 )
 
 urlpatterns = [
     path("validation/inbox", InboxView.as_view(), name="validation-inbox"),
+    path("validation/my-assignments", MyAssignmentsView.as_view(), name="validation-my-assignments"),
     path("works/<uuid:work_id>/assignments", AssignmentCreateView.as_view(), name="work-assignments"),
     path("works/<uuid:work_id>/reviews", ReviewListCreateView.as_view(), name="work-reviews"),
     path("works/<uuid:work_id>/corrections", CorrectionCreateView.as_view(), name="work-corrections"),

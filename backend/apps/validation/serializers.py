@@ -13,7 +13,11 @@ class AssignmentSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
-        fields = ["id", "work", "assignment", "author", "document_version", "comment", "recommendation", "conformity_score", "created_at"]
+        fields = [
+            "id", "work", "assignment", "author", "document_version",
+            "comment", "public_comment", "internal_comment", "attachment",
+            "recommendation", "conformity_score", "created_at",
+        ]
         read_only_fields = ["work", "author", "created_at"]
 
 

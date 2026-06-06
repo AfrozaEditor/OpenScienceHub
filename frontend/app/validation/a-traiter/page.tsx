@@ -19,16 +19,16 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { ValidationPageHeader } from "@/components/validation/validation-page-header";
+import { useAuth } from "@/components/auth-provider";
 import {
-  dossiers as initialDossiers,
-  getDossierWork,
   priorityRank,
-  validationAccount,
-  type Dossier,
   type DossierState,
   type Priority,
 } from "@/lib/validation-data";
-import { getValidationInbox, useApiResource, workToScientificDocument } from "@/lib/api";
+import { messageForApiError } from "@/lib/api/errors";
+import { useApiResource } from "@/lib/api/hooks";
+import { workToScientificDocument } from "@/lib/api/mappers";
+import { assignWork, getValidationInbox } from "@/lib/api/resources";
 
 const STATES: DossierState[] = ["À traiter", "En cours", "En correction", "Validé", "Rejeté"];
 const PRIORITIES: Priority[] = ["Haute", "Normale", "Basse"];
@@ -50,7 +50,9 @@ const stateVariant: Record<DossierState, "warning" | "default" | "ai" | "success
 
 function InboxInner() {
   const params = useSearchParams();
-  const [items, setItems] = React.useState<Dossier[]>(initialDossiers);
+  const { user } = useAuth();
+  const [localAssignments, setLocalAssignments] = React.useState<Record<string, string>>({});
+  const [message, setMessage] = React.useState<string | null>(null);
   const [query, setQuery] = React.useState("");
   const [stateFilter, setStateFilter] = React.useState(params.get("state") ?? "all");
   const [priorityFilter, setPriorityFilter] = React.useState("all");
@@ -64,23 +66,19 @@ function InboxInner() {
           workSlug: work.id,
           priority: index < 2 ? ("Haute" as Priority) : ("Normale" as Priority),
           state: "À traiter" as DossierState,
-          assignee: null,
+          assignee: localAssignments[work.id] || null,
           slaDays: 7,
           ageDays: 0,
           versionHash: work.reference_code || work.id.slice(0, 12),
         },
         doc: workToScientificDocument(work),
       })) || [],
-    [inbox.data],
+    [inbox.data, localAssignments],
   );
 
   const rows = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-    const base =
-      liveRows.length > 0
-        ? liveRows
-        : items.map((d) => ({ d, doc: getDossierWork(d) })).filter((x) => x.doc);
-    return base
+    return liveRows
       .filter(({ d, doc }) => {
         const matchesQuery =
           !q ||
@@ -97,20 +95,20 @@ function InboxInner() {
           priorityRank[a.d.priority] - priorityRank[b.d.priority] ||
           b.d.ageDays - a.d.ageDays
       );
-  }, [items, liveRows, query, stateFilter, priorityFilter, typeFilter]);
+  }, [liveRows, query, stateFilter, priorityFilter, typeFilter]);
 
-  function assignToMe(id: string) {
-    setItems((prev) =>
-      prev.map((d) =>
-        d.id === id
-          ? {
-              ...d,
-              assignee: validationAccount.name,
-              state: d.state === "À traiter" ? "En cours" : d.state,
-            }
-          : d
-      )
-    );
+  async function assignToMe(id: string) {
+    if (!user?.id) return;
+    try {
+      await assignWork(id, {
+        assignment_type: "PEER_REVIEW",
+        assignee: user.id,
+      });
+      setLocalAssignments((prev) => ({ ...prev, [id]: user.full_name || user.email }));
+      setMessage("Dossier assigné à votre mission.");
+    } catch (err) {
+      setMessage(messageForApiError(err));
+    }
   }
 
   function clearFilters() {
@@ -133,6 +131,11 @@ function InboxInner() {
           {inbox.loading ? "Chargement..." : `${rows.length} dossier(s)`}
         </Badge>
       </ValidationPageHeader>
+      {message && (
+        <div className="mb-4 rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+          {message}
+        </div>
+      )}
 
       {/* Filtres */}
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -189,7 +192,7 @@ function InboxInner() {
             </thead>
             <tbody>
               {rows.map(({ d, doc }) => {
-                const mine = d.assignee === validationAccount.name;
+                const mine = Boolean(d.assignee && d.assignee === (user?.full_name || user?.email));
                 const overdue = d.ageDays > d.slaDays;
                 return (
                   <tr

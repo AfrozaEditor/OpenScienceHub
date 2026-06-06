@@ -5,7 +5,9 @@ from .views import (
     AISettingsView,
     DashboardView,
     DocumentTypeViewSet,
+    ProofListView,
     SearchSettingsView,
+    ScopeSummaryView,
     StatsView,
     WorkflowStepViewSet,
     WorkflowTransitionViewSet,
@@ -20,7 +22,9 @@ router.register("admin/workflow-transitions", WorkflowTransitionViewSet, basenam
 
 urlpatterns = [
     path("admin/dashboard", DashboardView.as_view(), name="admin-dashboard"),
+    path("admin/proofs", ProofListView.as_view(), name="admin-proofs"),
     path("admin/stats", StatsView.as_view(), name="admin-stats"),
+    path("admin/scope-summary", ScopeSummaryView.as_view(), name="admin-scope-summary"),
     path("admin/ai-settings", AISettingsView.as_view(), name="admin-ai-settings"),
     path("admin/search-settings", SearchSettingsView.as_view(), name="admin-search-settings"),
 ]

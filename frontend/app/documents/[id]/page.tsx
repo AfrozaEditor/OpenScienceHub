@@ -34,14 +34,9 @@ import { CitationBox } from "@/components/citation-box";
 import { SimilarDocuments } from "@/components/similar-documents";
 import { EmptyState } from "@/components/empty-state";
 import { formatNumber } from "@/components/document-card";
-import { getDocument, getSimilarDocuments } from "@/lib/mock-data";
-import {
-  catalogToDocument,
-  getCatalogItem,
-  getSimilarWorks,
-  similarToDocument,
-  useApiResource,
-} from "@/lib/api";
+import { useApiResource } from "@/lib/api/hooks";
+import { catalogToDocument, similarToDocument } from "@/lib/api/mappers";
+import { getCatalogItem, getSimilarWorks } from "@/lib/api/resources";
 
 export default function DocumentDetailPage() {
   const params = useParams();
@@ -55,7 +50,7 @@ export default function DocumentDetailPage() {
     [liveCatalog.data?.work_id],
     null,
   );
-  const doc = liveCatalog.data ? catalogToDocument(liveCatalog.data) : getDocument(id);
+  const doc = liveCatalog.data ? catalogToDocument(liveCatalog.data) : undefined;
 
   const [copied, setCopied] = React.useState<string | null>(null);
 
@@ -136,8 +131,7 @@ export default function DocumentDetailPage() {
     );
   }
 
-  const similar =
-    liveSimilar.data?.results?.map(similarToDocument) || getSimilarDocuments(doc);
+  const similar = liveSimilar.data?.results?.map(similarToDocument) || [];
 
   const infoRows = [
     { label: "Auteur(s)", value: doc.authors.join(", ") },

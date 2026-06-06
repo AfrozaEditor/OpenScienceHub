@@ -1,5 +1,5 @@
 import { AdminValidationRow } from "@/components/admin-validation-row";
-import type { ScientificDocument } from "@/lib/mock-data";
+import type { ScientificDocument } from "@/lib/domain-types";
 
 export function DocumentTable({ docs }: { docs: ScientificDocument[] }) {
   return (

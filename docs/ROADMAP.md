@@ -16,7 +16,7 @@ Objectif : démontrer le parcours complet **dépôt → extraction IA → valida
 - `ai` : client `simba_ia`, extraction métadonnées (`MetadataExtraction`), accept/correction, Assistant IA basique avec sources.
 - `validation` : avis, corrections, décision finale (checklist simple), transitions de statut.
 - `archive` : `ArchiveRecord`, verrouillage version finale, déclenchement preuve.
-- `ssi` : client e-IDStack (mode `mock` accepté), `VerificationProof` + QR, endpoint public `/verify/{code}`.
+- `ssi` : client e-IDStack live, `VerificationProof` + QR, endpoint public `/verify/{code}`, état `SSI_PENDING` si le service est indisponible.
 - `search` : catalogue public + recherche à facettes (filtres principaux).
 - `audit` : journal minimal des actions sensibles.
 
@@ -33,7 +33,7 @@ Objectif : démontrer le parcours complet **dépôt → extraction IA → valida
 - `accounts` : RBAC complet par périmètre (tous les rôles, `UserRoleAssignment`, matrice de permissions).
 - `validation` : workflows mémoire/thèse/article différenciés, soutenances (`DefenseSession`), multi-rapporteurs, module articles / peer review (interne).
 - `admin` : configuration des workflows (étapes/transitions versionnées), types de documents, paramètres IA, paramètres SSI/e-IDStack.
-- `ssi` : émission **live** via e-IDStack (schema + cred-def), révocation/réémission, `CredentialStatusRecord`.
+- `ssi` : durcissement e-IDStack (schema + cred-def), révocation/réémission, `CredentialStatusRecord`, supervision et retries.
 - `search` : indexation avancée, tri multiples, sauvegarde de recherche.
 - `ai` : similarité (`AIKnowledgeChunk`), fiche de lecture, aide à la validation.
 - `audit` : niveaux de criticité, exports, statistiques et pilotage.
@@ -62,9 +62,9 @@ Objectif : démontrer le parcours complet **dépôt → extraction IA → valida
 1. common + accounts (auth) 
 2. institutions (référentiel)
 3. works + documents (dépôt + hash)
-4. ai (extraction via simba_ia, mock possible)
+4. ai (extraction via simba_ia live)
 5. validation (avis, décision)
-6. archive + ssi (preuve + QR, mock possible)
+6. archive + ssi (preuve + QR via e-IDStack live)
 7. search (catalogue + facettes)
 8. ai (Assistant IA sourcé)
 9. audit + dashboard admin minimal
