@@ -1,0 +1,246 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "OpenScience Hub OpenScience Hub Répertoire Institutionnel Intelligent" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img "OpenScience Hub" [ref=e6]
+          - generic [ref=e7]:
+            - generic [ref=e8]: OpenScience Hub
+            - generic [ref=e9]: Répertoire Institutionnel Intelligent
+        - button "Menu" [ref=e10]:
+          - img [ref=e11]
+    - generic [ref=e13]:
+      - generic [ref=e14]:
+        - img [ref=e15]
+        - text: Centre d'aide
+      - heading "Comment pouvons-nous vous aider ?" [level=1] [ref=e18]
+      - paragraph [ref=e19]: Réponses claires sur le dépôt, l'extraction des métadonnées par IA, la validation institutionnelle et les preuves d'authenticité.
+      - generic [ref=e20]:
+        - img
+        - searchbox "Rechercher dans la FAQ" [ref=e21]
+      - generic [ref=e22]:
+        - generic [ref=e23]: "Populaire :"
+        - button "déposer" [ref=e24]
+        - button "métadonnées" [ref=e25]
+        - button "preuve" [ref=e26]
+        - button "validation" [ref=e27]
+        - button "compte" [ref=e28]
+    - main [ref=e29]:
+      - generic [ref=e30]:
+        - complementary [ref=e31]:
+          - navigation [ref=e32]:
+            - button "Toutes les questions 12" [ref=e33]:
+              - img [ref=e35]
+              - generic [ref=e39]: Toutes les questions
+              - generic [ref=e40]: "12"
+            - button "Dépôt & soumission 3" [ref=e41]:
+              - img [ref=e43]
+              - generic [ref=e46]: Dépôt & soumission
+              - generic [ref=e47]: "3"
+            - button "Métadonnées & IA 3" [ref=e48]:
+              - img [ref=e50]
+              - generic [ref=e53]: Métadonnées & IA
+              - generic [ref=e54]: "3"
+            - button "Validation 2" [ref=e55]:
+              - img [ref=e57]
+              - generic [ref=e60]: Validation
+              - generic [ref=e61]: "2"
+            - button "Preuves & sécurité 2" [ref=e62]:
+              - img [ref=e64]
+              - generic [ref=e67]: Preuves & sécurité
+              - generic [ref=e68]: "2"
+            - button "Compte & accès 2" [ref=e69]:
+              - img [ref=e71]
+              - generic [ref=e74]: Compte & accès
+              - generic [ref=e75]: "2"
+        - generic [ref=e76]:
+          - generic [ref=e77]:
+            - img [ref=e79]
+            - generic [ref=e83]:
+              - heading "Toutes les questions" [level=2] [ref=e84]
+              - paragraph [ref=e85]: Parcourez l'ensemble des questions fréquentes de la plateforme.
+          - generic [ref=e86]:
+            - generic [ref=e87]:
+              - button "Quels types de documents puis-je déposer ?" [ref=e88]:
+                - img [ref=e90]
+                - generic [ref=e93]: Quels types de documents puis-je déposer ?
+                - img [ref=e95]
+              - paragraph [ref=e98]: Mémoires, thèses, articles scientifiques, rapports de recherche et actes de conférence sont acceptés. Le dépôt se fait au format PDF afin de garantir l'intégrité et la lisibilité du document sur le long terme.
+            - generic [ref=e99]:
+              - button "Comment déposer un document ?" [ref=e100]:
+                - img [ref=e102]
+                - generic [ref=e105]: Comment déposer un document ?
+                - img [ref=e107]
+              - generic [ref=e109]:
+                - paragraph [ref=e110]: Rendez-vous sur l'espace Déposant, glissez-déposez votre PDF, laissez l'IA pré-remplir les métadonnées, vérifiez-les puis validez la soumission. Le suivi de votre dépôt apparaît ensuite dans « Mes dossiers ».
+                - link "Déposer un document" [ref=e111] [cursor=pointer]:
+                  - /url: /deposant/deposer
+                  - text: Déposer un document
+                  - img [ref=e112]
+            - generic [ref=e114]:
+              - button "Quelle est la taille maximale d'un fichier ?" [ref=e115]:
+                - img [ref=e117]
+                - generic [ref=e120]: Quelle est la taille maximale d'un fichier ?
+                - img [ref=e122]
+              - paragraph [ref=e125]: Un document peut atteindre 50 Mo. Pour les travaux volumineux (annexes, jeux de données), privilégiez un PDF principal et référencez les ressources complémentaires dans les métadonnées.
+            - generic [ref=e126]:
+              - button "Comment l'IA extrait-elle les métadonnées ?" [ref=e127]:
+                - img [ref=e129]
+                - generic [ref=e132]: Comment l'IA extrait-elle les métadonnées ?
+                - img [ref=e134]
+              - generic [ref=e136]:
+                - paragraph [ref=e137]: Après l'ajout du PDF, le document est analysé pour détecter automatiquement le titre, les auteurs, le résumé, les mots-clés, l'année, la filière et le domaine scientifique. Vous gardez la main pour corriger chaque champ avant la soumission.
+                - link "Essayer le dépôt assisté" [ref=e138] [cursor=pointer]:
+                  - /url: /deposant/deposer
+                  - text: Essayer le dépôt assisté
+                  - img [ref=e139]
+            - generic [ref=e141]:
+              - button "Puis-je corriger les métadonnées proposées par l'IA ?" [ref=e142]:
+                - img [ref=e144]
+                - generic [ref=e147]: Puis-je corriger les métadonnées proposées par l'IA ?
+                - img [ref=e149]
+              - paragraph [ref=e152]: Oui. Une étape de révision vous permet d'éditer chaque champ. Les corrections que vous apportez améliorent la qualité documentaire et facilitent la recherche à facettes pour les autres utilisateurs.
+            - generic [ref=e153]:
+              - button "L'indice de confiance de l'IA, qu'est-ce que c'est ?" [ref=e154]:
+                - img [ref=e156]
+                - generic [ref=e159]: L'indice de confiance de l'IA, qu'est-ce que c'est ?
+                - img [ref=e161]
+              - paragraph [ref=e164]: C'est une estimation de la fiabilité de l'extraction automatique. Un indice élevé signifie que les champs proposés sont probablement exacts ; un indice plus faible vous invite à vérifier attentivement avant validation.
+            - generic [ref=e165]:
+              - button "Combien de temps prend la validation institutionnelle ?" [ref=e166]:
+                - img [ref=e168]
+                - generic [ref=e171]: Combien de temps prend la validation institutionnelle ?
+                - img [ref=e173]
+              - paragraph [ref=e176]: "Le département vérifie les métadonnées sous quelques jours ouvrés en général. Vous êtes notifié à chaque changement de statut : En attente, Validé ou Rejeté."
+            - generic [ref=e177]:
+              - button "Que se passe-t-il si mon dépôt est rejeté ?" [ref=e178]:
+                - img [ref=e180]
+                - generic [ref=e183]: Que se passe-t-il si mon dépôt est rejeté ?
+                - img [ref=e185]
+              - generic [ref=e187]:
+                - paragraph [ref=e188]: Un motif de rejet vous est communiqué dans le détail du dossier. Vous pouvez corriger les éléments signalés puis resoumettre le document sans repartir de zéro.
+                - link "Voir mes dossiers" [ref=e189] [cursor=pointer]:
+                  - /url: /deposant/mes-dossiers
+                  - text: Voir mes dossiers
+                  - img [ref=e190]
+            - generic [ref=e192]:
+              - button "Qu'est-ce qu'une preuve d'authenticité ?" [ref=e193]:
+                - img [ref=e195]
+                - generic [ref=e198]: Qu'est-ce qu'une preuve d'authenticité ?
+                - img [ref=e200]
+              - generic [ref=e202]:
+                - paragraph [ref=e203]: Chaque document validé reçoit une empreinte cryptographique SHA-256 et une attestation vérifiable. Cette preuve garantit l'intégrité du fichier et l'origine du dépôt, et reste vérifiable de façon indépendante.
+                - link "Voir un exemple de preuve" [ref=e204] [cursor=pointer]:
+                  - /url: /deposant/preuve/1
+                  - text: Voir un exemple de preuve
+                  - img [ref=e205]
+            - generic [ref=e207]:
+              - button "Comment vérifier l'authenticité d'un document ?" [ref=e208]:
+                - img [ref=e210]
+                - generic [ref=e213]: Comment vérifier l'authenticité d'un document ?
+                - img [ref=e215]
+              - paragraph [ref=e218]: Depuis la page « Preuve » du dossier, comparez l'empreinte SHA-256, scannez le QR code ou consultez le registre. Toute modification du fichier change l'empreinte, ce qui rend la falsification immédiatement détectable.
+            - generic [ref=e219]:
+              - button "Dois-je créer un compte pour consulter les travaux ?" [ref=e220]:
+                - img [ref=e222]
+                - generic [ref=e225]: Dois-je créer un compte pour consulter les travaux ?
+                - img [ref=e227]
+              - paragraph [ref=e230]: Non. La consultation et le téléchargement des travaux publiés sont en accès libre. Un compte est requis uniquement pour déposer des documents et suivre vos dossiers.
+            - generic [ref=e231]:
+              - button "Comment créer un compte déposant ?" [ref=e232]:
+                - img [ref=e234]
+                - generic [ref=e237]: Comment créer un compte déposant ?
+                - img [ref=e239]
+              - generic [ref=e241]:
+                - paragraph [ref=e242]: Cliquez sur « Créer un compte », renseignez votre identité, votre rôle et votre faculté de rattachement, puis activez votre accès. Vous pourrez ensuite déposer et gérer vos travaux depuis votre tableau de bord.
+                - link "Créer un compte" [ref=e243] [cursor=pointer]:
+                  - /url: /signup
+                  - text: Créer un compte
+                  - img [ref=e244]
+          - generic [ref=e247]:
+            - generic [ref=e248]:
+              - img [ref=e250]
+              - generic [ref=e253]:
+                - heading "Vous ne trouvez pas votre réponse ?" [level=2] [ref=e254]
+                - paragraph [ref=e255]: Posez votre question à l'assistant IA, ou contactez l'équipe support de votre institution.
+            - generic [ref=e256]:
+              - link "Contacter le support" [ref=e257] [cursor=pointer]:
+                - /url: mailto:contact@openscience-hub.cm
+                - img
+                - text: Contacter le support
+              - link "Explorer le répertoire" [ref=e258] [cursor=pointer]:
+                - /url: /explorer
+                - img
+                - text: Explorer le répertoire
+    - contentinfo [ref=e259]:
+      - generic [ref=e260]:
+        - generic [ref=e261]:
+          - generic [ref=e262]:
+            - generic [ref=e263]:
+              - img "OpenScience Hub" [ref=e264]
+              - generic [ref=e265]:
+                - generic [ref=e266]: OpenScience Hub
+                - generic [ref=e267]: Répertoire Institutionnel Intelligent
+            - paragraph [ref=e268]: Centralisez, valorisez et retrouvez toute la production scientifique universitaire grâce à une recherche intelligente et une extraction automatique des métadonnées par IA.
+            - generic [ref=e269]:
+              - generic [ref=e270]:
+                - img [ref=e271]
+                - text: Institutions partenaires configurées dans OpenScience Hub
+              - generic [ref=e274]:
+                - img [ref=e275]
+                - text: contact@openscience-hub.cm
+          - generic [ref=e278]:
+            - heading "Plateforme" [level=3] [ref=e279]
+            - list [ref=e280]:
+              - listitem [ref=e281]:
+                - link "Explorer les travaux" [ref=e282] [cursor=pointer]:
+                  - /url: /explorer
+              - listitem [ref=e283]:
+                - link "Déposer un document" [ref=e284] [cursor=pointer]:
+                  - /url: /deposant/deposer
+              - listitem [ref=e285]:
+                - link "Communautés" [ref=e286] [cursor=pointer]:
+                  - /url: /communautes
+              - listitem [ref=e287]:
+                - link "Statistiques" [ref=e288] [cursor=pointer]:
+                  - /url: /admin/statistiques
+          - generic [ref=e289]:
+            - heading "Ressources" [level=3] [ref=e290]
+            - list [ref=e291]:
+              - listitem [ref=e292]:
+                - link "Guide de dépôt" [ref=e293] [cursor=pointer]:
+                  - /url: /faq
+              - listitem [ref=e294]:
+                - link "Métadonnées et Assistant IA" [ref=e295] [cursor=pointer]:
+                  - /url: /assistant
+              - listitem [ref=e296]:
+                - link "Politique d'accès" [ref=e297] [cursor=pointer]:
+                  - /url: /faq
+              - listitem [ref=e298]:
+                - link "Preuves et exports" [ref=e299] [cursor=pointer]:
+                  - /url: /admin/preuves
+          - generic [ref=e300]:
+            - heading "Institution" [level=3] [ref=e301]
+            - list [ref=e302]:
+              - listitem [ref=e303]:
+                - link "À propos" [ref=e304] [cursor=pointer]:
+                  - /url: /
+              - listitem [ref=e305]:
+                - link "Science ouverte" [ref=e306] [cursor=pointer]:
+                  - /url: /communautes
+              - listitem [ref=e307]:
+                - link "Gouvernance" [ref=e308] [cursor=pointer]:
+                  - /url: /admin/dashboard
+              - listitem [ref=e309]:
+                - link "Contact" [ref=e310] [cursor=pointer]:
+                  - /url: mailto:contact@openscience-hub.cm
+        - generic [ref=e311]:
+          - generic [ref=e312]: © 2026 OpenScience Hub — Science ouverte universitaire.
+          - generic [ref=e313]:
+            - img [ref=e314]
+            - text: Archivage institutionnel certifié
+  - button "Ouvrir l'assistant IA" [ref=e318]:
+    - img [ref=e320]
+  - button "Open Next.js Dev Tools" [ref=e334] [cursor=pointer]:
+    - img [ref=e335]

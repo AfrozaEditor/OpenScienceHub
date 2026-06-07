@@ -54,7 +54,9 @@ function StructureList({ title, rows }: { title: string; rows: Record<string, un
             rows.map((row) => (
               <div key={String(row.id)} className="rounded-lg border border-border px-3 py-2">
                 <p className="text-sm font-medium text-foreground">{String(row.name || "Structure")}</p>
-                <p className="text-xs text-muted-foreground">Code : {String(row.code || "—")}</p>
+                <p className="text-xs text-muted-foreground">
+                  Référence interne : {String(row.code || "—")}
+                </p>
               </div>
             ))
           )}

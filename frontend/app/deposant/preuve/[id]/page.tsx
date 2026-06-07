@@ -153,7 +153,7 @@ export default function PreuvePage() {
         <EmptyState
           icon={ShieldCheck}
           title="Chargement de la preuve"
-          description="Récupération de la preuve d'authenticité depuis le backend."
+          description="Récupération de la preuve d'authenticité du dossier."
         />
       </div>
     );

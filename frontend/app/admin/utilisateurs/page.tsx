@@ -119,7 +119,7 @@ function apiUserToAdminUser(user: CurrentUser, institutionNames: Map<string, str
     name: user.full_name || user.email,
     email: user.email,
     role,
-    structure: institutionNames.get(institutionId) || "OpenScience Hub",
+    structure: institutionNames.get(institutionId) || (user.is_superuser ? "OpenScience Hub" : "À rattacher"),
     institutionId,
     status: user.status === "SUSPENDED" ? "Suspendu" : user.status === "PENDING" ? "Invité" : "Actif",
     initials: initialsOf(user.full_name || user.email) || "OS",
@@ -552,8 +552,57 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Tableau */}
-      <Card className="overflow-hidden py-0">
+      {/* Cartes mobile */}
+      <div className="grid gap-3 lg:hidden">
+        {filtered.map((u) => (
+          <Card key={u.id} className="p-4">
+            <div className="flex items-start gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                {u.initials}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium text-foreground">{u.name}</p>
+                <p className="truncate text-sm text-muted-foreground">{u.email}</p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <Badge variant={roleVariant[u.role]}>{u.role}</Badge>
+                  <Badge variant={statusVariant[u.status]}>{u.status}</Badge>
+                </div>
+              </div>
+            </div>
+            <dl className="mt-4 grid gap-2 text-sm">
+              <div>
+                <dt className="text-xs text-muted-foreground">Institution</dt>
+                <dd className="font-medium text-foreground">{u.structure}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Dernière activité</dt>
+                <dd className="font-medium text-foreground">{u.lastActive}</dd>
+              </div>
+            </dl>
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              <Button variant="outline" size="sm" onClick={() => openEdit(u)}>
+                <Pencil className="size-4" />
+                Modifier
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => toggleStatus(u.id)}>
+                {u.status === "Suspendu" ? (
+                  <RotateCcw className="size-4 text-success" />
+                ) : (
+                  <Ban className="size-4 text-[#b45309]" />
+                )}
+                {u.status === "Suspendu" ? "Réactiver" : "Suspendre"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => remove(u.id)}>
+                <Trash2 className="size-4 text-destructive" />
+                Supprimer
+              </Button>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Tableau desktop */}
+      <Card className="hidden overflow-hidden py-0 lg:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-sm">
             <thead>
@@ -643,6 +692,12 @@ export default function AdminUsersPage() {
           </div>
         )}
       </Card>
+
+      {filtered.length === 0 && (
+        <div className="lg:hidden rounded-lg border border-border bg-card px-4 py-12 text-center text-sm text-muted-foreground">
+          Aucun utilisateur ne correspond aux filtres.
+        </div>
+      )}
     </>
   );
 }

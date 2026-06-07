@@ -150,7 +150,7 @@ export default function DossierDetailPage() {
         <EmptyState
           icon={FileText}
           title="Chargement du dossier"
-          description="Récupération des informations depuis le backend."
+          description="Récupération des informations du dossier."
         />
       </div>
     );

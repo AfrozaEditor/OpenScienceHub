@@ -57,13 +57,13 @@ export const SERVICE_LABELS: Record<string, { label: string; description: string
     description: "Signaux de lecture pour les validateurs.",
   },
   auto_analyze_on_upload: {
-    label: "Analyse automatique après upload",
+    label: "Analyse automatique après ajout du PDF",
     description: "Lance l'extraction dès le téléversement.",
   },
 };
 
 export const TRIGGER_LABELS: Record<string, string> = {
-  after_upload: "Après upload du PDF",
+  after_upload: "Après ajout du PDF",
   before_submission: "Avant soumission officielle",
   after_submission: "Après soumission",
   during_validation: "Pendant la validation académique",

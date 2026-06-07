@@ -71,13 +71,13 @@ export default function AdminSsiPage() {
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-2">
         {/* Connexion */}
-        <Card>
+        <Card className="max-w-full overflow-hidden">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle className="flex min-w-0 items-center gap-2 text-base leading-snug">
               <KeyRound className="size-4 text-primary" />
-              Connexion au registre de confiance
+              <span className="min-w-0 break-words">Connexion au registre de confiance</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">

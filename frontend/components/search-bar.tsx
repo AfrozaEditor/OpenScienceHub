@@ -44,35 +44,37 @@ export function SearchBar({
     <form
       onSubmit={handleSubmit}
       className={cn(
-        "flex items-center gap-2 border border-border bg-card shadow-sm transition-colors focus-within:border-primary focus-within:ring-3 focus-within:ring-primary/20",
-        shape === "pill" ? "rounded-full" : "rounded-xl",
+        "flex min-w-0 flex-col gap-2 border border-border bg-card shadow-sm transition-colors focus-within:border-primary focus-within:ring-3 focus-within:ring-primary/20 sm:flex-row sm:items-center",
+        shape === "pill" ? "rounded-2xl sm:rounded-full" : "rounded-xl",
         size === "lg" ? "p-2" : "p-1.5",
         className
       )}
       role="search"
     >
-      <Search
-        className={cn(
-          "ml-2 shrink-0 text-muted-foreground",
-          size === "lg" ? "size-5" : "size-4"
-        )}
-      />
-      <input
-        type="search"
-        value={value}
-        autoFocus={autoFocus}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder={placeholder}
-        aria-label="Rechercher dans le répertoire"
-        className={cn(
-          "flex-1 bg-transparent text-foreground outline-none placeholder:text-muted-foreground",
-          size === "lg" ? "h-9 text-[15px]" : "h-8 text-sm"
-        )}
-      />
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <Search
+          className={cn(
+            "ml-2 shrink-0 text-muted-foreground",
+            size === "lg" ? "size-5" : "size-4"
+          )}
+        />
+        <input
+          type="search"
+          value={value}
+          autoFocus={autoFocus}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder={placeholder}
+          aria-label="Rechercher dans le répertoire"
+          className={cn(
+            "min-w-0 flex-1 bg-transparent text-foreground outline-none placeholder:text-muted-foreground",
+            size === "lg" ? "h-9 text-[15px]" : "h-8 text-sm"
+          )}
+        />
+      </div>
       <Button
         type="submit"
         size={size === "lg" ? "lg" : "default"}
-        className={cn(shape === "pill" && "rounded-full px-5")}
+        className={cn("w-full sm:w-auto", shape === "pill" && "rounded-xl px-5 sm:rounded-full")}
       >
         Rechercher
       </Button>

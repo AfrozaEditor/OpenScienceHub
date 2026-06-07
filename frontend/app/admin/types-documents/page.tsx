@@ -40,7 +40,9 @@ export default function AdminDocumentTypesPage() {
             <Card key={String(row.id || row.code)}>
               <CardContent>
                 <p className="font-medium text-foreground">{String(row.label || row.name || row.code)}</p>
-                <p className="mt-1 text-xs text-muted-foreground">Code : {String(row.code || "—")}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Référence interne : {String(row.code || "—")}
+                </p>
                 <p className="mt-3 text-sm text-muted-foreground">{String(row.description || "")}</p>
               </CardContent>
             </Card>

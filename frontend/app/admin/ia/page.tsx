@@ -50,8 +50,30 @@ const TABS = [
   { key: "security", label: "Sécurité" },
   { key: "quotas", label: "Quotas" },
   { key: "tests", label: "Tests" },
-  { key: "logs", label: "Logs" },
+  { key: "logs", label: "Journal IA" },
 ] as const;
+
+const dateTime = new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" });
+
+function formatDateTime(value: unknown) {
+  const raw = String(value || "");
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? raw || "—" : dateTime.format(date);
+}
+
+function modeLabel(value: unknown) {
+  switch (String(value || "").toLowerCase()) {
+    case "live":
+      return "réel";
+    case "mock":
+    case "demo":
+      return "démonstration";
+    case "disabled":
+      return "désactivé";
+    default:
+      return String(value || "—");
+  }
+}
 
 function modelOptions(data: Record<string, unknown> | null, selected: string) {
   const rows = Array.isArray(data?.models) ? data.models : [];
@@ -164,7 +186,7 @@ export default function AdminAiPage() {
       >
         <div className="flex items-center gap-2">
           <Badge variant="outline">
-            Mode {String(live.data?.mode || "—")}
+            Mode {modeLabel(live.data?.mode)}
           </Badge>
           <Button onClick={handleSave} disabled={saving || live.loading}>
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
@@ -249,13 +271,13 @@ export default function AdminAiPage() {
                 <p>
                   Dernière extraction :{" "}
                   <span className="font-medium">
-                    {String(monitoring.last_extraction_at || "—")}
+                    {formatDateTime(monitoring.last_extraction_at)}
                   </span>
                 </p>
                 <p>
                   Dernière requête Assistant :{" "}
                   <span className="font-medium">
-                    {String(monitoring.last_assistant_query_at || "—")}
+                    {formatDateTime(monitoring.last_assistant_query_at)}
                   </span>
                 </p>
                 <p className="text-muted-foreground">
@@ -656,7 +678,7 @@ export default function AdminAiPage() {
             <AdminToggle
               checked={asBoolean(indexing.auto_after_upload)}
               onChange={(value) => patch(["indexing", "auto_after_upload"], value)}
-              label="Indexation automatique après upload"
+                label="Indexation automatique après ajout du PDF"
             />
             <AdminToggle
               checked={asBoolean(indexing.auto_after_archive, true)}
@@ -735,7 +757,7 @@ export default function AdminAiPage() {
             <p className="text-sm text-muted-foreground">
               Utilisez cette section pour valider la configuration avant déploiement institutionnel.
               Les tests complets (PDF, résumé, Assistant, similarité) s'exécutent via le service
-              Assistant IA lorsque le mode live est actif.
+              Assistant IA lorsque le mode réel est actif.
             </p>
             <div className="rounded-lg border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
               Prochaines actions disponibles : extraction test sur PDF, question test à
@@ -745,11 +767,37 @@ export default function AdminAiPage() {
         </TabsContent>
 
         <TabsContent value="logs">
-          <SectionCard title="Logs IA">
+          <SectionCard title="Journal IA">
             {recentLogs.length === 0 ? (
               <p className="text-sm text-muted-foreground">Aucune action IA journalisée pour le moment.</p>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              <div className="grid gap-3 lg:hidden">
+                {recentLogs.map((log) => (
+                  <div key={String(log.id)} className="rounded-lg border border-border px-3 py-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">{String(log.created_at || "—")}</p>
+                        <p className="mt-1 font-medium text-foreground">{String(log.action || "Action IA")}</p>
+                      </div>
+                      <Badge variant="outline">{String(log.status || "—")}</Badge>
+                    </div>
+                    <dl className="mt-3 grid gap-2 text-sm">
+                      <div>
+                        <dt className="text-xs text-muted-foreground">Utilisateur</dt>
+                        <dd className="text-foreground">{String(log.user || "—")}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-muted-foreground">Détail</dt>
+                        <dd className="break-words text-muted-foreground">
+                          {String(log.question || log.model_name || "—")}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden overflow-x-auto lg:block">
                 <table className="w-full min-w-[640px] text-left text-sm">
                   <thead>
                     <tr className="border-b border-border text-muted-foreground">
@@ -779,6 +827,7 @@ export default function AdminAiPage() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </SectionCard>
         </TabsContent>

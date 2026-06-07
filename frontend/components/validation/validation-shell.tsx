@@ -136,7 +136,7 @@ export function ValidationShell({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   return (
-    <div className="min-h-screen bg-muted/40 text-foreground">
+    <div className="min-h-screen max-w-[100vw] overflow-x-hidden bg-muted/40 text-foreground">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-sidebar-border bg-sidebar lg:block">
         <SidebarContent />
       </aside>
@@ -161,8 +161,8 @@ export function ValidationShell({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      <div className="flex min-h-screen flex-col lg:pl-64">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/85 px-4 backdrop-blur sm:px-6">
+      <div className="flex min-h-screen min-w-0 max-w-[100vw] flex-col lg:pl-64">
+        <header className="sticky top-0 z-30 flex h-16 max-w-[100vw] items-center justify-between gap-3 overflow-hidden border-b border-border bg-background/85 px-4 backdrop-blur sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
@@ -182,7 +182,7 @@ export function ValidationShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <MissionSwitcher current="validation" />
             <Link
               href="/"
@@ -191,7 +191,7 @@ export function ValidationShell({ children }: { children: React.ReactNode }) {
               <ExternalLink className="size-3.5" />
               Site public
             </Link>
-            <div className="flex items-center gap-2.5 rounded-full border border-border bg-card py-1 pl-1 pr-3">
+            <div className="flex items-center gap-1.5 rounded-full border border-border bg-card py-1 pl-1 pr-2 sm:gap-2.5 sm:pr-3">
               <span className="flex size-8 items-center justify-center rounded-full bg-ai text-xs font-semibold text-ai-foreground">
                 {initials}
               </span>
@@ -215,8 +215,8 @@ export function ValidationShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto w-full max-w-7xl">{children}</div>
+        <main className="min-w-0 max-w-[100vw] flex-1 px-4 py-6 sm:px-6 lg:px-8">
+          <div className="mx-auto w-full min-w-0 max-w-7xl">{children}</div>
         </main>
       </div>
     </div>

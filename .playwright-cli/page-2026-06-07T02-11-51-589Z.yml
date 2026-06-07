@@ -1,0 +1,197 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "OpenScience Hub OpenScience Hub Répertoire Institutionnel Intelligent" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img "OpenScience Hub" [ref=e6]
+          - generic [ref=e7]:
+            - generic [ref=e8]: OpenScience Hub
+            - generic [ref=e9]: Répertoire Institutionnel Intelligent
+        - button "Menu" [ref=e10]:
+          - img [ref=e11]
+    - main [ref=e12]:
+      - generic [ref=e14]:
+        - generic [ref=e17]:
+          - img [ref=e19]
+          - generic [ref=e28]:
+            - paragraph [ref=e29]: Assistant IA OpenScienceHub
+            - paragraph [ref=e30]: Réponses sourcées · Catalogue public · IA encadrée
+          - generic [ref=e31]: Live
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - img [ref=e36]
+            - text: READY
+          - paragraph [ref=e45]: Bonjour. Je suis l'Assistant IA d'OpenScienceHub. J'interroge uniquement les sources autorisées et je cite les documents utilisés.
+        - generic [ref=e46]:
+          - generic [ref=e47]:
+            - textbox "Pose une question sur un document, une preuve, un dépôt ou une validation..." [ref=e49]
+            - generic [ref=e50]:
+              - button "Les pièces jointes resteront traitées via le flux dépôt PDF." [ref=e51]:
+                - img [ref=e52]
+              - generic [ref=e54]:
+                - button "Corpus" [ref=e55]:
+                  - img [ref=e56]
+                  - text: Corpus
+                - button "Envoyer" [disabled] [ref=e57]:
+                  - img [ref=e58]
+                  - generic [ref=e60]: Envoyer
+          - generic [ref=e61]:
+            - button "Explorer un sujet" [ref=e62]:
+              - img [ref=e63]
+              - generic [ref=e68]: Explorer un sujet
+            - button "Vérifier un QR" [ref=e69]:
+              - img [ref=e70]
+              - generic [ref=e76]: Vérifier un QR
+            - button "Dépôt PDF" [ref=e77]:
+              - img [ref=e78]
+              - generic [ref=e82]: Dépôt PDF
+            - button "Preuve d'archive" [ref=e83]:
+              - img [ref=e84]
+              - generic [ref=e87]: Preuve d'archive
+            - button "Validation" [ref=e88]:
+              - img [ref=e89]
+              - generic [ref=e91]: Validation
+            - button "Sources" [ref=e92]:
+              - img [ref=e93]
+              - generic [ref=e96]: Sources
+            - button "Parcours dossier" [ref=e97]:
+              - img [ref=e98]
+              - generic [ref=e102]: Parcours dossier
+      - complementary [ref=e103]:
+        - generic [ref=e104]:
+          - generic [ref=e105]:
+            - img
+            - text: IA encadrée par OpenScience Hub
+          - heading "Fenêtre Assistant IA" [level=1] [ref=e106]
+          - paragraph [ref=e107]: "Cette interface met en lumière l'IA du produit : recherche sourcée, extraction de métadonnées, résumé, similarité et vérification QR. Les échanges passent par OpenScience Hub, sans exposer les services techniques internes aux utilisateurs."
+          - link "Explorer le catalogue" [ref=e108] [cursor=pointer]:
+            - /url: /explorer
+            - text: Explorer le catalogue
+            - img
+        - generic [ref=e109]:
+          - generic [ref=e111]:
+            - img [ref=e112]
+            - text: Cas d'usage IA couverts
+          - generic [ref=e115]:
+            - generic [ref=e117]:
+              - img [ref=e119]
+              - generic [ref=e124]:
+                - paragraph [ref=e125]: Assistant IA sourcé
+                - paragraph [ref=e126]: Question publique sur le catalogue avec réponse et sources cliquables.
+                - paragraph [ref=e127]: Question catalogue -> réponse sourcée
+            - generic [ref=e129]:
+              - img [ref=e131]
+              - generic [ref=e135]:
+                - paragraph [ref=e136]: Extraction PDF
+                - paragraph [ref=e137]: Analyse du PDF déposé pour proposer titre, résumé, mots-clés et domaine.
+                - paragraph [ref=e138]: Dépôt PDF -> métadonnées proposées
+            - generic [ref=e140]:
+              - img [ref=e142]
+              - generic [ref=e154]:
+                - paragraph [ref=e155]: Résumé et similarité
+                - paragraph [ref=e156]: Résumé IA, documents proches et aide à la validation documentaire.
+                - paragraph [ref=e157]: Document -> résumé et travaux proches
+            - generic [ref=e159]:
+              - img [ref=e161]
+              - generic [ref=e167]:
+                - paragraph [ref=e168]: Vérification QR
+                - paragraph [ref=e169]: Scan mobile vers une page publique, contrôle de l'empreinte et de la preuve.
+                - paragraph [ref=e170]: QR public -> résultat de vérification
+        - generic [ref=e171]:
+          - generic [ref=e173]:
+            - img [ref=e174]
+            - text: Séquence live complète
+          - list [ref=e179]:
+            - listitem [ref=e180]:
+              - generic [ref=e181]: "1"
+              - generic [ref=e182]: Le déposant crée un dossier depuis son espace
+            - listitem [ref=e183]:
+              - generic [ref=e184]: "2"
+              - generic [ref=e185]: Le PDF est ajouté au dossier documentaire
+            - listitem [ref=e186]:
+              - generic [ref=e187]: "3"
+              - generic [ref=e188]: OpenScience Hub prépare l'extraction et les suggestions de l'Assistant IA
+            - listitem [ref=e189]:
+              - generic [ref=e190]: "4"
+              - generic [ref=e191]: Validateur contrôle métadonnées, avis, corrections et décision
+            - listitem [ref=e192]:
+              - generic [ref=e193]: "5"
+              - generic [ref=e194]: Archivage final déclenche la preuve vérifiable et le QR public
+            - listitem [ref=e195]:
+              - generic [ref=e196]: "6"
+              - generic [ref=e197]: Un téléphone scanne le QR public, sans donnée sensible intégrée
+        - paragraph [ref=e199]:
+          - img [ref=e200]
+          - text: "Le QR code reste sûr : il contient seulement un lien de vérification public, jamais l'empreinte complète du document ni des données sensibles."
+    - contentinfo [ref=e203]:
+      - generic [ref=e204]:
+        - generic [ref=e205]:
+          - generic [ref=e206]:
+            - generic [ref=e207]:
+              - img "OpenScience Hub" [ref=e208]
+              - generic [ref=e209]:
+                - generic [ref=e210]: OpenScience Hub
+                - generic [ref=e211]: Répertoire Institutionnel Intelligent
+            - paragraph [ref=e212]: Centralisez, valorisez et retrouvez toute la production scientifique universitaire grâce à une recherche intelligente et une extraction automatique des métadonnées par IA.
+            - generic [ref=e213]:
+              - generic [ref=e214]:
+                - img [ref=e215]
+                - text: Institutions partenaires configurées dans OpenScience Hub
+              - generic [ref=e218]:
+                - img [ref=e219]
+                - text: contact@openscience-hub.cm
+          - generic [ref=e222]:
+            - heading "Plateforme" [level=3] [ref=e223]
+            - list [ref=e224]:
+              - listitem [ref=e225]:
+                - link "Explorer les travaux" [ref=e226] [cursor=pointer]:
+                  - /url: /explorer
+              - listitem [ref=e227]:
+                - link "Déposer un document" [ref=e228] [cursor=pointer]:
+                  - /url: /deposant/deposer
+              - listitem [ref=e229]:
+                - link "Communautés" [ref=e230] [cursor=pointer]:
+                  - /url: /communautes
+              - listitem [ref=e231]:
+                - link "Statistiques" [ref=e232] [cursor=pointer]:
+                  - /url: /admin/statistiques
+          - generic [ref=e233]:
+            - heading "Ressources" [level=3] [ref=e234]
+            - list [ref=e235]:
+              - listitem [ref=e236]:
+                - link "Guide de dépôt" [ref=e237] [cursor=pointer]:
+                  - /url: /faq
+              - listitem [ref=e238]:
+                - link "Métadonnées et Assistant IA" [ref=e239] [cursor=pointer]:
+                  - /url: /assistant
+              - listitem [ref=e240]:
+                - link "Politique d'accès" [ref=e241] [cursor=pointer]:
+                  - /url: /faq
+              - listitem [ref=e242]:
+                - link "Preuves et exports" [ref=e243] [cursor=pointer]:
+                  - /url: /admin/preuves
+          - generic [ref=e244]:
+            - heading "Institution" [level=3] [ref=e245]
+            - list [ref=e246]:
+              - listitem [ref=e247]:
+                - link "À propos" [ref=e248] [cursor=pointer]:
+                  - /url: /
+              - listitem [ref=e249]:
+                - link "Science ouverte" [ref=e250] [cursor=pointer]:
+                  - /url: /communautes
+              - listitem [ref=e251]:
+                - link "Gouvernance" [ref=e252] [cursor=pointer]:
+                  - /url: /admin/dashboard
+              - listitem [ref=e253]:
+                - link "Contact" [ref=e254] [cursor=pointer]:
+                  - /url: mailto:contact@openscience-hub.cm
+        - generic [ref=e255]:
+          - generic [ref=e256]: © 2026 OpenScience Hub — Science ouverte universitaire.
+          - generic [ref=e257]:
+            - img [ref=e258]
+            - text: Archivage institutionnel certifié
+  - button "Ouvrir l'assistant IA" [ref=e262]:
+    - img [ref=e264]
+  - button "Open Next.js Dev Tools" [ref=e278] [cursor=pointer]:
+    - img [ref=e279]

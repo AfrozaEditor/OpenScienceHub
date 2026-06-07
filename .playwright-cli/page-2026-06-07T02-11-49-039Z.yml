@@ -1,0 +1,82 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - link "OpenScience Hub OpenScience Hub" [ref=e5] [cursor=pointer]:
+      - /url: /
+      - img "OpenScience Hub" [ref=e6]
+      - generic [ref=e7]: OpenScience Hub
+    - generic [ref=e8]:
+      - img
+      - text: Accès institutionnel
+    - heading "Créer un compte" [level=2] [ref=e9]
+    - paragraph [ref=e10]: Rejoignez OpenScience Hub pour déposer et gérer vos travaux scientifiques.
+    - generic [ref=e11]:
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - generic [ref=e14]: Prénom
+          - textbox "Prénom" [ref=e15]:
+            - /placeholder: Arnaud
+        - generic [ref=e16]:
+          - generic [ref=e17]: Nom
+          - textbox "Nom" [ref=e18]:
+            - /placeholder: Nguelé Fotso
+      - generic [ref=e19]:
+        - generic [ref=e20]: Adresse e-mail institutionnelle
+        - textbox "Adresse e-mail institutionnelle" [ref=e21]:
+          - /placeholder: prenom.nom@univ-yaounde1.cm
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]: Statut
+          - generic [ref=e25]:
+            - combobox "Statut" [ref=e26]:
+              - option "Étudiant(e)" [selected]
+              - option "Enseignant(e)-chercheur(se)"
+              - option "Personnel administratif"
+              - option "Bibliothécaire / Documentaliste"
+            - img
+        - generic [ref=e27]:
+          - generic [ref=e28]: Université
+          - generic [ref=e29]:
+            - combobox "Université" [disabled]:
+              - option "Chargement des universités..." [disabled] [selected]
+            - img
+      - generic [ref=e30]:
+        - generic [ref=e31]: Mot de passe
+        - generic [ref=e32]:
+          - textbox "Mot de passe" [ref=e33]:
+            - /placeholder: ••••••••
+          - button "Afficher le mot de passe" [ref=e34]:
+            - img [ref=e35]
+      - generic [ref=e38]:
+        - generic [ref=e39]: Confirmer le mot de passe
+        - generic [ref=e40]:
+          - textbox "Confirmer le mot de passe" [ref=e41]:
+            - /placeholder: ••••••••
+          - button "Afficher le mot de passe" [ref=e42]:
+            - img [ref=e43]
+      - generic [ref=e47] [cursor=pointer]:
+        - checkbox "J'accepte les conditions d'utilisation et la charte de science ouverte." [ref=e48]
+        - generic [ref=e49]:
+          - text: J'accepte les
+          - link "conditions d'utilisation" [ref=e50]:
+            - /url: /faq
+          - text: et la
+          - link "charte de science ouverte" [ref=e51]:
+            - /url: /faq
+          - text: .
+      - button "Créer mon compte" [disabled]:
+        - text: Créer mon compte
+        - img
+    - generic [ref=e52]:
+      - separator [ref=e53]
+      - generic [ref=e54]: ou
+      - separator [ref=e55]
+    - link "Continuer en tant qu'invité" [ref=e56] [cursor=pointer]:
+      - /url: /explorer
+    - paragraph [ref=e57]:
+      - text: Vous avez déjà un compte ?
+      - link "Se connecter" [ref=e58] [cursor=pointer]:
+        - /url: /login
+  - button "Ouvrir l'assistant IA" [ref=e60]:
+    - img [ref=e62]
+  - button "Open Next.js Dev Tools" [ref=e76] [cursor=pointer]:
+    - img [ref=e77]

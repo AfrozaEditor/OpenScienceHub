@@ -175,8 +175,79 @@ function InboxInner() {
         )}
       </div>
 
-      {/* Table */}
-      <Card className="overflow-hidden py-0">
+      {/* Mobile cards */}
+      <div className="grid gap-3 lg:hidden">
+        {rows.map(({ d, doc }) => {
+          const mine = Boolean(d.assignee && d.assignee === (user?.full_name || user?.email));
+          const overdue = d.ageDays > d.slaDays;
+          return (
+            <Card key={d.id} className="p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={priorityVariant[d.priority]}>{d.priority}</Badge>
+                <Badge variant={stateVariant[d.state]}>{d.state}</Badge>
+                <Badge variant="outline">{doc!.type}</Badge>
+              </div>
+              <Link
+                href={`/validation/dossiers/${d.id}`}
+                className="mt-3 block font-heading text-base font-semibold text-foreground hover:text-primary"
+              >
+                {doc!.title}
+              </Link>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {doc!.authors[0]} · {doc!.faculty}
+              </p>
+              <div className="mt-3 grid gap-2 text-sm text-muted-foreground">
+                <p>
+                  Assigné :{" "}
+                  <span className="font-medium text-foreground">
+                    {d.assignee ? (mine ? "Vous" : d.assignee) : "Non assigné"}
+                  </span>
+                </p>
+                <p>
+                  Délai :{" "}
+                  <span className={overdue ? "font-medium text-destructive" : "font-medium text-foreground"}>
+                    {d.ageDays} j / {d.slaDays} j
+                  </span>
+                </p>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {mine ? (
+                  <Button variant="outline" disabled>
+                    <UserCheck className="size-4" />
+                    Assigné
+                  </Button>
+                ) : (
+                  <Button variant="outline" onClick={() => assignToMe(d.id)}>
+                    <UserPlus className="size-4" />
+                    M&apos;assigner
+                  </Button>
+                )}
+                <Button asChild>
+                  <Link href={`/validation/dossiers/${d.id}`}>
+                    Ouvrir
+                    <ArrowUpRight className="size-4" />
+                  </Link>
+                </Button>
+                <Button variant="ghost" asChild>
+                  <Link href={`/validation/dossiers/${d.id}?tab=avis`}>
+                    <MessageSquarePlus className="size-4" />
+                    Avis
+                  </Link>
+                </Button>
+                <Button variant="ghost" asChild>
+                  <Link href={`/validation/dossiers/${d.id}?tab=decision`}>
+                    <Gavel className="size-4" />
+                    Décision
+                  </Link>
+                </Button>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Table desktop */}
+      <Card className="hidden overflow-hidden py-0 lg:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[920px] text-sm">
             <thead>
@@ -288,6 +359,12 @@ function InboxInner() {
           </div>
         )}
       </Card>
+
+      {rows.length === 0 && (
+        <div className="lg:hidden rounded-lg border border-border bg-card px-4 py-12 text-center text-sm text-muted-foreground">
+          Aucun dossier ne correspond aux filtres.
+        </div>
+      )}
     </>
   );
 }

@@ -15,6 +15,29 @@ function listFrom<T>(data: { results: T[] } | T[] | null) {
   return Array.isArray(data) ? data : data.results;
 }
 
+function scopeLabel(value: unknown) {
+  switch (String(value || "")) {
+    case "PLATFORM":
+      return "Plateforme";
+    case "INSTITUTION":
+      return "Institution";
+    case "FACULTY":
+      return "Faculté";
+    case "DEPARTMENT":
+      return "Département";
+    default:
+      return String(value || "Périmètre non renseigné");
+  }
+}
+
+function permissionLabel(value: unknown) {
+  return String(value || "Permission")
+    .replaceAll("_", " ")
+    .replaceAll(".", " ")
+    .toLowerCase()
+    .replace(/^\w/, (letter) => letter.toUpperCase());
+}
+
 export default function AdminRolesPage() {
   const roles = useApiResource(() => listRoles(), [], null);
   const permissions = useApiResource(() => listPermissions(), [], null);
@@ -44,11 +67,11 @@ export default function AdminRolesPage() {
                 <ShieldCheck className="size-3" />
                 {String(role.label || role.code)}
               </Badge>
-              <p className="text-sm text-muted-foreground">
-                Code : <span className="font-mono">{String(role.code || "—")}</span>
-              </p>
               <div className="border-t border-border pt-3 text-xs text-muted-foreground">
-                Périmètre : <span className="font-medium text-foreground">{String(role.scope || "—")}</span>
+                Périmètre : <span className="font-medium text-foreground">{scopeLabel(role.scope)}</span>
+              </div>
+              <div className="text-[11px] text-muted-foreground/70">
+                Référence interne : {String(role.code || "—")}
               </div>
             </CardContent>
           </Card>
@@ -64,7 +87,7 @@ export default function AdminRolesPage() {
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {permissionRows.map((permission) => (
               <div key={String(permission.id || permission.code)} className="rounded-lg border border-border px-3 py-2 text-sm">
-                <p className="font-mono text-xs text-foreground">{String(permission.code || "—")}</p>
+                <p className="text-xs font-medium text-foreground">{permissionLabel(permission.code)}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{String(permission.description || "")}</p>
               </div>
             ))}

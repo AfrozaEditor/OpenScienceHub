@@ -77,6 +77,23 @@ function isAiStep(step: WorkflowRow["steps"][number]) {
   return text.includes("ia") || text.includes("extraction") || text.includes("index");
 }
 
+function roleLabel(value?: string) {
+  switch (value) {
+    case "SYSTEM":
+      return "OpenScience Hub";
+    case "VALIDATOR":
+      return "Validateur";
+    case "ARCHIVIST":
+      return "Archiviste";
+    case "INSTITUTION_ADMIN":
+      return "Admin institution";
+    case "DEPOSANT":
+      return "Déposant";
+    default:
+      return value || "";
+  }
+}
+
 export default function AdminWorkflowsPage() {
   const live = useApiResource(() => listWorkflows(), [], null);
   const [rows, setRows] = React.useState<WorkflowRow[]>([]);
@@ -118,7 +135,7 @@ export default function AdminWorkflowsPage() {
     setError(null);
     try {
       await updateWorkflow(workflow.id, { is_active: !workflow.is_active });
-      setFeedback(workflow.is_active ? "Workflow désactivé." : "Workflow activé.");
+    setFeedback(workflow.is_active ? "Parcours désactivé." : "Parcours activé.");
       await reload();
     } catch (err) {
       setError(messageForApiError(err));
@@ -128,12 +145,12 @@ export default function AdminWorkflowsPage() {
   }
 
   async function handleDelete(workflow: WorkflowRow) {
-    if (!window.confirm(`Supprimer le workflow « ${workflow.name} » ?`)) return;
+    if (!window.confirm(`Supprimer le parcours « ${workflow.name} » ?`)) return;
     setBusy(`delete-${workflow.id}`);
     setError(null);
     try {
       await deleteWorkflow(workflow.id);
-      setFeedback("Workflow supprimé.");
+      setFeedback("Parcours supprimé.");
       await reload();
     } catch (err) {
       setError(messageForApiError(err));
@@ -145,12 +162,12 @@ export default function AdminWorkflowsPage() {
   return (
     <>
       <AdminPageHeader
-        title="Workflows"
+        title="Parcours de validation"
         description="Processus configurés pour le traitement académique des travaux."
       >
         <Badge variant="outline">
           <Workflow className="size-3" />
-          {live.loading ? "Chargement..." : `${rows.length} workflow(s)`}
+          {live.loading ? "Chargement..." : `${rows.length} parcours`}
         </Badge>
       </AdminPageHeader>
 
@@ -194,7 +211,7 @@ export default function AdminWorkflowsPage() {
         {rows.length === 0 ? (
           <Card>
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              Aucun workflow configuré pour le moment.
+              Aucun parcours configuré pour le moment.
               <br />
               Utilisez un modèle mémoire, thèse ou article pour démarrer.
             </CardContent>
@@ -265,7 +282,7 @@ export default function AdminWorkflowsPage() {
                             </Badge>
                           )}
                           {step.responsible_role && (
-                            <Badge variant="outline">{step.responsible_role}</Badge>
+                            <Badge variant="outline">{roleLabel(step.responsible_role)}</Badge>
                           )}
                         </div>
                         {step.description && (

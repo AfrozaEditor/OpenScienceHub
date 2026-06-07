@@ -7,7 +7,7 @@ import { AdminShell } from "@/components/admin/admin-shell";
 export const metadata: Metadata = {
   title: "Administration — OpenScience Hub",
   description:
-    "Portail d'administration : utilisateurs, rôles, référentiels, workflows, IA, sécurité, preuves et audit.",
+    "Portail d'administration : utilisateurs, rôles, référentiels, parcours de validation, IA, sécurité, preuves et audit.",
 };
 
 export default function AdminLayout({ children }: { children: ReactNode }) {

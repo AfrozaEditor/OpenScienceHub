@@ -167,7 +167,7 @@ export default function DeposerPage() {
 
   async function submitForValidation() {
     if (!workId) {
-      setApiError("Aucun dossier backend n'a été créé pour ce dépôt.");
+      setApiError("Aucun dossier n'a été créé pour ce dépôt.");
       return;
     }
     setSubmitting(true);

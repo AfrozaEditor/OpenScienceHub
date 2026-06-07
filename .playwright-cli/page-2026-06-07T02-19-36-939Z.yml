@@ -1,0 +1,37 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - link "OpenScience Hub OpenScience Hub" [ref=e5] [cursor=pointer]:
+      - /url: /
+      - img "OpenScience Hub" [ref=e6]
+      - generic [ref=e7]: OpenScience Hub
+    - heading "Connexion" [level=2] [ref=e8]
+    - paragraph [ref=e9]: Accédez à votre espace de dépôt et de gestion documentaire.
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - generic [ref=e12]: Adresse e-mail institutionnelle
+        - textbox "Adresse e-mail institutionnelle" [ref=e13]:
+          - /placeholder: prenom.nom@univ-yaounde1.cm
+      - generic [ref=e14]:
+        - generic [ref=e15]:
+          - generic [ref=e16]: Mot de passe
+          - link "Mot de passe oublié ?" [ref=e17] [cursor=pointer]:
+            - /url: mailto:contact@openscience-hub.cm?subject=Réinitialisation%20du%20mot%20de%20passe
+        - textbox "Mot de passe" [ref=e18]:
+          - /placeholder: ••••••••
+      - button "Se connecter" [ref=e19]:
+        - text: Se connecter
+        - img
+    - generic [ref=e20]:
+      - separator [ref=e21]
+      - generic [ref=e22]: ou
+      - separator [ref=e23]
+    - link "Continuer en tant qu'invité" [ref=e24] [cursor=pointer]:
+      - /url: /explorer
+    - paragraph [ref=e25]:
+      - text: Pas encore de compte ?
+      - link "Créer un compte" [ref=e26] [cursor=pointer]:
+        - /url: /signup
+  - button "Ouvrir l'assistant IA" [ref=e28]:
+    - img [ref=e30]
+  - button "Open Next.js Dev Tools" [ref=e44] [cursor=pointer]:
+    - img [ref=e45]

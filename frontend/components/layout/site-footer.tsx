@@ -18,7 +18,7 @@ const columns = [
       { label: "Guide de dépôt", href: "/faq" },
       { label: "Métadonnées et Assistant IA", href: "/assistant" },
       { label: "Politique d'accès", href: "/faq" },
-      { label: "API et exports", href: "/admin/preuves" },
+      { label: "Preuves et exports", href: "/admin/preuves" },
     ],
   },
   {

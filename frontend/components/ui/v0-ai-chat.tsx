@@ -123,7 +123,7 @@ export function VercelV0Chat({ className }: { className?: string }) {
       role: "assistant",
       status: "READY",
       text:
-        "Bonjour. Je suis l'Assistant IA d'OpenScienceHub. J'interroge uniquement les sources autorisées du backend et je cite les documents utilisés.",
+        "Bonjour. Je suis l'Assistant IA d'OpenScienceHub. J'interroge uniquement les sources autorisées et je cite les documents utilisés.",
     },
   ]);
   const [loading, setLoading] = React.useState(false);
@@ -198,7 +198,7 @@ export function VercelV0Chat({ className }: { className?: string }) {
           <div className="min-w-0 flex-1">
             <p className="font-heading text-base font-semibold">Assistant IA OpenScienceHub</p>
             <p className="text-xs text-slate-300">
-              Réponses sourcées · Catalogue public · IA via backend uniquement
+              Réponses sourcées · Catalogue public · IA encadrée
             </p>
           </div>
           <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 text-[11px] font-medium text-emerald-200">
@@ -278,7 +278,7 @@ export function VercelV0Chat({ className }: { className?: string }) {
                 adjustHeight();
               }}
               onKeyDown={handleKeyDown}
-              placeholder="Pose une question sur un document, une preuve, un dépôt, un endpoint..."
+              placeholder="Pose une question sur un document, une preuve, un dépôt ou une validation..."
               className={cn(
                 "min-h-16 w-full resize-none border-none bg-transparent px-4 py-3 text-sm text-white shadow-none",
                 "placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0",
@@ -326,10 +326,10 @@ export function VercelV0Chat({ className }: { className?: string }) {
           <ActionButton icon={<FileSearch className="size-4" />} label="Explorer un sujet" onClick={() => void send("Quels documents publics sont les plus pertinents sur l'intelligence artificielle ?")} />
           <ActionButton icon={<QrCode className="size-4" />} label="Vérifier un QR" onClick={() => void send("Explique comment vérifier une preuve QR OpenScienceHub.")} />
           <ActionButton icon={<FileUp className="size-4" />} label="Dépôt PDF" onClick={() => void send("Décris le flux complet de dépôt PDF avec extraction IA.")} />
-          <ActionButton icon={<ShieldCheck className="size-4" />} label="Preuve SSI" onClick={() => void send("Comment la preuve SSI est-elle générée après archivage ?")} />
-          <ActionButton icon={<Landmark className="size-4" />} label="Validation" onClick={() => void send("Quels sont les rôles du validateur dans le workflow ?")} />
+          <ActionButton icon={<ShieldCheck className="size-4" />} label="Preuve d'archive" onClick={() => void send("Comment la preuve d'archive est-elle générée après archivage ?")} />
+          <ActionButton icon={<Landmark className="size-4" />} label="Validation" onClick={() => void send("Quels sont les rôles du validateur dans le parcours de validation ?")} />
           <ActionButton icon={<BookOpenCheck className="size-4" />} label="Sources" onClick={() => void send("Réponds uniquement avec les sources disponibles et cite-les.")} />
-          <ActionButton icon={<Layers3 className="size-4" />} label="Séquences" onClick={() => void send("Donne la séquence backend IA SSI complète pour un dossier.")} />
+          <ActionButton icon={<Layers3 className="size-4" />} label="Parcours dossier" onClick={() => void send("Explique le parcours complet d'un dossier, du dépôt à la vérification publique.")} />
         </div>
       </div>
     </div>

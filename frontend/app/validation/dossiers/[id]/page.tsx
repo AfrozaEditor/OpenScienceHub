@@ -13,6 +13,7 @@ import {
   Circle,
   Clock,
   Download,
+  ExternalLink,
   FileText,
   Gavel,
   Hash,
@@ -117,6 +118,20 @@ const eventDot: Record<EventType, string> = {
   archive: "bg-success",
 };
 
+function documentFileUrl(value?: string | null) {
+  if (!value) return "";
+  if (value.startsWith("/")) return value;
+  try {
+    const parsed = new URL(value);
+    if (parsed.hostname === "backend" || parsed.port === "8000") {
+      return `${parsed.pathname}${parsed.search}`;
+    }
+    return value;
+  } catch {
+    return value.startsWith("/") ? value : `/${value}`;
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 
 function DetailInner() {
@@ -128,7 +143,10 @@ function DetailInner() {
   const liveDocuments = useApiResource(() => listDocuments(id), [id], []);
   const liveReviews = useApiResource(() => listReviews(id), [id], []);
   const liveCorrections = useApiResource(() => listCorrections(id), [id], []);
-  const liveDoc = liveWork.data ? workToScientificDocument(liveWork.data) : undefined;
+  const liveDoc = React.useMemo(
+    () => (liveWork.data ? workToScientificDocument(liveWork.data) : undefined),
+    [liveWork.data],
+  );
   const liveDossier = React.useMemo<Dossier | undefined>(() => {
     if (!liveWork.data) return undefined;
     const submitted = liveWork.data.submitted_at ? new Date(liveWork.data.submitted_at) : null;
@@ -211,10 +229,7 @@ function DetailInner() {
   const examinedPageCount = examinedVersion?.page_count ?? doc?.pages ?? 0;
   const examinedFileName = examinedVersion?.file_name || (doc ? `${doc.title}.pdf` : "document.pdf");
   const examinedFileUrl = React.useMemo(() => {
-    const file = examinedVersion?.file;
-    if (!file) return "";
-    if (file.startsWith("http://") || file.startsWith("https://")) return file;
-    return file.startsWith("/") ? file : `/${file}`;
+    return documentFileUrl(examinedVersion?.file);
   }, [examinedVersion?.file]);
 
   const [flash, setFlash] = React.useState<string | null>(null);
@@ -560,7 +575,7 @@ function DetailInner() {
       </div>
 
       {/* Timeline (stepper) */}
-      <div className="my-6 flex items-center">
+      <div className="my-6 grid grid-cols-2 gap-3 sm:flex sm:items-center">
         {STAGES.map((label, i) => {
           const done = i < stageIndex;
           const current = i === stageIndex;
@@ -593,7 +608,7 @@ function DetailInner() {
               {i < STAGES.length - 1 && (
                 <span
                   className={
-                    "mx-3 h-px flex-1 " + (i < stageIndex ? "bg-success" : "bg-border")
+                    "mx-3 hidden h-px flex-1 sm:block " + (i < stageIndex ? "bg-success" : "bg-border")
                   }
                 />
               )}
@@ -603,9 +618,9 @@ function DetailInner() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={tab} onValueChange={setTab}>
-        <div className="overflow-x-auto pb-1">
-          <TabsList className="h-auto flex-nowrap p-1">
+      <Tabs value={tab} onValueChange={setTab} className="min-w-0">
+        <div className="max-w-full min-w-0 overflow-x-auto pb-1">
+          <TabsList className="h-auto w-max flex-nowrap p-1">
             {TABS.map((t) => (
               <TabsTrigger key={t.key} value={t.key} className="h-8">
                 <t.icon className="size-3.5" />
@@ -634,11 +649,28 @@ function DetailInner() {
                 ) : null}
               </div>
               {examinedFileUrl ? (
-                <iframe
-                  src={examinedFileUrl}
-                  title={`Aperçu PDF - ${examinedFileName}`}
-                  className="h-[min(72vh,860px)] min-h-[520px] w-full border-0 bg-muted"
-                />
+                <>
+                  <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 bg-muted/30 px-6 py-10 text-center sm:hidden">
+                    <FileText className="size-12 text-primary" />
+                    <div>
+                      <p className="font-medium text-foreground">PDF disponible</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Ouvrez le fichier dans le lecteur du navigateur pour le consulter confortablement sur mobile.
+                      </p>
+                    </div>
+                    <Button asChild>
+                      <a href={examinedFileUrl} target="_blank" rel="noreferrer">
+                        <ExternalLink className="size-4" />
+                        Ouvrir le PDF
+                      </a>
+                    </Button>
+                  </div>
+                  <iframe
+                    src={examinedFileUrl}
+                    title={`Aperçu PDF - ${examinedFileName}`}
+                    className="hidden h-[min(72vh,860px)] min-h-[520px] w-full border-0 bg-muted sm:block"
+                  />
+                </>
               ) : (
                 <div className="flex aspect-[1/1.3] items-center justify-center bg-muted/30">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -1099,7 +1131,7 @@ function DetailInner() {
         <TabsContent value="historique">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Historique du workflow</CardTitle>
+              <CardTitle className="text-base">Historique du parcours</CardTitle>
             </CardHeader>
             <CardContent>
               <ol className="relative space-y-5 border-l border-border pl-6">

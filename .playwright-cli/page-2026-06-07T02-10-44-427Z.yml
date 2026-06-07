@@ -1,0 +1,96 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "OpenScience Hub OpenScience Hub Répertoire Institutionnel Intelligent" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img "OpenScience Hub" [ref=e6]
+          - generic [ref=e7]:
+            - generic [ref=e8]: OpenScience Hub
+            - generic [ref=e9]: Répertoire Institutionnel Intelligent
+        - button "Menu" [ref=e10]:
+          - img [ref=e11]
+    - generic [ref=e13]:
+      - generic [ref=e14]:
+        - img
+        - text: Communautés & structures
+      - heading "Explorez les structures institutionnelles" [level=1] [ref=e15]
+      - paragraph [ref=e16]: Institutions, facultés et départements sont chargés depuis l'API.
+    - main [ref=e17]:
+      - tablist [ref=e19]:
+        - tab "Toutes" [selected] [ref=e20]
+        - tab "Institution" [ref=e21]
+        - tab "Faculté" [ref=e22]
+        - tab "Département" [ref=e23]
+      - paragraph [ref=e25]: Chargement des structures...
+    - contentinfo [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - generic [ref=e29]:
+            - generic [ref=e30]:
+              - img "OpenScience Hub" [ref=e31]
+              - generic [ref=e32]:
+                - generic [ref=e33]: OpenScience Hub
+                - generic [ref=e34]: Répertoire Institutionnel Intelligent
+            - paragraph [ref=e35]: Centralisez, valorisez et retrouvez toute la production scientifique universitaire grâce à une recherche intelligente et une extraction automatique des métadonnées par IA.
+            - generic [ref=e36]:
+              - generic [ref=e37]:
+                - img [ref=e38]
+                - text: Institutions partenaires configurées dans OpenScience Hub
+              - generic [ref=e41]:
+                - img [ref=e42]
+                - text: contact@openscience-hub.cm
+          - generic [ref=e45]:
+            - heading "Plateforme" [level=3] [ref=e46]
+            - list [ref=e47]:
+              - listitem [ref=e48]:
+                - link "Explorer les travaux" [ref=e49] [cursor=pointer]:
+                  - /url: /explorer
+              - listitem [ref=e50]:
+                - link "Déposer un document" [ref=e51] [cursor=pointer]:
+                  - /url: /deposant/deposer
+              - listitem [ref=e52]:
+                - link "Communautés" [ref=e53] [cursor=pointer]:
+                  - /url: /communautes
+              - listitem [ref=e54]:
+                - link "Statistiques" [ref=e55] [cursor=pointer]:
+                  - /url: /admin/statistiques
+          - generic [ref=e56]:
+            - heading "Ressources" [level=3] [ref=e57]
+            - list [ref=e58]:
+              - listitem [ref=e59]:
+                - link "Guide de dépôt" [ref=e60] [cursor=pointer]:
+                  - /url: /faq
+              - listitem [ref=e61]:
+                - link "Métadonnées et Assistant IA" [ref=e62] [cursor=pointer]:
+                  - /url: /assistant
+              - listitem [ref=e63]:
+                - link "Politique d'accès" [ref=e64] [cursor=pointer]:
+                  - /url: /faq
+              - listitem [ref=e65]:
+                - link "Preuves et exports" [ref=e66] [cursor=pointer]:
+                  - /url: /admin/preuves
+          - generic [ref=e67]:
+            - heading "Institution" [level=3] [ref=e68]
+            - list [ref=e69]:
+              - listitem [ref=e70]:
+                - link "À propos" [ref=e71] [cursor=pointer]:
+                  - /url: /
+              - listitem [ref=e72]:
+                - link "Science ouverte" [ref=e73] [cursor=pointer]:
+                  - /url: /communautes
+              - listitem [ref=e74]:
+                - link "Gouvernance" [ref=e75] [cursor=pointer]:
+                  - /url: /admin/dashboard
+              - listitem [ref=e76]:
+                - link "Contact" [ref=e77] [cursor=pointer]:
+                  - /url: mailto:contact@openscience-hub.cm
+        - generic [ref=e78]:
+          - generic [ref=e79]: © 2026 OpenScience Hub — Science ouverte universitaire.
+          - generic [ref=e80]:
+            - img [ref=e81]
+            - text: Archivage institutionnel certifié
+  - button "Ouvrir l'assistant IA" [ref=e85]:
+    - img [ref=e87]
+  - button "Open Next.js Dev Tools" [ref=e101] [cursor=pointer]:
+    - img [ref=e102]

@@ -1,0 +1,230 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "OpenScience Hub OpenScience Hub Répertoire Institutionnel Intelligent" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img "OpenScience Hub" [ref=e6]
+          - generic [ref=e7]:
+            - generic [ref=e8]: OpenScience Hub
+            - generic [ref=e9]: Répertoire Institutionnel Intelligent
+        - navigation [ref=e10]:
+          - link "Accueil" [ref=e11] [cursor=pointer]:
+            - /url: /
+          - link "Explorer" [ref=e12] [cursor=pointer]:
+            - /url: /explorer
+          - link "Assistant IA" [ref=e13] [cursor=pointer]:
+            - /url: /assistant
+          - link "Communautés" [ref=e14] [cursor=pointer]:
+            - /url: /communautes
+          - link "FAQ" [ref=e15] [cursor=pointer]:
+            - /url: /faq
+        - generic [ref=e16]:
+          - link "Assistant IA" [ref=e17] [cursor=pointer]:
+            - /url: /assistant
+            - img
+            - text: Assistant IA
+          - link "Connexion" [ref=e18] [cursor=pointer]:
+            - /url: /login
+          - link "Déposer" [ref=e19] [cursor=pointer]:
+            - /url: /deposant/deposer
+            - img
+            - text: Déposer
+    - main [ref=e20]:
+      - generic [ref=e21]:
+        - generic [ref=e22]:
+          - generic:
+            - generic:
+              - img
+          - generic [ref=e23]:
+            - heading "Recherchez la science universitaire" [level=1] [ref=e24]
+            - paragraph [ref=e25]: Mémoires, thèses, articles et rapports — un seul moteur de recherche à facettes pour toute la production scientifique.
+            - search [ref=e27]:
+              - img [ref=e28]
+              - searchbox "Rechercher dans le répertoire" [ref=e31]
+              - button "Rechercher" [ref=e32]
+            - generic [ref=e33]:
+              - generic [ref=e34]: "Suggestions :"
+              - link "Intelligence artificielle" [ref=e35] [cursor=pointer]:
+                - /url: /explorer?q=Intelligence%20artificielle
+              - link "Hydrologie" [ref=e36] [cursor=pointer]:
+                - /url: /explorer?q=Hydrologie
+              - link "Cybersécurité" [ref=e37] [cursor=pointer]:
+                - /url: /explorer?q=Cybers%C3%A9curit%C3%A9
+              - link "Science ouverte" [ref=e38] [cursor=pointer]:
+                - /url: /explorer?q=Science%20ouverte
+            - generic [ref=e39]:
+              - link "Explorer les travaux" [ref=e40] [cursor=pointer]:
+                - /url: /explorer
+                - img
+                - text: Explorer les travaux
+              - link "Déposer un document" [ref=e41] [cursor=pointer]:
+                - /url: /deposant/deposer
+                - img
+                - text: Déposer un document
+            - generic [ref=e42]:
+              - generic [ref=e43]:
+                - img [ref=e44]
+                - text: Science ouverte
+              - generic [ref=e47]:
+                - img [ref=e48]
+                - text: Métadonnées IA
+              - generic [ref=e51]:
+                - img [ref=e52]
+                - text: Recherche à facettes
+              - generic [ref=e55]:
+                - img [ref=e56]
+                - text: Archivage institutionnel
+        - generic [ref=e61]:
+          - generic [ref=e62]:
+            - definition [ref=e63]: "0"
+            - term [ref=e65]: Documents archivés
+          - generic [ref=e66]:
+            - definition [ref=e67]: "0"
+            - term [ref=e69]: Auteurs
+          - generic [ref=e70]:
+            - definition [ref=e71]: "0"
+            - term [ref=e73]: Départements
+          - generic [ref=e74]:
+            - definition [ref=e75]: "0"
+            - term [ref=e77]: Domaines scientifiques
+          - generic [ref=e78]:
+            - definition [ref=e79]: "0"
+            - term [ref=e81]: Téléchargements
+      - generic [ref=e83]:
+        - generic [ref=e84]:
+          - generic [ref=e85]: Comment ça marche
+          - heading "Du dépôt à la consultation, en quatre étapes" [level=2] [ref=e86]
+          - paragraph [ref=e87]: Un parcours fluide, outillé par l'IA et sécurisé par la validation institutionnelle.
+        - generic [ref=e88]:
+          - generic [ref=e90]:
+            - generic [ref=e91]:
+              - img [ref=e93]
+              - generic [ref=e96]: "01"
+            - heading "Téléverser le PDF" [level=3] [ref=e97]
+            - paragraph [ref=e98]: Déposez votre mémoire, thèse, article ou rapport en quelques secondes par glisser-déposer.
+          - generic [ref=e100]:
+            - generic [ref=e101]:
+              - img [ref=e103]
+              - generic [ref=e106]: "02"
+            - heading "Extraction IA des métadonnées" [level=3] [ref=e107]
+            - paragraph [ref=e108]: L'IA détecte automatiquement titre, auteurs, résumé, mots-clés, année, filière et domaine.
+            - generic [ref=e109]:
+              - img
+              - text: Propulsé par l'IA
+          - generic [ref=e111]:
+            - generic [ref=e112]:
+              - img [ref=e114]
+              - generic [ref=e117]: "03"
+            - heading "Validation institutionnelle" [level=3] [ref=e118]
+            - paragraph [ref=e119]: Le département vérifie et valide les métadonnées pour garantir la qualité documentaire.
+          - generic [ref=e121]:
+            - generic [ref=e122]:
+              - img [ref=e124]
+              - generic [ref=e127]: "04"
+            - heading "Consultation publique" [level=3] [ref=e128]
+            - paragraph [ref=e129]: Le travail devient consultable et téléchargeable via une recherche intelligente à facettes.
+      - generic [ref=e131]:
+        - generic [ref=e132]:
+          - generic [ref=e133]:
+            - generic [ref=e134]: Derniers dépôts
+            - heading "Travaux récemment archivés" [level=2] [ref=e135]
+          - link "Voir tout le répertoire" [ref=e136] [cursor=pointer]:
+            - /url: /explorer
+            - text: Voir tout le répertoire
+            - img
+        - paragraph [ref=e138]: Aucun document archivé n'est disponible dans le catalogue pour le moment.
+      - generic [ref=e141]:
+        - generic [ref=e142]: Domaines scientifiques
+        - heading "Explorez par domaine de recherche" [level=2] [ref=e143]
+        - paragraph [ref=e144]: Parcourez les travaux regroupés par discipline scientifique.
+      - generic [ref=e148]:
+        - heading "Valorisez la production scientifique de votre université" [level=2] [ref=e149]
+        - paragraph [ref=e150]: Rejoignez les institutions qui centralisent et diffusent leurs travaux de recherche sur OpenScience Hub.
+        - generic [ref=e151]:
+          - link "Déposer un document" [ref=e152] [cursor=pointer]:
+            - /url: /deposant/deposer
+            - text: Déposer un document
+            - img
+          - link "Explorer le répertoire" [ref=e153] [cursor=pointer]:
+            - /url: /explorer
+            - img
+            - text: Explorer le répertoire
+        - generic [ref=e154]:
+          - generic [ref=e155]:
+            - img [ref=e156]
+            - text: Accès libre
+          - generic [ref=e159]:
+            - img [ref=e160]
+            - text: Multi-institutions
+    - contentinfo [ref=e165]:
+      - generic [ref=e166]:
+        - generic [ref=e167]:
+          - generic [ref=e168]:
+            - generic [ref=e169]:
+              - img "OpenScience Hub" [ref=e170]
+              - generic [ref=e171]:
+                - generic [ref=e172]: OpenScience Hub
+                - generic [ref=e173]: Répertoire Institutionnel Intelligent
+            - paragraph [ref=e174]: Centralisez, valorisez et retrouvez toute la production scientifique universitaire grâce à une recherche intelligente et une extraction automatique des métadonnées par IA.
+            - generic [ref=e175]:
+              - generic [ref=e176]:
+                - img [ref=e177]
+                - text: Institutions partenaires configurées dans OpenScience Hub
+              - generic [ref=e180]:
+                - img [ref=e181]
+                - text: contact@openscience-hub.cm
+          - generic [ref=e184]:
+            - heading "Plateforme" [level=3] [ref=e185]
+            - list [ref=e186]:
+              - listitem [ref=e187]:
+                - link "Explorer les travaux" [ref=e188] [cursor=pointer]:
+                  - /url: /explorer
+              - listitem [ref=e189]:
+                - link "Déposer un document" [ref=e190] [cursor=pointer]:
+                  - /url: /deposant/deposer
+              - listitem [ref=e191]:
+                - link "Communautés" [ref=e192] [cursor=pointer]:
+                  - /url: /communautes
+              - listitem [ref=e193]:
+                - link "Statistiques" [ref=e194] [cursor=pointer]:
+                  - /url: /admin/statistiques
+          - generic [ref=e195]:
+            - heading "Ressources" [level=3] [ref=e196]
+            - list [ref=e197]:
+              - listitem [ref=e198]:
+                - link "Guide de dépôt" [ref=e199] [cursor=pointer]:
+                  - /url: /faq
+              - listitem [ref=e200]:
+                - link "Métadonnées et Assistant IA" [ref=e201] [cursor=pointer]:
+                  - /url: /assistant
+              - listitem [ref=e202]:
+                - link "Politique d'accès" [ref=e203] [cursor=pointer]:
+                  - /url: /faq
+              - listitem [ref=e204]:
+                - link "Preuves et exports" [ref=e205] [cursor=pointer]:
+                  - /url: /admin/preuves
+          - generic [ref=e206]:
+            - heading "Institution" [level=3] [ref=e207]
+            - list [ref=e208]:
+              - listitem [ref=e209]:
+                - link "À propos" [ref=e210] [cursor=pointer]:
+                  - /url: /
+              - listitem [ref=e211]:
+                - link "Science ouverte" [ref=e212] [cursor=pointer]:
+                  - /url: /communautes
+              - listitem [ref=e213]:
+                - link "Gouvernance" [ref=e214] [cursor=pointer]:
+                  - /url: /admin/dashboard
+              - listitem [ref=e215]:
+                - link "Contact" [ref=e216] [cursor=pointer]:
+                  - /url: mailto:contact@openscience-hub.cm
+        - generic [ref=e217]:
+          - generic [ref=e218]: © 2026 OpenScience Hub — Science ouverte universitaire.
+          - generic [ref=e219]:
+            - img [ref=e220]
+            - text: Archivage institutionnel certifié
+  - button "Ouvrir l'assistant IA" [ref=e224]:
+    - img [ref=e226]
+  - button "Open Next.js Dev Tools" [ref=e240] [cursor=pointer]:
+    - img [ref=e241]

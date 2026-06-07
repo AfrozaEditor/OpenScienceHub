@@ -171,7 +171,7 @@ export default function VerifyProofPage() {
                   <FileCheck2 className="mt-0.5 size-4 shrink-0 text-primary" />
                   Le QR code ne contient pas de données sensibles : il contient seulement cette
                   URL publique de vérification. La preuve et le hash restent contrôlés par le
-                  backend.
+                service OpenScience Hub.
                 </p>
               </div>
             </CardContent>

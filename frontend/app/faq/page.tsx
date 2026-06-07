@@ -94,7 +94,7 @@ const faqs: FaqItem[] = [
     category: "Métadonnées & IA",
     question: "Comment l'IA extrait-elle les métadonnées ?",
     answer:
-      "À l'upload, le PDF est analysé pour détecter automatiquement le titre, les auteurs, le résumé, les mots-clés, l'année, la filière et le domaine scientifique. Vous gardez la main pour corriger chaque champ avant la soumission.",
+      "Après l'ajout du PDF, le document est analysé pour détecter automatiquement le titre, les auteurs, le résumé, les mots-clés, l'année, la filière et le domaine scientifique. Vous gardez la main pour corriger chaque champ avant la soumission.",
     cta: { label: "Essayer le dépôt assisté", href: "/deposant/deposer" },
   },
   {
@@ -272,13 +272,13 @@ export default function FaqPage() {
 
       {/* Body */}
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-[264px_minmax(0,1fr)]">
+        <div className="grid min-w-0 gap-8 lg:grid-cols-[264px_minmax(0,1fr)]">
           {/* Sidebar */}
-          <aside className="lg:sticky lg:top-24 lg:self-start">
+          <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
             <p className="mb-2 hidden px-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:block">
               Catégories
             </p>
-            <nav className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
+            <nav className="flex max-w-full gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
               {navItems.map((item) => {
                 const isActive = !isSearching && category === item.value;
                 const Icon = item.icon;
@@ -342,7 +342,7 @@ export default function FaqPage() {
           </aside>
 
           {/* Content */}
-          <div>
+          <div className="min-w-0">
             {/* Active header */}
             <div className="flex items-start gap-3 border-b border-border pb-5">
               <span

@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { DocumentCardMini } from "@/components/document-card";
-import type { ScientificDocument } from "@/lib/mock-data";
+import type { ScientificDocument } from "@/lib/domain-types";
 
 const GAP = 24; // gap-6
 const AUTOPLAY_MS = 5000;

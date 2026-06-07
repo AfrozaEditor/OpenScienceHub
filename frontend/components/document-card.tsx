@@ -17,6 +17,20 @@ function formatNumber(n: number) {
   return new Intl.NumberFormat("fr-FR").format(n);
 }
 
+function publicKeywordLabel(keyword: string) {
+  const normalized = keyword.trim().toLowerCase();
+
+  if (["ids", "ssi", "docker", "eidstack", "e-idstack"].includes(normalized)) {
+    return null;
+  }
+
+  if (normalized === "ia") {
+    return "Assistant IA";
+  }
+
+  return keyword;
+}
+
 export function DocumentCard({
   doc,
   className,
@@ -26,10 +40,14 @@ export function DocumentCard({
 }) {
   const href = `/documents/${doc.slug}`;
   const canDownload = doc.access !== "Restreint" && Boolean(doc.downloadUrl);
+  const keywords = doc.keywords
+    .map(publicKeywordLabel)
+    .filter((keyword): keyword is string => Boolean(keyword))
+    .slice(0, 4);
 
   return (
     <Card className={cn("group gap-0 transition-all hover:border-primary/40 hover:shadow-md", className)}>
-      <CardContent className="flex flex-col gap-3">
+      <CardContent className="flex min-w-0 flex-col gap-3 px-4 sm:px-6">
         <div className="flex flex-wrap items-center gap-2">
           <DocumentTypeBadge type={doc.type} />
           <StatusBadge status={doc.status} />
@@ -60,11 +78,13 @@ export function DocumentCard({
           {doc.abstract}
         </p>
 
-        <div className="flex flex-wrap gap-1.5">
-          {doc.keywords.slice(0, 4).map((kw) => (
-            <MetadataBadge key={kw}>{kw}</MetadataBadge>
-          ))}
-        </div>
+        {keywords.length > 0 ? (
+          <div className="flex min-w-0 flex-wrap gap-1.5">
+            {keywords.map((kw) => (
+              <MetadataBadge key={kw}>{kw}</MetadataBadge>
+            ))}
+          </div>
+        ) : null}
 
         <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span>{doc.faculty}</span>
@@ -73,7 +93,7 @@ export function DocumentCard({
         </div>
 
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Eye className="size-3.5" />
               {formatNumber(doc.views)}
@@ -87,15 +107,15 @@ export function DocumentCard({
               {formatNumber(doc.citations)} citations
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
+          <div className="grid w-full grid-cols-1 gap-2 min-[360px]:grid-cols-3 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end">
+            <Button variant="ghost" size="sm" className="w-full sm:w-auto" asChild>
               <Link href={`${href}#citer`}>
                 <Quote className="size-3.5" />
                 Citer
               </Link>
             </Button>
             {canDownload ? (
-              <Button variant="outline" size="sm" asChild>
+              <Button variant="outline" size="sm" className="w-full sm:w-auto" asChild>
                 <a href={doc.downloadUrl} download={doc.fileName || `${doc.slug}.pdf`}>
                   <Download className="size-3.5" />
                   Télécharger
@@ -105,6 +125,7 @@ export function DocumentCard({
               <Button
                 variant="outline"
                 size="sm"
+                className="w-full sm:w-auto"
                 disabled
                 title={doc.access === "Restreint" ? "Accès restreint" : "Fichier indisponible"}
               >
@@ -112,7 +133,7 @@ export function DocumentCard({
                 Télécharger
               </Button>
             )}
-            <Button size="sm" asChild>
+            <Button size="sm" className="w-full sm:w-auto" asChild>
               <Link href={href}>
                 Voir détails
                 <ArrowUpRight className="size-3.5" />

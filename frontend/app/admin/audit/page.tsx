@@ -40,6 +40,32 @@ const roleVariant: Record<UserRole, BadgeVariant> = {
   Administrateur: "brand",
 };
 
+function auditActionLabel(value: string) {
+  switch (value) {
+    case "PDF_UPLOADED":
+      return "PDF ajouté";
+    case "PROOF_ISSUED":
+      return "Preuve émise";
+    case "PROOF_REVOKED":
+      return "Preuve révoquée";
+    case "DOCUMENT_ARCHIVED":
+      return "Document archivé";
+    case "WORKFLOW_CHANGED":
+      return "Parcours mis à jour";
+    case "DECISION_RECORDED":
+      return "Décision enregistrée";
+    default:
+      return value.replaceAll("_", " ").toLowerCase();
+  }
+}
+
+const dateTime = new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" });
+
+function formatDateTime(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value || "—" : dateTime.format(date);
+}
+
 export default function AdminAuditPage() {
   const [query, setQuery] = React.useState("");
   const [severity, setSeverity] = React.useState<string>("all");
@@ -51,7 +77,7 @@ export default function AdminAuditPage() {
         time: String(event.created_at || ""),
         actor: String(event.actor || "Système"),
         role: "Administrateur" as UserRole,
-        action: String(event.action_type || event.module || "Événement"),
+        action: auditActionLabel(String(event.action_type || event.module || "Événement")),
         target: String(event.comment || event.object_status || "OpenScience Hub"),
         ip: String(event.ip_address || "—"),
         severity:
@@ -129,8 +155,40 @@ export default function AdminAuditPage() {
         </div>
       </div>
 
-      {/* Journal */}
-      <Card className="overflow-hidden py-0">
+      {/* Journal mobile */}
+      <div className="grid gap-3 lg:hidden">
+        {filtered.map((e) => (
+          <Card key={e.id} className="p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-mono text-xs text-muted-foreground">{formatDateTime(e.time)}</p>
+                <p className="mt-1 truncate font-medium text-foreground">{e.actor}</p>
+              </div>
+              <Badge variant={severityVariant[e.severity]}>{severityLabel[e.severity]}</Badge>
+            </div>
+            <dl className="mt-4 grid gap-2 text-sm">
+              <div>
+                <dt className="text-xs text-muted-foreground">Action</dt>
+                <dd className="break-words font-medium text-foreground">{e.action}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Cible</dt>
+                <dd className="break-words text-foreground">{e.target}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <dt className="text-xs text-muted-foreground">IP</dt>
+                  <dd className="font-mono text-xs text-foreground">{e.ip}</dd>
+                </div>
+                <Badge variant={roleVariant[e.role]}>{e.role}</Badge>
+              </div>
+            </dl>
+          </Card>
+        ))}
+      </div>
+
+      {/* Journal desktop */}
+      <Card className="hidden overflow-hidden py-0 lg:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[860px] text-sm">
             <thead>
@@ -150,7 +208,7 @@ export default function AdminAuditPage() {
                   className="border-b border-border last:border-0 transition-colors hover:bg-muted/30"
                 >
                   <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-muted-foreground">
-                    {e.time}
+                    {formatDateTime(e.time)}
                   </td>
                   <td className="px-4 py-3">
                     <p className="font-medium text-foreground">{e.actor}</p>
@@ -183,6 +241,12 @@ export default function AdminAuditPage() {
           </div>
         )}
       </Card>
+
+      {filtered.length === 0 && (
+        <div className="lg:hidden rounded-lg border border-border bg-card px-4 py-12 text-center text-sm text-muted-foreground">
+          Aucun événement ne correspond aux filtres.
+        </div>
+      )}
     </>
   );
 }
