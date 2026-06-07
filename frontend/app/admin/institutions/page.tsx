@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { useAuth } from "@/components/auth-provider";
 import { messageForApiError } from "@/lib/api/errors";
 import { useApiResource } from "@/lib/api/hooks";
 import { createInstitution, deleteInstitution, listInstitutions, updateInstitution } from "@/lib/api/resources";
@@ -50,6 +51,8 @@ const emptyForm = {
 };
 
 export default function AdminInstitutionsPage() {
+  const { user } = useAuth();
+  const isPlatformAdmin = Boolean(user?.capabilities?.is_platform_admin);
   const liveInstitutions = useApiResource(() => listInstitutions(), [], null);
   const [items, setItems] = React.useState<Institution[]>([]);
   const [showForm, setShowForm] = React.useState(false);
@@ -121,7 +124,7 @@ export default function AdminInstitutionsPage() {
   }
 
   async function toggleStatus(item: Institution) {
-    const nextStatus = item.status === "Active" ? "INACTIVE" : "ACTIVE";
+    const nextStatus = item.status === "Active" ? "DISABLED" : "ACTIVE";
     setBusyId(item.id);
     setFeedback(null);
     try {
@@ -155,12 +158,18 @@ export default function AdminInstitutionsPage() {
     <>
       <AdminPageHeader
         title="Institutions"
-        description="Gérez les établissements partenaires et leur configuration."
+        description={
+          isPlatformAdmin
+            ? "Créez et gérez les établissements partenaires et leur configuration."
+            : "Consultez votre établissement de rattachement. La création d'institutions est réservée au super admin plateforme."
+        }
       >
-        <Button onClick={openCreate}>
-          <Plus className="size-4" />
-          Nouvelle institution
-        </Button>
+        {isPlatformAdmin && (
+          <Button onClick={openCreate}>
+            <Plus className="size-4" />
+            Nouvelle institution
+          </Button>
+        )}
       </AdminPageHeader>
 
       {feedback && (
@@ -169,7 +178,7 @@ export default function AdminInstitutionsPage() {
         </div>
       )}
 
-      {showForm && (
+      {showForm && isPlatformAdmin && (
         <Card className="mb-5 border-primary/30">
           <CardContent className="py-5">
             <form onSubmit={submit} className="space-y-4">
@@ -316,7 +325,12 @@ export default function AdminInstitutionsPage() {
               </dl>
 
               <div className="mt-auto flex items-center gap-1 border-t border-border pt-3">
-                <Button variant="outline" size="sm" onClick={() => openEdit(i)} disabled={busyId !== null}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openEdit(i)}
+                  disabled={!isPlatformAdmin || busyId !== null}
+                >
                   <Pencil className="size-3.5" />
                   Configurer
                 </Button>
@@ -324,7 +338,7 @@ export default function AdminInstitutionsPage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => toggleStatus(i)}
-                  disabled={busyId !== null}
+                  disabled={!isPlatformAdmin || busyId !== null}
                   title={i.status === "Active" ? "Désactiver" : "Activer"}
                 >
                   <Power
@@ -335,7 +349,7 @@ export default function AdminInstitutionsPage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => remove(i.id)}
-                  disabled={busyId !== null}
+                  disabled={!isPlatformAdmin || busyId !== null}
                   title="Supprimer"
                   className="ml-auto"
                 >
@@ -358,13 +372,13 @@ function apiInstitutionToAdmin(item: ApiInstitution): Institution {
     type:
       item.type === "SCHOOL"
         ? "Grande École"
-        : item.type === "INSTITUTE"
+        : item.type === "RESEARCH_INSTITUTE"
           ? "Institut"
           : "Université",
     city: item.city || "—",
     emailDomain: item.official_email?.split("@")[1] || "—",
     license: "Standard",
-    status: item.status === "INACTIVE" ? "Inactive" : "Active",
+    status: item.status === "DISABLED" ? "Inactive" : "Active",
     documents: null,
   };
 }
@@ -383,10 +397,10 @@ function formToApiInstitution(form: typeof emptyForm): Partial<ApiInstitution> {
       form.type === "Grande École"
         ? "SCHOOL"
         : form.type === "Institut"
-          ? "INSTITUTE"
-          : "UNIVERSITY",
+          ? "RESEARCH_INSTITUTE"
+          : "PUBLIC_UNIVERSITY",
     city: form.city.trim(),
     official_email: officialEmail,
-    status: form.status === "Inactive" ? "INACTIVE" : "ACTIVE",
+    status: form.status === "Inactive" ? "DISABLED" : "ACTIVE",
   };
 }

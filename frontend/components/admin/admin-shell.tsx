@@ -19,7 +19,13 @@ function useActive() {
   );
 }
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarContent({
+  nav = adminNav,
+  onNavigate,
+}: {
+  nav?: typeof adminNav;
+  onNavigate?: () => void;
+}) {
   const isActive = useActive();
 
   return (
@@ -48,7 +54,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </Link>
 
       <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-5">
-        {adminNav.map((group) => (
+        {nav.map((group) => (
           <div key={group.title}>
             <p className="px-2 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/45">
               {group.title}
@@ -123,12 +129,25 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     }
     return "Administration";
   }, [pathname]);
+  const visibleNav = React.useMemo(() => {
+    if (user?.capabilities?.is_platform_admin) return adminNav;
+    const platformOnly = new Set([
+      "/admin/institutions",
+      "/admin/ssi",
+    ]);
+    return adminNav
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => !platformOnly.has(item.href)),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [user?.capabilities?.is_platform_admin]);
 
   return (
     <div className="min-h-screen max-w-[100vw] overflow-x-hidden bg-muted/40 text-foreground">
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-sidebar-border bg-sidebar lg:block">
-        <SidebarContent />
+            <SidebarContent nav={visibleNav} />
       </aside>
 
       {/* Mobile drawer */}
@@ -147,7 +166,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             >
               <X className="size-5" />
             </button>
-            <SidebarContent onNavigate={() => setOpen(false)} />
+            <SidebarContent nav={visibleNav} onNavigate={() => setOpen(false)} />
           </aside>
         </div>
       )}

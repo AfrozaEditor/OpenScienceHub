@@ -238,6 +238,32 @@ class AdminUserApiGovernanceTests(TestCase):
             ).exists()
         )
 
+    def test_institution_admin_can_nominate_another_admin_in_own_institution(self):
+        self.client.force_authenticate(self.institution_admin)
+
+        response = self.client.post(
+            "/api/v1/accounts/users",
+            {
+                "email": "local-admin@example.com",
+                "full_name": "Local Admin",
+                "password": "pass12345",
+                "role_code": RoleCode.INSTITUTION_ADMIN,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        user = get_user_model().objects.get(email="local-admin@example.com")
+        self.assertEqual(user.institution_id, self.institution.id)
+        self.assertTrue(
+            UserRoleAssignment.objects.filter(
+                user=user,
+                role__code=RoleCode.INSTITUTION_ADMIN,
+                scope_type=ScopeType.INSTITUTION,
+                scope_id=self.institution.id,
+            ).exists()
+        )
+
     def test_institution_admin_patch_is_scoped_and_cannot_move_user(self):
         own_user = get_user_model().objects.create_user(
             email="own-user@example.com",

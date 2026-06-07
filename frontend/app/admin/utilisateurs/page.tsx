@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { useAuth } from "@/components/auth-provider";
 import { messageForApiError } from "@/lib/api/errors";
 import { useApiResource } from "@/lib/api/hooks";
 import { createAdminUser, deleteAdminUser, listAdminUsers, listAdminUsersWithoutInstitution, listInstitutions, updateAdminUser } from "@/lib/api/resources";
@@ -137,6 +138,7 @@ const emptyForm = {
 };
 
 export default function AdminUsersPage() {
+  const { user } = useAuth();
   const liveUsers = useApiResource(() => listAdminUsers(), [], null);
   const liveOrphans = useApiResource(() => listAdminUsersWithoutInstitution(), [], null);
   const liveInstitutions = useApiResource(() => listInstitutions(), [], null);
@@ -153,6 +155,11 @@ export default function AdminUsersPage() {
     () => listFrom<Institution>(liveInstitutions.data),
     [liveInstitutions.data],
   );
+  const availableInstitutions = React.useMemo(() => {
+    if (user?.capabilities?.is_platform_admin) return institutions;
+    const ownInstitutionId = String(user?.institution || "");
+    return institutions.filter((institution) => institution.id === ownInstitutionId);
+  }, [institutions, user?.capabilities?.is_platform_admin, user?.institution]);
   const institutionNames = React.useMemo(
     () => new Map(institutions.map((institution) => [institution.id, institution.name])),
     [institutions],
@@ -188,7 +195,11 @@ export default function AdminUsersPage() {
   const suspendedCount = users.filter((u) => u.status === "Suspendu").length;
 
   function openCreate() {
-    setForm(emptyForm);
+    setForm({
+      ...emptyForm,
+      institutionId:
+        availableInstitutions.length === 1 ? availableInstitutions[0].id : "",
+    });
     setEditingId(null);
     setShowForm(true);
   }
@@ -207,12 +218,14 @@ export default function AdminUsersPage() {
   }
 
   function openAttach(u: AdminUser) {
+    const defaultInstitutionId =
+      availableInstitutions.length === 1 ? availableInstitutions[0].id : "";
     setForm({
       name: u.name,
       email: u.email,
       password: "",
       role: u.role === "Administrateur" ? "Déposant" : u.role,
-      institutionId: "",
+      institutionId: defaultInstitutionId,
       status: u.status,
     });
     setEditingId(u.id);
@@ -464,7 +477,7 @@ export default function AdminUsersPage() {
                     required
                   >
                     <option value="">Sélectionner une institution</option>
-                    {institutions.map((institution) => (
+                    {availableInstitutions.map((institution) => (
                       <option key={institution.id} value={institution.id}>
                         {institution.name}
                       </option>
